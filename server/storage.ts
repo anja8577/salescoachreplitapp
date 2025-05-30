@@ -1,10 +1,7 @@
 import { 
-  steps, substeps, behaviors, assessments, assessmentScores,
   type Step, type Substep, type Behavior, type Assessment, type AssessmentScore,
   type InsertStep, type InsertSubstep, type InsertBehavior, type InsertAssessment, type InsertAssessmentScore
 } from "@shared/schema";
-import { db } from "./db";
-import { eq, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -29,97 +26,108 @@ export interface IStorage {
   initializeDefaultData(): Promise<void>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemStorage implements IStorage {
+  private steps: Map<number, Step> = new Map();
+  private substeps: Map<number, Substep> = new Map();
+  private behaviors: Map<number, Behavior> = new Map();
+  private assessments: Map<number, Assessment> = new Map();
+  private assessmentScores: Map<string, AssessmentScore> = new Map();
+  private nextId = 1;
+
   async getAllSteps(): Promise<(Step & { substeps: (Substep & { behaviors: Behavior[] })[] })[]> {
-    const result = await db.query.steps.findMany({
-      orderBy: [asc(steps.order)],
-      with: {
-        substeps: {
-          orderBy: [asc(substeps.order)],
-          with: {
-            behaviors: {
-              orderBy: [asc(behaviors.proficiencyLevel), asc(behaviors.order)],
-            },
-          },
-        },
-      },
-    });
-    return result;
+    const stepsArray = Array.from(this.steps.values()).sort((a, b) => a.order - b.order);
+    
+    return stepsArray.map(step => ({
+      ...step,
+      substeps: Array.from(this.substeps.values())
+        .filter(substep => substep.stepId === step.id)
+        .sort((a, b) => a.order - b.order)
+        .map(substep => ({
+          ...substep,
+          behaviors: Array.from(this.behaviors.values())
+            .filter(behavior => behavior.substepId === substep.id)
+            .sort((a, b) => a.proficiencyLevel - b.proficiencyLevel || a.order - b.order)
+        }))
+    }));
   }
 
   async createStep(step: InsertStep): Promise<Step> {
-    const [created] = await db.insert(steps).values(step).returning();
-    return created;
+    const newStep: Step = { ...step, id: this.nextId++ };
+    this.steps.set(newStep.id, newStep);
+    return newStep;
   }
 
   async createSubstep(substep: InsertSubstep): Promise<Substep> {
-    const [created] = await db.insert(substeps).values(substep).returning();
-    return created;
+    const newSubstep: Substep = { ...substep, id: this.nextId++ };
+    this.substeps.set(newSubstep.id, newSubstep);
+    return newSubstep;
   }
 
   async createBehavior(behavior: InsertBehavior): Promise<Behavior> {
-    const [created] = await db.insert(behaviors).values(behavior).returning();
-    return created;
+    const newBehavior: Behavior = { ...behavior, id: this.nextId++ };
+    this.behaviors.set(newBehavior.id, newBehavior);
+    return newBehavior;
   }
 
   async createAssessment(assessment: InsertAssessment): Promise<Assessment> {
-    const [created] = await db.insert(assessments).values(assessment).returning();
-    return created;
+    const newAssessment: Assessment = { 
+      ...assessment, 
+      id: this.nextId++, 
+      createdAt: new Date() 
+    };
+    this.assessments.set(newAssessment.id, newAssessment);
+    return newAssessment;
   }
 
   async getAssessment(id: number): Promise<Assessment | undefined> {
-    const [assessment] = await db.select().from(assessments).where(eq(assessments.id, id));
-    return assessment || undefined;
+    return this.assessments.get(id);
   }
 
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
-    return await db.select().from(assessmentScores).where(eq(assessmentScores.assessmentId, assessmentId));
+    return Array.from(this.assessmentScores.values())
+      .filter(score => score.assessmentId === assessmentId);
   }
 
   async updateAssessmentScore(assessmentId: number, behaviorId: number, checked: boolean): Promise<AssessmentScore> {
-    // Check if score already exists
-    const [existing] = await db
-      .select()
-      .from(assessmentScores)
-      .where(eq(assessmentScores.assessmentId, assessmentId))
-      .where(eq(assessmentScores.behaviorId, behaviorId));
+    const key = `${assessmentId}-${behaviorId}`;
+    const existing = this.assessmentScores.get(key);
 
     if (existing) {
-      const [updated] = await db
-        .update(assessmentScores)
-        .set({ checked })
-        .where(eq(assessmentScores.id, existing.id))
-        .returning();
+      const updated = { ...existing, checked };
+      this.assessmentScores.set(key, updated);
       return updated;
     } else {
-      const [created] = await db
-        .insert(assessmentScores)
-        .values({ assessmentId, behaviorId, checked })
-        .returning();
-      return created;
+      const newScore: AssessmentScore = {
+        id: this.nextId++,
+        assessmentId,
+        behaviorId,
+        checked
+      };
+      this.assessmentScores.set(key, newScore);
+      return newScore;
     }
   }
 
   async initializeDefaultData(): Promise<void> {
     // Check if data already exists
-    const existingSteps = await db.select().from(steps);
-    if (existingSteps.length > 0) {
+    if (this.steps.size > 0) {
       return; // Data already initialized
     }
 
-    // Step 1: Call Preparation
+    // Step 1: Preparation
     const step1 = await this.createStep({
-      title: "Call Preparation",
-      description: "Objective setting and planning behaviors",
+      title: "Preparation",
+      description: "Strategic preparation, client understanding, and technical preparation",
       order: 1,
     });
 
     const substep1_1 = await this.createSubstep({
       stepId: step1.id,
-      title: "Objective Setting",
+      title: "Strategic preparation",
       order: 1,
     });
 
+    // Strategic preparation behaviors based on the images
     // Level 1 behaviors
     await this.createBehavior({
       substepId: substep1_1.id,
@@ -135,7 +143,7 @@ export class DatabaseStorage implements IStorage {
     });
     await this.createBehavior({
       substepId: substep1_1.id,
-      description: "Formulates the open questions that should be raised within a call",
+      description: "Formulates the open questions, that should be raised within a call",
       proficiencyLevel: 1,
       order: 3,
     });
@@ -155,7 +163,7 @@ export class DatabaseStorage implements IStorage {
     });
     await this.createBehavior({
       substepId: substep1_1.id,
-      description: "Defines key/directive questions that should be raised within a call",
+      description: "Defines key/directive questions, that should be raised within a call",
       proficiencyLevel: 2,
       order: 3,
     });
@@ -182,220 +190,207 @@ export class DatabaseStorage implements IStorage {
       order: 1,
     });
 
-    // Step 2: Call Review
-    const step2 = await this.createStep({
-      title: "Call Review",
-      description: "Previous call analysis and preparation behaviors",
+    // Client understanding substep
+    const substep1_2 = await this.createSubstep({
+      stepId: step1.id,
+      title: "Client understanding",
       order: 2,
     });
 
-    const substep2_1 = await this.createSubstep({
-      stepId: step2.id,
-      title: "Previous Call Analysis",
-      order: 1,
-    });
-
     await this.createBehavior({
-      substepId: substep2_1.id,
+      substepId: substep1_2.id,
       description: "Enters call with little or no review of the previous call notes/history",
       proficiencyLevel: 1,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep2_1.id,
+      substepId: substep1_2.id,
       description: "Has reviewed previous call notes/sales history in CRM",
       proficiencyLevel: 2,
       order: 1,
     });
     await this.createBehavior({
-      substepId: substep2_1.id,
+      substepId: substep1_2.id,
       description: "Makes assumptions about client needs",
       proficiencyLevel: 2,
       order: 2,
     });
 
     await this.createBehavior({
-      substepId: substep2_1.id,
+      substepId: substep1_2.id,
       description: "Demonstrates awareness and knowledge of competitor activities",
       proficiencyLevel: 3,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep2_1.id,
+      substepId: substep1_2.id,
       description: "Is always aware of the environment and collects relevant information to use in the call (observes patients, secretary)",
       proficiencyLevel: 4,
       order: 1,
     });
 
-    // Step 3: Material Selection
-    const step3 = await this.createStep({
-      title: "Material Selection",
-      description: "Promo material and presentation behaviors",
+    // Technical preparation substep
+    const substep1_3 = await this.createSubstep({
+      stepId: step1.id,
+      title: "Technical preparation",
       order: 3,
     });
 
-    const substep3_1 = await this.createSubstep({
-      stepId: step3.id,
-      title: "Material and Presentation Planning",
-      order: 1,
-    });
-
     await this.createBehavior({
-      substepId: substep3_1.id,
+      substepId: substep1_3.id,
       description: "Chooses fitting promo materials",
       proficiencyLevel: 1,
       order: 1,
     });
     await this.createBehavior({
-      substepId: substep3_1.id,
+      substepId: substep1_3.id,
       description: "Chooses the features and benefits to focus on",
       proficiencyLevel: 1,
       order: 2,
     });
     await this.createBehavior({
-      substepId: substep3_1.id,
+      substepId: substep1_3.id,
       description: "Checks the iPad before the visit (presentation, charge)",
       proficiencyLevel: 1,
       order: 3,
     });
 
     await this.createBehavior({
-      substepId: substep3_1.id,
-      description: "Prepares a hook/hinge",
+      substepId: substep1_3.id,
+      description: "Prepares a hook\\hinge",
       proficiencyLevel: 2,
       order: 1,
     });
     await this.createBehavior({
-      substepId: substep3_1.id,
+      substepId: substep1_3.id,
       description: "Plans how to respond to objections and how to position alternatives",
       proficiencyLevel: 2,
       order: 2,
     });
 
     await this.createBehavior({
-      substepId: substep3_1.id,
+      substepId: substep1_3.id,
       description: "Plans the call individually, anticipating questions which will be asked, choosing materials and solutions to position and options for closing",
       proficiencyLevel: 3,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep3_1.id,
+      substepId: substep1_3.id,
       description: "Prepares individual solutions that will demonstrate added value for the customer",
       proficiencyLevel: 4,
       order: 1,
     });
 
-    // Step 4: Introduction
-    const step4 = await this.createStep({
-      title: "Introduction",
-      description: "Personal introduction behaviors",
-      order: 4,
+    // Step 2: Opening
+    const step2 = await this.createStep({
+      title: "Opening",
+      description: "Greeting & introduction and relating behaviors",
+      order: 2,
     });
 
-    const substep4_1 = await this.createSubstep({
-      stepId: step4.id,
-      title: "Professional Introduction",
+    const substep2_1 = await this.createSubstep({
+      stepId: step2.id,
+      title: "Greeting & introduction",
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep4_1.id,
+      substepId: substep2_1.id,
       description: "Introduces themself & the organisation",
       proficiencyLevel: 1,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep4_1.id,
+      substepId: substep2_1.id,
       description: "Calls the doctor by name",
       proficiencyLevel: 2,
       order: 1,
     });
     await this.createBehavior({
-      substepId: substep4_1.id,
+      substepId: substep2_1.id,
       description: "Mentions the reason for the visit",
       proficiencyLevel: 2,
       order: 2,
     });
 
     await this.createBehavior({
-      substepId: substep4_1.id,
+      substepId: substep2_1.id,
       description: "Demonstrates effective presence: interest, conviction, appropriate energy (through body language)",
       proficiencyLevel: 3,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep4_1.id,
+      substepId: substep2_1.id,
       description: "Is a recognized, trusted contact for the customer",
       proficiencyLevel: 4,
       order: 1,
     });
 
-    // Step 5: Atmosphere
-    const step5 = await this.createStep({
-      title: "Atmosphere",
-      description: "Creating positive environment behaviors",
-      order: 5,
-    });
-
-    const substep5_1 = await this.createSubstep({
-      stepId: step5.id,
-      title: "Environment Creation",
-      order: 1,
+    // Relating substep
+    const substep2_2 = await this.createSubstep({
+      stepId: step2.id,
+      title: "Relating",
+      order: 2,
     });
 
     await this.createBehavior({
-      substepId: substep5_1.id,
+      substepId: substep2_2.id,
       description: "Creates a positive atmosphere (friendly, smiling, well-presented, polite)",
       proficiencyLevel: 1,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep5_1.id,
+      substepId: substep2_2.id,
       description: "Understands various customer personality styles (insight colors)",
       proficiencyLevel: 2,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep5_1.id,
+      substepId: substep2_2.id,
       description: "Shows flexibility in own style to meet different customer personality styles",
       proficiencyLevel: 3,
       order: 1,
     });
 
     await this.createBehavior({
-      substepId: substep5_1.id,
-      description: "Creates a trusting client relationship through presence, charisma and a high level of customer/technical, market knowledge",
+      substepId: substep2_2.id,
+      description: "Creates a trusting client relationship through presence, charisma and a high level of customer\\technical, market knowledge",
       proficiencyLevel: 4,
       order: 1,
     });
 
-    // Step 6: Relationship
-    const step6 = await this.createStep({
-      title: "Relationship",
-      description: "Building trust and client relationship behaviors",
+    // Add placeholder steps 3-6 for now (you can add more behaviors later)
+    await this.createStep({
+      title: "Step 3",
+      description: "Step 3 behaviors",
+      order: 3,
+    });
+
+    await this.createStep({
+      title: "Step 4", 
+      description: "Step 4 behaviors",
+      order: 4,
+    });
+
+    await this.createStep({
+      title: "Step 5",
+      description: "Step 5 behaviors", 
+      order: 5,
+    });
+
+    await this.createStep({
+      title: "Step 6",
+      description: "Step 6 behaviors",
       order: 6,
-    });
-
-    const substep6_1 = await this.createSubstep({
-      stepId: step6.id,
-      title: "Trust Building",
-      order: 1,
-    });
-
-    await this.createBehavior({
-      substepId: substep6_1.id,
-      description: "Creates a trusting client relationship through presence, charisma and a high level of customer/technical, market knowledge",
-      proficiencyLevel: 4,
-      order: 1,
     });
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();

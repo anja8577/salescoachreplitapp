@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AssessmentHeader from "@/components/assessment-header";
 import ProgressOverview from "@/components/progress-overview";
 import AssessmentStep from "@/components/assessment-step";
@@ -78,7 +78,7 @@ export default function Assessment() {
   };
 
   // Update checked behaviors when scores change
-  useState(() => {
+  useEffect(() => {
     const checkedIds = scores.filter(score => score.checked).map(score => score.behaviorId);
     setCheckedBehaviors(new Set(checkedIds));
   }, [scores]);
