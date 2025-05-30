@@ -16,7 +16,7 @@ interface ScoringDashboardProps {
 
 export default function ScoringDashboard({ totalScore, totalBehaviors, steps, checkedBehaviors }: ScoringDashboardProps) {
   const averageLevel = totalBehaviors > 0 ? (totalScore / totalBehaviors).toFixed(1) : "0";
-  const { level: overallProficiency, className } = calculateOverallProficiency(totalScore, totalBehaviors);
+  const { level: overallProficiency, className } = calculateOverallProficiency(totalScore, steps);
 
   return (
     <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">

@@ -133,7 +133,7 @@ export default function Assessment() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-inter">
-      <AssessmentHeader totalScore={totalScore} totalBehaviors={totalBehaviors} />
+      <AssessmentHeader totalScore={totalScore} totalBehaviors={totalBehaviors} steps={steps} />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ProgressOverview steps={steps} checkedBehaviors={checkedBehaviors} />

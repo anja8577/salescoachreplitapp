@@ -1,12 +1,20 @@
 import { calculateOverallProficiency } from "@/lib/utils";
+import type { Step, Substep, Behavior } from "@shared/schema";
+
+type StepWithSubsteps = Step & {
+  substeps: (Substep & {
+    behaviors: Behavior[];
+  })[];
+};
 
 interface AssessmentHeaderProps {
   totalScore: number;
   totalBehaviors: number;
+  steps: StepWithSubsteps[];
 }
 
-export default function AssessmentHeader({ totalScore, totalBehaviors }: AssessmentHeaderProps) {
-  const { level, className } = calculateOverallProficiency(totalScore, totalBehaviors);
+export default function AssessmentHeader({ totalScore, totalBehaviors, steps }: AssessmentHeaderProps) {
+  const { level, className } = calculateOverallProficiency(totalScore, steps);
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">

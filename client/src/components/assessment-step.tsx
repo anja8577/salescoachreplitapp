@@ -26,15 +26,30 @@ export default function AssessmentStep({ step, checkedBehaviors, onBehaviorCheck
     return total + substep.behaviors.filter(behavior => checkedBehaviors.has(behavior.id)).length;
   }, 0);
 
-  const stepLevel = stepBehaviorCount > 0 ? 
-    (stepScore / stepBehaviorCount >= 3.5 ? "Master" :
-     stepScore / stepBehaviorCount >= 2.5 ? "Experienced" :
-     stepScore / stepBehaviorCount >= 1.5 ? "Qualified" : "Learner") : "Not Assessed";
+  // Calculate cumulative thresholds for this step
+  let stepLevel1Count = 0, stepLevel2Count = 0, stepLevel3Count = 0, stepLevel4Count = 0;
+  step.substeps.forEach(substep => {
+    substep.behaviors.forEach(behavior => {
+      if (behavior.proficiencyLevel === 1) stepLevel1Count++;
+      else if (behavior.proficiencyLevel === 2) stepLevel2Count++;
+      else if (behavior.proficiencyLevel === 3) stepLevel3Count++;
+      else if (behavior.proficiencyLevel === 4) stepLevel4Count++;
+    });
+  });
 
-  const stepLevelClass = stepBehaviorCount > 0 ?
-    (stepScore / stepBehaviorCount >= 3.5 ? "bg-purple-100 text-purple-700" :
-     stepScore / stepBehaviorCount >= 2.5 ? "bg-blue-100 text-blue-700" :
-     stepScore / stepBehaviorCount >= 1.5 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700") : "bg-gray-100 text-gray-700";
+  const stepLevel1Max = stepLevel1Count * 1;
+  const stepLevel2Max = stepLevel1Max + (stepLevel2Count * 2);
+  const stepLevel3Max = stepLevel2Max + (stepLevel3Count * 3);
+
+  const stepLevel = stepScore === 0 ? "Not Assessed" :
+    stepScore > stepLevel3Max ? "Master" :
+    stepScore > stepLevel2Max ? "Experienced" :
+    stepScore > stepLevel1Max ? "Qualified" : "Learner";
+
+  const stepLevelClass = stepScore === 0 ? "bg-gray-100 text-gray-700" :
+    stepScore > stepLevel3Max ? "bg-purple-100 text-purple-700" :
+    stepScore > stepLevel2Max ? "bg-blue-100 text-blue-700" :
+    stepScore > stepLevel1Max ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700";
 
   const getBehaviorsByLevel = (behaviors: Behavior[], level: number) => {
     return behaviors.filter(behavior => behavior.proficiencyLevel === level);
