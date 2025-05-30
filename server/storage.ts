@@ -366,29 +366,422 @@ export class MemStorage implements IStorage {
       order: 1,
     });
 
-    // Add placeholder steps 3-6 for now (you can add more behaviors later)
-    await this.createStep({
-      title: "Step 3",
-      description: "Step 3 behaviors",
+    // Add Summary & Hinge substep to Step 2 (Opening)
+    const substep2_3 = await this.createSubstep({
+      stepId: step2.id,
+      title: "Summary & hinge",
       order: 3,
     });
 
-    await this.createStep({
-      title: "Step 4", 
-      description: "Step 4 behaviors",
+    await this.createBehavior({
+      substepId: substep2_3.id,
+      description: "Summarises by recapping the last agenda",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep2_3.id,
+      description: "Creates interest with a catchy hook/hinge",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep2_3.id,
+      description: "Positions the purpose of the visit and the benefits for the customer to create interest through the opening statement",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep2_3.id,
+      description: "Raises an issue\\challenge which is relevant for the customer (and for which we have a solution), the potential impact on him\\her and the needs that it creates",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    // Add Agenda Introduction substep to Step 2 (Opening)
+    const substep2_4 = await this.createSubstep({
+      stepId: step2.id,
+      title: "Agenda introduction",
       order: 4,
     });
 
-    await this.createStep({
-      title: "Step 5",
-      description: "Step 5 behaviors", 
+    await this.createBehavior({
+      substepId: substep2_4.id,
+      description: "Takes cues from the customer for timing and checks it",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep2_4.id,
+      description: "Checks the relevance of the agenda and asks the customers for input to the meeting agenda",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep2_4.id,
+      description: "Builds credibility and provides content",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep2_4.id,
+      description: "Positions the wish to ask questions to help focus on the client's needs",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    // Step 3: Need Dialog
+    const step3 = await this.createStep({
+      title: "Need Dialog",
+      description: "Questioning and active listening behaviors",
+      order: 3,
+    });
+
+    const substep3_1 = await this.createSubstep({
+      stepId: step3.id,
+      title: "Questioning",
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_1.id,
+      description: "Asks questions to gather information about current situation (HCP's potential)",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_1.id,
+      description: "Explores HCP's satisfaction with the current situation (what is going well, what should change)",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+    await this.createBehavior({
+      substepId: substep3_1.id,
+      description: "Asks questions about the level of commitment",
+      proficiencyLevel: 2,
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_1.id,
+      description: "Uses questioning techniques (prefacing/drilling down/trading) to create a need dialogue",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_1.id,
+      description: "Uses a combination of different question types and techniques to appropriately expand the dialogue, uncovers and understands the hidden needs",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    const substep3_2 = await this.createSubstep({
+      stepId: step3.id,
+      title: "Active listening",
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_2.id,
+      description: "Listens attentively",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_2.id,
+      description: "Uses verbal and non-verbal reinforcement",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_2.id,
+      description: "Paces questions effectively (keeps silent after asking a question, avoids multiple-choice questions, asks one question at time); uses the answer as a hinge",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep3_2.id,
+      description: "Listens to the needs in detail, to understand, not to respond (effective listening)",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    // Step 4: Solution Dialog
+    const step4 = await this.createStep({
+      title: "Solution Dialog",
+      description: "Structuring, positioning, and checking solution behaviors",
+      order: 4,
+    });
+
+    const substep4_1 = await this.createSubstep({
+      stepId: step4.id,
+      title: "Structuring",
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_1.id,
+      description: "Provides an overview of what is about to be said",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_1.id,
+      description: "Introduces the solution without giving details or checking",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_1.id,
+      description: "Shares a relevant key message for the solution",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_1.id,
+      description: "Delivers a well-thought-out individually tailored message and a solution for the specific HCP's challenge",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    const substep4_2 = await this.createSubstep({
+      stepId: step4.id,
+      title: "Positioning solution",
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Links to needs using features and benefits",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Offers a solution as a reaction to the prior conversation",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Uses promotional materials in line with the brand strategy",
+      proficiencyLevel: 2,
+      order: 2,
+    });
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Supports the presentation by using iPAD content",
+      proficiencyLevel: 2,
+      order: 3,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Offers a solution by including value adding features and benefits (added value could be expertise, service, network etc)",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Uses visual aids appropriately and selectively",
+      proficiencyLevel: 3,
+      order: 2,
+    });
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Easily navigates the iPAD content",
+      proficiencyLevel: 3,
+      order: 3,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_2.id,
+      description: "Delivers a win-win solution that makes the HCP view them as a trusted advisor",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    const substep4_3 = await this.createSubstep({
+      stepId: step4.id,
+      title: "Checking",
+      order: 3,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_3.id,
+      description: "Asks a basic checking question only once",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_3.id,
+      description: "Asks basic checking questions throughout the dialogue: how does it sound? What do you think about it?",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_3.id,
+      description: "Summarises client benefits",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+    await this.createBehavior({
+      substepId: substep4_3.id,
+      description: "Actively uses silence",
+      proficiencyLevel: 3,
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep4_3.id,
+      description: "Concisely summarises and checks for agreement",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    // Step 5: Objection Resolution (no substeps)
+    const step5 = await this.createStep({
+      title: "Objection Resolution",
+      description: "Handling objections and maintaining dialogue",
       order: 5,
     });
 
-    await this.createStep({
-      title: "Step 6",
-      description: "Step 6 behaviors",
+    const substep5_1 = await this.createSubstep({
+      stepId: step5.id,
+      title: "Objection handling",
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep5_1.id,
+      description: "Knows the objection handling model and partly uses it",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep5_1.id,
+      description: "Acknowledges to reduce any customer negativity",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+    await this.createBehavior({
+      substepId: substep5_1.id,
+      description: "Handles common objections",
+      proficiencyLevel: 2,
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep5_1.id,
+      description: "Has prepared for multiple possible objections and uses the objection handling model consistently",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+    await this.createBehavior({
+      substepId: substep5_1.id,
+      description: "Probes to identify the underlying need",
+      proficiencyLevel: 3,
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep5_1.id,
+      description: "Remains calm even with difficult objections; Keeps the dialogue interactive, even if the objection is not resolved; Anticipates most objections; If an objection was not solved, guarantees to give the answer to the client in the next call",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    // Step 6: Asking for Commitment
+    const step6 = await this.createStep({
+      title: "Asking for Commitment",
+      description: "Summarizing and securing commitment behaviors",
       order: 6,
+    });
+
+    const substep6_1 = await this.createSubstep({
+      stepId: step6.id,
+      title: "Summarizing",
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_1.id,
+      description: "Summarises the focus product information",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_1.id,
+      description: "Positions the closing summary by reinforcing key benefits and value",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_1.id,
+      description: "Acknowledges the value of the discussion",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_1.id,
+      description: "Links the close to the adapted call objective; Summary takes into account the individualized value proposition",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    const substep6_2 = await this.createSubstep({
+      stepId: step6.id,
+      title: "Asking for commitment",
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_2.id,
+      description: "Is aware of buying signals (both verbal & non verbal), which indicate that it is time to 'ask for commitment'",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_2.id,
+      description: "Does a final check for feedback on what has been positioned",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_2.id,
+      description: "Gets the commitment on the concrete next steps (for specific patients)",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_2.id,
+      description: "Has convinced the HCP with our solution and has agreed on the concrete next steps (by asking implementation questions: who, what, where, when); The HCP commits to try the solution with a number of patients",
+      proficiencyLevel: 4,
+      order: 1,
     });
   }
 }
