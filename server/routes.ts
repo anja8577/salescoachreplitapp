@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertAssessmentSchema, insertAssessmentScoreSchema } from "@shared/schema";
+import { insertUserSchema, insertAssessmentSchema, insertAssessmentScoreSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize default data
@@ -50,6 +50,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(score);
     } catch (error) {
       res.status(500).json({ message: "Failed to update assessment score" });
+    }
+  });
+
+  // User routes
+  app.get("/api/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/users", async (req, res) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(validatedData);
+      res.json(user);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid user data" });
+    }
+  });
+
+  // Get assessment with user details
+  app.get("/api/assessments/:id", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const assessment = await storage.getAssessmentWithUser(assessmentId);
+      if (!assessment) {
+        return res.status(404).json({ message: "Assessment not found" });
+      }
+      res.json(assessment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch assessment" });
     }
   });
 

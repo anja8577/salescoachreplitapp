@@ -76,6 +76,26 @@ export class MemStorage implements IStorage {
     return newBehavior;
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const newUser: User = { 
+      id: this.nextId++,
+      fullName: user.fullName,
+      email: user.email,
+      team: user.team || null,
+      createdAt: new Date() 
+    };
+    this.users.set(newUser.id, newUser);
+    return newUser;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
   async createAssessment(assessment: InsertAssessment): Promise<Assessment> {
     const newAssessment: Assessment = { 
       ...assessment, 
@@ -88,6 +108,16 @@ export class MemStorage implements IStorage {
 
   async getAssessment(id: number): Promise<Assessment | undefined> {
     return this.assessments.get(id);
+  }
+
+  async getAssessmentWithUser(id: number): Promise<(Assessment & { user: User }) | undefined> {
+    const assessment = this.assessments.get(id);
+    if (!assessment) return undefined;
+    
+    const user = this.users.get(assessment.userId);
+    if (!user) return undefined;
+    
+    return { ...assessment, user };
   }
 
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
