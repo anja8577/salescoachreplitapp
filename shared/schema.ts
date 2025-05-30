@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -25,9 +25,18 @@ export const behaviors = pgTable("behaviors", {
   order: integer("order").notNull(),
 });
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  fullName: varchar("full_name").notNull(),
+  email: varchar("email").notNull().unique(),
+  team: varchar("team"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const assessments = pgTable("assessments", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -58,7 +67,15 @@ export const behaviorsRelations = relations(behaviors, ({ one, many }) => ({
   scores: many(assessmentScores),
 }));
 
-export const assessmentsRelations = relations(assessments, ({ many }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
+  assessments: many(assessments),
+}));
+
+export const assessmentsRelations = relations(assessments, ({ one, many }) => ({
+  user: one(users, {
+    fields: [assessments.userId],
+    references: [users.id],
+  }),
   scores: many(assessmentScores),
 }));
 
@@ -85,6 +102,11 @@ export const insertBehaviorSchema = createInsertSchema(behaviors).omit({
   id: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertAssessmentSchema = createInsertSchema(assessments).omit({
   id: true,
   createdAt: true,
@@ -97,11 +119,13 @@ export const insertAssessmentScoreSchema = createInsertSchema(assessmentScores).
 export type Step = typeof steps.$inferSelect;
 export type Substep = typeof substeps.$inferSelect;
 export type Behavior = typeof behaviors.$inferSelect;
+export type User = typeof users.$inferSelect;
 export type Assessment = typeof assessments.$inferSelect;
 export type AssessmentScore = typeof assessmentScores.$inferSelect;
 
 export type InsertStep = z.infer<typeof insertStepSchema>;
 export type InsertSubstep = z.infer<typeof insertSubstepSchema>;
 export type InsertBehavior = z.infer<typeof insertBehaviorSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type InsertAssessmentScore = z.infer<typeof insertAssessmentScoreSchema>;

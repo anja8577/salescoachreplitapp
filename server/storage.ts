@@ -1,6 +1,6 @@
 import { 
-  type Step, type Substep, type Behavior, type Assessment, type AssessmentScore,
-  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertAssessment, type InsertAssessmentScore
+  type Step, type Substep, type Behavior, type User, type Assessment, type AssessmentScore,
+  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertUser, type InsertAssessment, type InsertAssessmentScore
 } from "@shared/schema";
 
 export interface IStorage {
@@ -14,9 +14,15 @@ export interface IStorage {
   // Behaviors
   createBehavior(behavior: InsertBehavior): Promise<Behavior>;
   
+  // Users
+  getAllUsers(): Promise<User[]>;
+  createUser(user: InsertUser): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  
   // Assessments
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
   getAssessment(id: number): Promise<Assessment | undefined>;
+  getAssessmentWithUser(id: number): Promise<(Assessment & { user: User }) | undefined>;
   
   // Assessment Scores
   getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]>;
@@ -30,6 +36,7 @@ export class MemStorage implements IStorage {
   private steps: Map<number, Step> = new Map();
   private substeps: Map<number, Substep> = new Map();
   private behaviors: Map<number, Behavior> = new Map();
+  private users: Map<number, User> = new Map();
   private assessments: Map<number, Assessment> = new Map();
   private assessmentScores: Map<string, AssessmentScore> = new Map();
   private nextId = 1;
