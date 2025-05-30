@@ -26,13 +26,13 @@ export function calculateSubstepProficiency(substep: Substep & { behaviors: Beha
   const averageLevel = score / checkedCount;
   
   if (averageLevel >= 3.5) {
-    return { level: "Expert", className: "bg-green-100 text-green-700" };
+    return { level: "Master", className: "bg-purple-100 text-purple-700" };
   } else if (averageLevel >= 2.5) {
-    return { level: "Proficient", className: "bg-blue-100 text-blue-700" };
+    return { level: "Experienced", className: "bg-blue-100 text-blue-700" };
   } else if (averageLevel >= 1.5) {
-    return { level: "Developing", className: "bg-yellow-100 text-yellow-700" };
+    return { level: "Qualified", className: "bg-green-100 text-green-700" };
   } else {
-    return { level: "Beginner", className: "bg-red-100 text-red-700" };
+    return { level: "Learner", className: "bg-orange-100 text-orange-700" };
   }
 }
 
@@ -44,12 +44,12 @@ export function calculateOverallProficiency(totalScore: number, totalBehaviors: 
   const averageLevel = totalScore / totalBehaviors;
   
   if (averageLevel >= 3.5) {
-    return { level: "Expert", className: "bg-green-100 text-green-700" };
+    return { level: "Master", className: "bg-purple-100 text-purple-700" };
   } else if (averageLevel >= 2.5) {
-    return { level: "Proficient", className: "bg-blue-100 text-blue-700" };
+    return { level: "Experienced", className: "bg-blue-100 text-blue-700" };
   } else if (averageLevel >= 1.5) {
-    return { level: "Developing", className: "bg-yellow-100 text-yellow-700" };
+    return { level: "Qualified", className: "bg-green-100 text-green-700" };
   } else {
-    return { level: "Beginner", className: "bg-red-100 text-red-700" };
+    return { level: "Learner", className: "bg-orange-100 text-orange-700" };
   }
 }

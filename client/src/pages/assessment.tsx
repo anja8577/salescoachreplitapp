@@ -85,7 +85,7 @@ export default function Assessment() {
       
       // Only update if the sets are actually different
       if (newCheckedSet.size !== checkedBehaviors.size || 
-          ![...newCheckedSet].every(id => checkedBehaviors.has(id))) {
+          !Array.from(newCheckedSet).every(id => checkedBehaviors.has(id))) {
         setCheckedBehaviors(newCheckedSet);
       }
     }

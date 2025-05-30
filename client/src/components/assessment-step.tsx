@@ -27,14 +27,14 @@ export default function AssessmentStep({ step, checkedBehaviors, onBehaviorCheck
   }, 0);
 
   const stepLevel = stepBehaviorCount > 0 ? 
-    (stepScore / stepBehaviorCount >= 3.5 ? "Expert" :
-     stepScore / stepBehaviorCount >= 2.5 ? "Proficient" :
-     stepScore / stepBehaviorCount >= 1.5 ? "Developing" : "Beginner") : "Not Assessed";
+    (stepScore / stepBehaviorCount >= 3.5 ? "Master" :
+     stepScore / stepBehaviorCount >= 2.5 ? "Experienced" :
+     stepScore / stepBehaviorCount >= 1.5 ? "Qualified" : "Learner") : "Not Assessed";
 
   const stepLevelClass = stepBehaviorCount > 0 ?
-    (stepScore / stepBehaviorCount >= 3.5 ? "bg-green-100 text-green-700" :
+    (stepScore / stepBehaviorCount >= 3.5 ? "bg-purple-100 text-purple-700" :
      stepScore / stepBehaviorCount >= 2.5 ? "bg-blue-100 text-blue-700" :
-     stepScore / stepBehaviorCount >= 1.5 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700") : "bg-gray-100 text-gray-700";
+     stepScore / stepBehaviorCount >= 1.5 ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700") : "bg-gray-100 text-gray-700";
 
   const getBehaviorsByLevel = (behaviors: Behavior[], level: number) => {
     return behaviors.filter(behavior => behavior.proficiencyLevel === level);
@@ -42,10 +42,10 @@ export default function AssessmentStep({ step, checkedBehaviors, onBehaviorCheck
 
   const getLevelConfig = (level: number) => {
     const configs = {
-      1: { label: "Level 1", className: "bg-red-100 text-red-700" },
-      2: { label: "Level 2", className: "bg-yellow-100 text-yellow-700" },
-      3: { label: "Level 3", className: "bg-blue-100 text-blue-700" },
-      4: { label: "Level 4", className: "bg-green-100 text-green-700" },
+      1: { label: "Learner", className: "bg-orange-100 text-orange-700" },
+      2: { label: "Qualified", className: "bg-green-100 text-green-700" },
+      3: { label: "Experienced", className: "bg-blue-100 text-blue-700" },
+      4: { label: "Master", className: "bg-purple-100 text-purple-700" },
     };
     return configs[level as keyof typeof configs];
   };

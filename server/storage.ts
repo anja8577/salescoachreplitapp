@@ -783,6 +783,149 @@ export class MemStorage implements IStorage {
       proficiencyLevel: 4,
       order: 1,
     });
+
+    const substep6_3 = await this.createSubstep({
+      stepId: step6.id,
+      title: "Maintaining rapport",
+      order: 3,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_3.id,
+      description: "Continues with a positive atmosphere",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_3.id,
+      description: "Demonstrates appreciation for the client's business; Personalises the Close; Is genuine",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_3.id,
+      description: "Creates a favourable last impression",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep6_3.id,
+      description: "Summarises feelings and attitudes as well as facts and arguments",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    // Step 7: Follow up
+    const step7 = await this.createStep({
+      title: "Follow up",
+      description: "Post-call analysis and planning behaviors",
+      order: 7,
+    });
+
+    const substep7_1 = await this.createSubstep({
+      stepId: step7.id,
+      title: "Analyzing results",
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_1.id,
+      description: "Analyses the call results (was the call objective reached?) under manager's guidance",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_1.id,
+      description: "Self-critically analyses the call results (what went well?, what should be improved?); Execute on agreements (all action steps)",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_1.id,
+      description: "Adjusts/Sets a SMART call objective for the next call",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_1.id,
+      description: "Develops a plan to improve/enhance the outcome of the visits",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    const substep7_2 = await this.createSubstep({
+      stepId: step7.id,
+      title: "Self-analyzing",
+      order: 2,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_2.id,
+      description: "Analyses the call for strong points and areas for improvement under manager's guidance",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_2.id,
+      description: "Self-critically analyses the call for strong points and areas for improvement",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_2.id,
+      description: "Gives suggestions for improvement in selling skills",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_2.id,
+      description: "Develops a plan to improve selling skills",
+      proficiencyLevel: 4,
+      order: 1,
+    });
+
+    const substep7_3 = await this.createSubstep({
+      stepId: step7.id,
+      title: "Reporting",
+      order: 3,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_3.id,
+      description: "Makes notes to record the most important information (during or after a call), uses CRM",
+      proficiencyLevel: 1,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_3.id,
+      description: "Keeps a record of all commitments in one place",
+      proficiencyLevel: 2,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_3.id,
+      description: "Keeps a record of all commitments in one place and checks it on a regular basis",
+      proficiencyLevel: 3,
+      order: 1,
+    });
+
+    await this.createBehavior({
+      substepId: substep7_3.id,
+      description: "Uses the call notes to update planning documentation and customer database",
+      proficiencyLevel: 4,
+      order: 1,
+    });
   }
 }
 
