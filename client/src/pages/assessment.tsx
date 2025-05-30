@@ -79,8 +79,16 @@ export default function Assessment() {
 
   // Update checked behaviors when scores change
   useEffect(() => {
-    const checkedIds = scores.filter(score => score.checked).map(score => score.behaviorId);
-    setCheckedBehaviors(new Set(checkedIds));
+    if (scores.length > 0) {
+      const checkedIds = scores.filter(score => score.checked).map(score => score.behaviorId);
+      const newCheckedSet = new Set(checkedIds);
+      
+      // Only update if the sets are actually different
+      if (newCheckedSet.size !== checkedBehaviors.size || 
+          ![...newCheckedSet].every(id => checkedBehaviors.has(id))) {
+        setCheckedBehaviors(newCheckedSet);
+      }
+    }
   }, [scores]);
 
   // Calculate total score
