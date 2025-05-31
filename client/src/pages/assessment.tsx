@@ -37,7 +37,7 @@ export default function Assessment() {
   // Create assessment mutation
   const createAssessmentMutation = useMutation({
     mutationFn: async ({ title, userId }: { title: string; userId: number }) => {
-      return await apiRequest("/api/assessments", "POST", { title, userId });
+      return await apiRequest("POST", "/api/assessments", { title, userId });
     },
     onSuccess: (assessment: AssessmentType) => {
       setCurrentAssessment(assessment);
