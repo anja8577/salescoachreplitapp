@@ -77,7 +77,7 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance vs Benchmark (Level 3)</h2>
-      <div className="h-96">
+      <div className="h-96" data-testid="spider-graph">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={data}>
             <PolarGrid />
