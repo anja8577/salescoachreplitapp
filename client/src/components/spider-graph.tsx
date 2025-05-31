@@ -62,17 +62,12 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
   };
 
   const data = steps.map(step => {
-    const actualScore = calculateStepScore(step);
-    const targetScore = calculateTargetScore(step);
-    const behaviorCount = step.substeps.reduce((total, substep) => total + substep.behaviors.length, 0);
+    const actualLevel = calculateStepLevel(step);
     
     return {
       step: step.title,
-      actual: actualScore,
-      target: targetScore,
-      // Calculate average proficiency level (0-4 scale)
-      averageActual: behaviorCount > 0 ? actualScore / behaviorCount : 0,
-      benchmark: 3, // Level 3 benchmark for all steps
+      actual: actualLevel,
+      target: 3, // Target is always Level 3 (Experienced)
       maxLevel: 4,
     };
   });
