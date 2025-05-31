@@ -245,6 +245,7 @@ export default function Assessment() {
             totalScore={totalScore}
             user={currentUser}
             assessmentTitle={currentAssessment.title}
+            stepScores={stepScores}
           />
         )}
       </div>
