@@ -41,12 +41,19 @@ export default function Assessment() {
   // Create assessment mutation
   const createAssessmentMutation = useMutation<AssessmentType, Error, { title: string; userId: number; assesseeName: string }>({
     mutationFn: async ({ title, userId, assesseeName }) => {
+      console.log("Creating assessment with:", { title, userId, assesseeName });
       const res = await apiRequest("POST", "/api/assessments", { title, userId, assesseeName });
       return await res.json();
     },
     onSuccess: (assessment: AssessmentType) => {
+      console.log("Assessment created successfully:", assessment);
       setCurrentAssessment(assessment);
+      setShowUserModal(false);
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
+    },
+    onError: (error) => {
+      console.error("Assessment creation failed:", error);
+      alert(`Failed to create assessment: ${error.message}`);
     },
   });
 
@@ -163,6 +170,7 @@ export default function Assessment() {
   }
 
   const handleUserSelected = async (userId: number) => {
+    console.log("User selected:", userId);
     try {
       // Reset current state for new assessment
       setCurrentAssessment(null);
@@ -172,24 +180,30 @@ export default function Assessment() {
       // Prompt for assessee name
       const assesseeNameInput = prompt("Enter the name of the person being assessed:");
       if (!assesseeNameInput) {
+        console.log("User cancelled assessment creation");
         return; // User cancelled
       }
+      console.log("Assessee name entered:", assesseeNameInput);
       setAssesseeName(assesseeNameInput);
       
       // Fetch user details from API
+      console.log("Fetching user details for ID:", userId);
       const response = await fetch(`/api/users/${userId}`);
       if (response.ok) {
         const user = await response.json();
+        console.log("User details fetched:", user);
         setCurrentUser(user);
       } else {
+        console.log("Failed to fetch user details, using fallback");
         // Fallback - set basic user info
         setCurrentUser({ id: userId, fullName: "User", email: "", team: null, createdAt: new Date() } as User);
       }
       
       const title = `Assessment ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+      console.log("About to create assessment with title:", title);
       createAssessmentMutation.mutate({ title, userId, assesseeName: assesseeNameInput });
     } catch (error) {
-      console.error("Error fetching user:", error);
+      console.error("Error in handleUserSelected:", error);
       setCurrentUser({ id: userId, fullName: "User", email: "", team: null, createdAt: new Date() } as User);
       const title = `Assessment ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
       const assesseeNameInput = prompt("Enter the name of the person being assessed:");
