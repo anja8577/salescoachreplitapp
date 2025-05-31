@@ -242,7 +242,7 @@ export default function Profile() {
               <CardContent>
                 <div className="mb-4">
                   <Label htmlFor="teamFilter">Filter by Team</Label>
-                  <Select value={teamFilter || ""} onValueChange={(value) => setTeamFilter(value || null)}>
+                  <Select value={teamFilter || "all"} onValueChange={(value) => setTeamFilter(value === "all" ? null : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="All teams" />
                     </SelectTrigger>
@@ -262,7 +262,7 @@ export default function Profile() {
                   <div className="text-center py-8 text-gray-500">No users found</div>
                 ) : (
                   <div className="space-y-4">
-                    {users.map((user) => (
+                    {filteredUsers.map((user) => (
                       <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                         {editingUser?.id === user.id ? (
                           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 mr-4">
@@ -371,10 +371,6 @@ export default function Profile() {
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="text-lg font-semibold">{assessment.title}</h3>
-                              <div className="flex gap-4 text-sm text-gray-600 mt-2">
-                                <span>From: {new Date(assessment.createdAt || '').toLocaleDateString()}</span>
-                                <span>{new Date(assessment.createdAt || '').toLocaleTimeString()}</span>
-                              </div>
                             </div>
                             <Button 
                               size="sm" 
@@ -390,22 +386,35 @@ export default function Profile() {
                             <div className="flex items-center gap-2 mb-2">
                               <span className="font-medium">Overall Score:</span>
                               <div className="flex items-center gap-1">
-                                <span className="text-lg font-bold text-blue-600">Level {overallScore}</span>
+                                <span className={`text-lg font-bold ${
+                                  overallScore === 1 ? 'text-orange-500' :
+                                  overallScore === 2 ? 'text-yellow-400' :
+                                  overallScore === 3 ? 'text-green-500' :
+                                  'text-blue-500'
+                                }`}>Level {overallScore}</span>
                                 <span className="text-gray-500">/ 4</span>
                               </div>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {stepScores.map((score, index) => (
-                              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span className="text-sm font-medium">{stepNames[index]}</span>
-                                <div className="flex items-center gap-1">
-                                  <span className="font-semibold text-blue-600">L{score}</span>
-                                  <span className="text-gray-500 text-sm">/4</span>
-                                </div>
-                              </div>
-                            ))}
+                          <div className="text-sm">
+                            <div className="flex flex-wrap gap-2">
+                              {stepScores.map((score, index) => {
+                                const levelColor = 
+                                  score === 1 ? 'text-orange-500' :
+                                  score === 2 ? 'text-yellow-400' :
+                                  score === 3 ? 'text-green-500' :
+                                  'text-blue-500';
+                                
+                                return (
+                                  <span key={index} className="flex items-center">
+                                    <span className="font-medium">{stepNames[index]}</span>
+                                    <span className={`font-bold ml-1 ${levelColor}`}>L{score}</span>
+                                    {index < stepScores.length - 1 && <span className="ml-2 text-gray-400">-</span>}
+                                  </span>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
                       );
