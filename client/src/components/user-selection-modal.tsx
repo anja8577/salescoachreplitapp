@@ -30,7 +30,7 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
     enabled: open,
   });
@@ -46,13 +46,7 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserForm) => {
-      return await apiRequest("/api/users", {
-        method: "POST",
-        body: JSON.stringify(userData),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      return await apiRequest("/api/users", "POST", userData);
     },
     onSuccess: (newUser: User) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
@@ -160,7 +154,7 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
                     <FormItem>
                       <FormLabel>Team</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter team (optional)" {...field} />
+                        <Input placeholder="Enter team (optional)" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

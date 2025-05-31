@@ -2,10 +2,14 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import AssessmentHeader from "@/components/assessment-header";
-import ProgressOverview from "@/components/progress-overview";
 import AssessmentStep from "@/components/assessment-step";
 import ScoringDashboard from "@/components/scoring-dashboard";
-import type { Step, Substep, Behavior, Assessment as AssessmentType, AssessmentScore } from "@shared/schema";
+import SpiderGraph from "@/components/spider-graph";
+import ExportResults from "@/components/export-results";
+import UserSelectionModal from "@/components/user-selection-modal";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import type { Step, Substep, Behavior, User, Assessment as AssessmentType, AssessmentScore } from "@shared/schema";
 
 type StepWithSubsteps = Step & {
   substeps: (Substep & {
@@ -15,6 +19,8 @@ type StepWithSubsteps = Step & {
 
 export default function Assessment() {
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentType | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [showUserModal, setShowUserModal] = useState(false);
   const [checkedBehaviors, setCheckedBehaviors] = useState<Set<number>>(new Set());
 
   // Fetch all steps with substeps and behaviors
