@@ -146,6 +146,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create assessment
+  app.post("/api/assessments", async (req, res) => {
+    try {
+      const { title, userId, assesseeName } = req.body;
+      
+      if (!title || !userId) {
+        return res.status(400).json({ message: "Title and userId are required" });
+      }
+
+      const assessment = await storage.createAssessment({
+        title,
+        userId,
+        assesseeName: assesseeName || "Unknown"
+      });
+      
+      res.json(assessment);
+    } catch (error) {
+      console.error("Error creating assessment:", error);
+      res.status(500).json({ message: "Failed to create assessment" });
+    }
+  });
+
   // Get all assessments
   app.get("/api/assessments", async (req, res) => {
     try {
@@ -154,6 +176,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching assessments:", error);
       res.status(500).json({ message: "Failed to fetch assessments" });
+    }
+  });
+
+  // Get assessment by ID
+  app.get("/api/assessments/:id", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const assessment = await storage.getAssessment(assessmentId);
+      
+      if (!assessment) {
+        return res.status(404).json({ message: "Assessment not found" });
+      }
+      
+      res.json(assessment);
+    } catch (error) {
+      console.error("Error fetching assessment:", error);
+      res.status(500).json({ message: "Failed to fetch assessment" });
     }
   });
 
