@@ -13,8 +13,16 @@ interface SpiderGraphProps {
   stepScores?: { [stepId: number]: number };
 }
 
-export default function SpiderGraph({ steps, checkedBehaviors }: SpiderGraphProps) {
+export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }: SpiderGraphProps) {
   const calculateStepScore = (step: StepWithSubsteps) => {
+    // Use manual step score if set, otherwise calculate from behaviors
+    const manualScore = stepScores[step.id];
+    if (manualScore && manualScore > 0) {
+      // Convert manual level (1-4) to points similar to behavior scoring
+      const totalBehaviors = step.substeps.reduce((total, substep) => total + substep.behaviors.length, 0);
+      return manualScore * Math.ceil(totalBehaviors / 4);
+    }
+    
     return step.substeps.reduce((total, substep) => {
       return total + substep.behaviors.reduce((substepTotal, behavior) => {
         if (checkedBehaviors.has(behavior.id)) {

@@ -202,7 +202,7 @@ export default function Assessment() {
         </div>
         
         {/* Spider Graph */}
-        <SpiderGraph steps={steps} checkedBehaviors={checkedBehaviors} />
+        <SpiderGraph steps={steps} checkedBehaviors={checkedBehaviors} stepScores={stepScores} />
         
         {/* Scoring Dashboard */}
         <ScoringDashboard 
