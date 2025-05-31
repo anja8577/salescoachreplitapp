@@ -34,20 +34,22 @@ export default function SpiderGraph({ steps, checkedBehaviors }: SpiderGraphProp
   const data = steps.map(step => {
     const actualScore = calculateStepScore(step);
     const targetScore = calculateTargetScore(step);
+    const behaviorCount = step.substeps.reduce((total, substep) => total + substep.behaviors.length, 0);
     
     return {
       step: step.title,
       actual: actualScore,
       target: targetScore,
-      // Convert to percentage for better visualization
-      actualPercent: targetScore > 0 ? Math.round((actualScore / targetScore) * 100) : 0,
-      targetPercent: 100,
+      // Calculate average proficiency level (0-4 scale)
+      averageActual: behaviorCount > 0 ? actualScore / behaviorCount : 0,
+      benchmark: 3, // Level 3 benchmark for all steps
+      maxLevel: 4,
     };
   });
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance vs Target (Level 3)</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance vs Benchmark (Level 3)</h2>
       <div className="h-96">
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={data}>
@@ -59,22 +61,22 @@ export default function SpiderGraph({ steps, checkedBehaviors }: SpiderGraphProp
             />
             <PolarRadiusAxis 
               angle={90} 
-              domain={[0, 100]}
+              domain={[0, 4]}
               tick={{ fontSize: 10 }}
-              tickCount={6}
+              tickCount={5}
             />
             <Radar
-              name="Target (Level 3)"
-              dataKey="targetPercent"
-              stroke="#94a3b8"
-              fill="#94a3b8"
+              name="Benchmark (Level 3)"
+              dataKey="benchmark"
+              stroke="#87ceeb"
+              fill="#87ceeb"
               fillOpacity={0.1}
               strokeWidth={2}
               strokeDasharray="5 5"
             />
             <Radar
               name="Actual Performance"
-              dataKey="actualPercent"
+              dataKey="averageActual"
               stroke="#3b82f6"
               fill="#3b82f6"
               fillOpacity={0.3}
@@ -89,7 +91,7 @@ export default function SpiderGraph({ steps, checkedBehaviors }: SpiderGraphProp
         {data.map((item, index) => (
           <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
             <span className="font-medium">{item.step}:</span>
-            <span className="text-blue-600">{item.actual}/{item.target} pts ({item.actualPercent}%)</span>
+            <span className="text-blue-600">Avg: {item.averageActual.toFixed(1)}/4 (Benchmark: 3.0)</span>
           </div>
         ))}
       </div>
