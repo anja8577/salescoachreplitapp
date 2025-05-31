@@ -36,9 +36,8 @@ export default function Assessment() {
 
   // Create assessment mutation
   const createAssessmentMutation = useMutation({
-    mutationFn: async (title: string) => {
-      const response = await apiRequest("POST", "/api/assessments", { title });
-      return response.json();
+    mutationFn: async ({ title, userId }: { title: string; userId: number }) => {
+      return await apiRequest("/api/assessments", "POST", { title, userId });
     },
     onSuccess: (assessment: AssessmentType) => {
       setCurrentAssessment(assessment);
@@ -119,32 +118,52 @@ export default function Assessment() {
     );
   }
 
+  const handleUserSelected = async (userId: number) => {
+    // Fetch user details (simplified for now)
+    setCurrentUser({ id: userId, fullName: "", email: "", team: null, createdAt: new Date() } as User);
+    const title = `Assessment ${new Date().toLocaleDateString()}`;
+    createAssessmentMutation.mutate({ title, userId });
+  };
+
+  // Show user selection if no user is selected
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">SSA Behavior Assessment</h1>
+          <p className="text-gray-600 mb-6">Select or create a user to begin the assessment</p>
+          <Button onClick={() => setShowUserModal(true)} className="w-full">
+            <Plus className="mr-2" size={16} />
+            Start Assessment
+          </Button>
+        </div>
+        
+        <UserSelectionModal 
+          open={showUserModal}
+          onClose={() => setShowUserModal(false)}
+          onUserSelected={handleUserSelected}
+        />
+      </div>
+    );
+  }
+
   if (!currentAssessment) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">SSA Behavior Assessment</h1>
-          <p className="text-gray-600 mb-6">Start a new assessment to begin scoring behaviors</p>
-          <button
-            onClick={handleStartAssessment}
-            disabled={createAssessmentMutation.isPending}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {createAssessmentMutation.isPending ? "Creating..." : "Start Assessment"}
-          </button>
+          <div className="text-lg text-gray-600">Creating assessment...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-inter">
+    <div className="min-h-screen bg-gray-50">
       <AssessmentHeader totalScore={totalScore} totalBehaviors={totalBehaviors} steps={steps} />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ProgressOverview steps={steps} checkedBehaviors={checkedBehaviors} />
-        
-        <div className="space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+        {/* Assessment Steps - Mobile Optimized */}
+        <div className="space-y-4">
           {steps.map((step) => (
             <AssessmentStep
               key={step.id}
@@ -154,13 +173,28 @@ export default function Assessment() {
             />
           ))}
         </div>
-
+        
+        {/* Spider Graph */}
+        <SpiderGraph steps={steps} checkedBehaviors={checkedBehaviors} />
+        
+        {/* Scoring Dashboard */}
         <ScoringDashboard 
           totalScore={totalScore} 
           totalBehaviors={totalBehaviors}
           steps={steps}
           checkedBehaviors={checkedBehaviors}
         />
+        
+        {/* Export Results */}
+        {currentUser && currentAssessment && (
+          <ExportResults
+            steps={steps}
+            checkedBehaviors={checkedBehaviors}
+            totalScore={totalScore}
+            user={currentUser}
+            assessmentTitle={currentAssessment.title}
+          />
+        )}
       </div>
     </div>
   );
