@@ -39,9 +39,9 @@ export default function Assessment() {
   });
 
   // Create assessment mutation
-  const createAssessmentMutation = useMutation<AssessmentType, Error, { title: string; userId: number }>({
-    mutationFn: async ({ title, userId }) => {
-      const res = await apiRequest("POST", "/api/assessments", { title, userId });
+  const createAssessmentMutation = useMutation<AssessmentType, Error, { title: string; userId: number; assesseeName: string }>({
+    mutationFn: async ({ title, userId, assesseeName }) => {
+      const res = await apiRequest("POST", "/api/assessments", { title, userId, assesseeName });
       return await res.json();
     },
     onSuccess: (assessment: AssessmentType) => {
@@ -169,6 +169,13 @@ export default function Assessment() {
       setCheckedBehaviors(new Set());
       setStepScores({});
       
+      // Prompt for assessee name
+      const assesseeNameInput = prompt("Enter the name of the person being assessed:");
+      if (!assesseeNameInput) {
+        return; // User cancelled
+      }
+      setAssesseeName(assesseeNameInput);
+      
       // Fetch user details from API
       const response = await fetch(`/api/users/${userId}`);
       if (response.ok) {
@@ -180,12 +187,15 @@ export default function Assessment() {
       }
       
       const title = `Assessment ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
-      createAssessmentMutation.mutate({ title, userId });
+      createAssessmentMutation.mutate({ title, userId, assesseeName: assesseeNameInput });
     } catch (error) {
       console.error("Error fetching user:", error);
       setCurrentUser({ id: userId, fullName: "User", email: "", team: null, createdAt: new Date() } as User);
       const title = `Assessment ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
-      createAssessmentMutation.mutate({ title, userId });
+      const assesseeNameInput = prompt("Enter the name of the person being assessed:");
+      if (assesseeNameInput) {
+        createAssessmentMutation.mutate({ title, userId, assesseeName: assesseeNameInput });
+      }
     }
   };
 
@@ -230,6 +240,8 @@ export default function Assessment() {
   const handleNewAssessment = () => {
     setShowUserModal(true);
   };
+  
+  const [assesseeName, setAssesseeName] = useState<string>('');
 
   // Show authentication modal if not authenticated
   if (!isAuthenticated) {
