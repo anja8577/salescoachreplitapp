@@ -130,6 +130,11 @@ export default function Assessment() {
 
   const handleUserSelected = async (userId: number) => {
     try {
+      // Reset current state for new assessment
+      setCurrentAssessment(null);
+      setCheckedBehaviors(new Set());
+      setStepScores({});
+      
       // Fetch user details from API
       const response = await fetch(`/api/users/${userId}`);
       if (response.ok) {
@@ -182,9 +187,24 @@ export default function Assessment() {
     );
   }
 
+  const handleNewAssessment = () => {
+    setShowUserModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <AssessmentHeader totalScore={totalScore} totalBehaviors={totalBehaviors} steps={steps} />
+      <AssessmentHeader 
+        totalScore={totalScore} 
+        totalBehaviors={totalBehaviors} 
+        steps={steps}
+        onNewAssessment={handleNewAssessment}
+      />
+      
+      <UserSelectionModal 
+        open={showUserModal}
+        onClose={() => setShowUserModal(false)}
+        onUserSelected={handleUserSelected}
+      />
       
       <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
         {/* Assessment Steps - Mobile Optimized */}

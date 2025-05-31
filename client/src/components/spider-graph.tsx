@@ -67,6 +67,8 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
     return {
       step: step.title,
       actual: actualLevel,
+      averageActual: actualLevel, // Add averageActual for display
+      benchmark: 3, // Level 3 benchmark for all steps
       target: 3, // Target is always Level 3 (Experienced)
       maxLevel: 4,
     };
@@ -101,7 +103,7 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
             />
             <Radar
               name="Actual Performance"
-              dataKey="averageActual"
+              dataKey="actual"
               stroke="#3b82f6"
               fill="#3b82f6"
               fillOpacity={0.3}

@@ -1,5 +1,7 @@
 import { calculateOverallProficiency } from "@/lib/utils";
 import type { Step, Substep, Behavior } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 type StepWithSubsteps = Step & {
   substeps: (Substep & {
@@ -11,9 +13,10 @@ interface AssessmentHeaderProps {
   totalScore: number;
   totalBehaviors: number;
   steps: StepWithSubsteps[];
+  onNewAssessment?: () => void;
 }
 
-export default function AssessmentHeader({ totalScore, totalBehaviors, steps }: AssessmentHeaderProps) {
+export default function AssessmentHeader({ totalScore, totalBehaviors, steps, onNewAssessment }: AssessmentHeaderProps) {
   const { level, className } = calculateOverallProficiency(totalScore, steps);
 
   return (
@@ -25,6 +28,12 @@ export default function AssessmentHeader({ totalScore, totalBehaviors, steps }: 
             <p className="text-sm text-gray-600">Sales Skills Assessment Scoring Tool</p>
           </div>
           <div className="flex items-center space-x-4">
+            {onNewAssessment && (
+              <Button onClick={onNewAssessment} variant="outline" size="sm">
+                <Plus className="mr-2" size={16} />
+                New Assessment
+              </Button>
+            )}
             <div className="text-right">
               <div className="text-sm text-gray-500">Overall Score</div>
               <div className="text-2xl font-bold text-blue-600">{totalScore}</div>
