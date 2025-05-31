@@ -197,6 +197,7 @@ export default function Assessment() {
         totalScore={totalScore} 
         totalBehaviors={totalBehaviors} 
         steps={steps}
+        checkedBehaviors={checkedBehaviors}
         onNewAssessment={handleNewAssessment}
       />
       

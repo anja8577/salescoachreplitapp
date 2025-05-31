@@ -45,38 +45,49 @@ export function calculateSubstepProficiency(substep: Substep & { behaviors: Beha
   }
 }
 
-export function calculateOverallProficiency(totalScore: number, steps: any[]): { level: string; className: string } {
-  if (totalScore === 0) {
-    return { level: "Not Assessed", className: "bg-gray-100 text-gray-700" };
-  }
-
-  // Count all behaviors across all steps by level
-  let level1Count = 0, level2Count = 0, level3Count = 0, level4Count = 0;
-  
-  steps.forEach(step => {
-    step.substeps.forEach((substep: any) => {
-      substep.behaviors.forEach((behavior: any) => {
-        if (behavior.proficiencyLevel === 1) level1Count++;
-        else if (behavior.proficiencyLevel === 2) level2Count++;
-        else if (behavior.proficiencyLevel === 3) level3Count++;
-        else if (behavior.proficiencyLevel === 4) level4Count++;
-      });
-    });
+export function calculateStepLevel(step: any, checkedBehaviors: Set<number>): number {
+  // Calculate the level for a single step based on substep levels
+  const substepLevels = step.substeps.map((substep: any) => {
+    const checkedCount = substep.behaviors.filter((b: any) => checkedBehaviors.has(b.id)).length;
+    const totalBehaviors = substep.behaviors.length;
+    
+    if (totalBehaviors === 0) return 1;
+    
+    const percentage = checkedCount / totalBehaviors;
+    if (percentage >= 1.0) return 4; // Master
+    if (percentage >= 0.75) return 3; // Experienced  
+    if (percentage >= 0.5) return 2; // Qualified
+    return 1; // Learner
   });
   
-  // Calculate cumulative point thresholds for overall assessment
-  const level1Max = level1Count * 1;
-  const level2Max = level1Max + (level2Count * 2);
-  const level3Max = level2Max + (level3Count * 3);
-  const level4Max = level3Max + (level4Count * 4);
+  // Average the substep levels for this step
+  return substepLevels.reduce((sum: number, level: number) => sum + level, 0) / substepLevels.length;
+}
+
+export function calculateOverallProficiency(steps: any[], checkedBehaviors: Set<number>): { level: string; className: string; score: number } {
+  // Calculate level for each step (1-4)
+  const stepLevels = steps.map(step => calculateStepLevel(step, checkedBehaviors));
   
-  if (totalScore > level3Max) {
-    return { level: "Master", className: "bg-purple-100 text-purple-700" };
-  } else if (totalScore > level2Max) {
-    return { level: "Experienced", className: "bg-blue-100 text-blue-700" };
-  } else if (totalScore > level1Max) {
-    return { level: "Qualified", className: "bg-green-100 text-green-700" };
+  // Sum all step levels and divide by 7
+  const totalStepLevels = stepLevels.reduce((sum, level) => sum + level, 0);
+  const averageLevel = totalStepLevels / 7;
+  
+  let level: string;
+  let className: string;
+  
+  if (averageLevel < 2) {
+    level = "Learner";
+    className = "bg-orange-100 text-orange-700";
+  } else if (averageLevel < 3) {
+    level = "Qualified";
+    className = "bg-green-100 text-green-700";
+  } else if (averageLevel < 4) {
+    level = "Experienced";
+    className = "bg-blue-100 text-blue-700";
   } else {
-    return { level: "Learner", className: "bg-orange-100 text-orange-700" };
+    level = "Master";
+    className = "bg-purple-100 text-purple-700";
   }
+  
+  return { level, className, score: averageLevel };
 }

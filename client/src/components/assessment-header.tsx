@@ -13,11 +13,12 @@ interface AssessmentHeaderProps {
   totalScore: number;
   totalBehaviors: number;
   steps: StepWithSubsteps[];
+  checkedBehaviors: Set<number>;
   onNewAssessment?: () => void;
 }
 
-export default function AssessmentHeader({ totalScore, totalBehaviors, steps, onNewAssessment }: AssessmentHeaderProps) {
-  const { level, className } = calculateOverallProficiency(totalScore, steps);
+export default function AssessmentHeader({ totalScore, totalBehaviors, steps, checkedBehaviors, onNewAssessment }: AssessmentHeaderProps) {
+  const { level, className, score } = calculateOverallProficiency(steps, checkedBehaviors);
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
