@@ -1,7 +1,10 @@
 import { 
   type Step, type Substep, type Behavior, type User, type Assessment, type AssessmentScore,
-  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertUser, type InsertAssessment, type InsertAssessmentScore
+  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertUser, type InsertAssessment, type InsertAssessmentScore,
+  steps, substeps, behaviors, users, assessments, assessmentScores
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -971,4 +974,145 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getAllSteps(): Promise<(Step & { substeps: (Substep & { behaviors: Behavior[] })[] })[]> {
+    const stepsWithSubsteps = await db.query.steps.findMany({
+      with: {
+        substeps: {
+          with: {
+            behaviors: true
+          }
+        }
+      }
+    });
+    return stepsWithSubsteps;
+  }
+
+  async createStep(step: InsertStep): Promise<Step> {
+    const [newStep] = await db.insert(steps).values(step).returning();
+    return newStep;
+  }
+
+  async createSubstep(substep: InsertSubstep): Promise<Substep> {
+    const [newSubstep] = await db.insert(substeps).values(substep).returning();
+    return newSubstep;
+  }
+
+  async createBehavior(behavior: InsertBehavior): Promise<Behavior> {
+    const [newBehavior] = await db.insert(behaviors).values(behavior).returning();
+    return newBehavior;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    const allUsers = await db.select().from(users).orderBy(users.fullName);
+    return allUsers;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createAssessment(assessment: InsertAssessment): Promise<Assessment> {
+    const [newAssessment] = await db.insert(assessments).values(assessment).returning();
+    return newAssessment;
+  }
+
+  async getAssessment(id: number): Promise<Assessment | undefined> {
+    const [assessment] = await db.select().from(assessments).where(eq(assessments.id, id));
+    return assessment;
+  }
+
+  async getAssessmentWithUser(id: number): Promise<(Assessment & { user: User }) | undefined> {
+    const result = await db.query.assessments.findFirst({
+      where: eq(assessments.id, id),
+      with: {
+        user: true
+      }
+    });
+    return result;
+  }
+
+  async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
+    const scores = await db.select().from(assessmentScores).where(eq(assessmentScores.assessmentId, assessmentId));
+    return scores;
+  }
+
+  async updateAssessmentScore(assessmentId: number, behaviorId: number, checked: boolean): Promise<AssessmentScore> {
+    const [score] = await db.insert(assessmentScores)
+      .values({
+        assessmentId,
+        behaviorId,
+        checked
+      })
+      .onConflictDoUpdate({
+        target: [assessmentScores.assessmentId, assessmentScores.behaviorId],
+        set: { checked }
+      })
+      .returning();
+    return score;
+  }
+
+  async initializeDefaultData(): Promise<void> {
+    // Check if data already exists
+    const existingSteps = await db.select().from(steps).limit(1);
+    if (existingSteps.length > 0) {
+      return;
+    }
+
+    // Use MemStorage to initialize data properly in database
+    const memStorage = new MemStorage();
+    await memStorage.initializeDefaultData();
+    
+    // Get all data from MemStorage and insert into database
+    const allSteps = await memStorage.getAllSteps();
+    
+    for (let stepIndex = 0; stepIndex < allSteps.length; stepIndex++) {
+      const step = allSteps[stepIndex];
+      const insertedStep = await this.createStep({
+        title: step.title,
+        description: step.description,
+        targetScore: step.targetScore,
+        order: stepIndex + 1
+      });
+      
+      for (let substepIndex = 0; substepIndex < step.substeps.length; substepIndex++) {
+        const substep = step.substeps[substepIndex];
+        const insertedSubstep = await this.createSubstep({
+          title: substep.title,
+          stepId: insertedStep.id,
+          order: substepIndex + 1
+        });
+        
+        let behaviorOrder = 1;
+        for (const behavior of substep.behaviors) {
+          // Split behaviors that contain semicolons into separate behaviors
+          const behaviorTexts = behavior.description.split(';').map(text => text.trim()).filter(text => text.length > 0);
+          
+          for (const behaviorText of behaviorTexts) {
+            await this.createBehavior({
+              description: behaviorText,
+              proficiencyLevel: behavior.proficiencyLevel,
+              substepId: insertedSubstep.id,
+              order: behaviorOrder++
+            });
+          }
+        }
+      }
+    }
+    
+    console.log("Database initialized with separated behaviors");
+  }
+}
+
+export const storage = new DatabaseStorage();
