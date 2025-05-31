@@ -50,9 +50,13 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
       return await res.json();
     },
     onSuccess: (newUser: User) => {
+      // Invalidate and refetch users query
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      onUserSelected(newUser.id);
-      onClose();
+      // Wait a moment for the query to update before selecting the user
+      setTimeout(() => {
+        onUserSelected(newUser.id);
+        onClose();
+      }, 100);
     },
   });
 

@@ -22,6 +22,7 @@ export default function Assessment() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [checkedBehaviors, setCheckedBehaviors] = useState<Set<number>>(new Set());
+  const [stepScores, setStepScores] = useState<{ [stepId: number]: number }>({});
 
   // Fetch all steps with substeps and behaviors
   const { data: steps = [], isLoading } = useQuery<StepWithSubsteps[]>({
@@ -78,6 +79,14 @@ export default function Assessment() {
       newCheckedBehaviors.delete(behaviorId);
     }
     setCheckedBehaviors(newCheckedBehaviors);
+  };
+
+  // Handle step-level scoring
+  const handleStepScoreChange = (stepId: number, level: number) => {
+    setStepScores(prev => ({
+      ...prev,
+      [stepId]: level
+    }));
   };
 
   // Update checked behaviors when scores change
@@ -183,6 +192,8 @@ export default function Assessment() {
               step={step}
               checkedBehaviors={checkedBehaviors}
               onBehaviorCheck={handleBehaviorCheck}
+              stepScores={stepScores}
+              onStepScoreChange={handleStepScoreChange}
             />
           ))}
         </div>

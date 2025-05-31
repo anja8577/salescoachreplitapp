@@ -13,9 +13,17 @@ interface AssessmentStepProps {
   step: StepWithSubsteps;
   checkedBehaviors: Set<number>;
   onBehaviorCheck: (behaviorId: number, checked: boolean) => void;
+  stepScores?: { [stepId: number]: number };
+  onStepScoreChange?: (stepId: number, level: number) => void;
 }
 
-export default function AssessmentStep({ step, checkedBehaviors, onBehaviorCheck }: AssessmentStepProps) {
+export default function AssessmentStep({ 
+  step, 
+  checkedBehaviors, 
+  onBehaviorCheck, 
+  stepScores = {}, 
+  onStepScoreChange 
+}: AssessmentStepProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const stepScore = step.substeps.reduce((total, substep) => {
@@ -65,6 +73,14 @@ export default function AssessmentStep({ step, checkedBehaviors, onBehaviorCheck
     return configs[level as keyof typeof configs];
   };
 
+  const currentStepScore = stepScores[step.id] || 0;
+
+  const handleStepLevelChange = (level: number, checked: boolean) => {
+    if (onStepScoreChange) {
+      onStepScoreChange(step.id, checked ? level : 0);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-6 border-b border-gray-200">
@@ -99,19 +115,19 @@ export default function AssessmentStep({ step, checkedBehaviors, onBehaviorCheck
           </div>
         </div>
       </div>
-      
+
       {isExpanded && (
         <div className="p-6 space-y-6">
           {step.substeps.map((substep) => (
             <div key={substep.id} className="border border-gray-100 rounded-lg p-4">
               <h4 className="font-medium text-gray-900 mb-4">{substep.title}</h4>
-              
+
               {[1, 2, 3, 4].map((level) => {
                 const levelBehaviors = getBehaviorsByLevel(substep.behaviors, level);
                 if (levelBehaviors.length === 0) return null;
-                
+
                 const levelConfig = getLevelConfig(level);
-                
+
                 return (
                   <div key={level} className="mb-4">
                     <div className="flex items-center mb-2">
