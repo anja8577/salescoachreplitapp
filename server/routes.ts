@@ -20,11 +20,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new assessment
   app.post("/api/assessments", async (req, res) => {
     try {
+      console.log("Assessment creation request body:", req.body);
       const validatedData = insertAssessmentSchema.parse(req.body);
+      console.log("Validated data:", validatedData);
       const assessment = await storage.createAssessment(validatedData);
       res.json(assessment);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid assessment data" });
+    } catch (error: any) {
+      console.error("Assessment creation error:", error);
+      res.status(400).json({ message: "Invalid assessment data", error: error.message });
     }
   });
 

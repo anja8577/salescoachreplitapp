@@ -44,9 +44,10 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
     },
   });
 
-  const createUserMutation = useMutation({
+  const createUserMutation = useMutation<User, Error, CreateUserForm>({
     mutationFn: async (userData: CreateUserForm) => {
-      return await apiRequest("POST", "/api/users", userData);
+      const res = await apiRequest("POST", "/api/users", userData);
+      return await res.json();
     },
     onSuccess: (newUser: User) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });

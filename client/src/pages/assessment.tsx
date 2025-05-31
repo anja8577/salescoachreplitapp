@@ -35,9 +35,10 @@ export default function Assessment() {
   });
 
   // Create assessment mutation
-  const createAssessmentMutation = useMutation({
-    mutationFn: async ({ title, userId }: { title: string; userId: number }) => {
-      return await apiRequest("POST", "/api/assessments", { title, userId });
+  const createAssessmentMutation = useMutation<AssessmentType, Error, { title: string; userId: number }>({
+    mutationFn: async ({ title, userId }) => {
+      const res = await apiRequest("POST", "/api/assessments", { title, userId });
+      return await res.json();
     },
     onSuccess: (assessment: AssessmentType) => {
       setCurrentAssessment(assessment);
@@ -58,10 +59,7 @@ export default function Assessment() {
     },
   });
 
-  // Initialize assessment if not exists
-  const handleStartAssessment = () => {
-    createAssessmentMutation.mutate(`Assessment ${new Date().toLocaleDateString()}`);
-  };
+
 
   // Handle checkbox changes
   const handleBehaviorCheck = (behaviorId: number, checked: boolean) => {
