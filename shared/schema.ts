@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -46,7 +46,9 @@ export const assessmentScores = pgTable("assessment_scores", {
   assessmentId: integer("assessment_id").notNull().references(() => assessments.id),
   behaviorId: integer("behavior_id").notNull().references(() => behaviors.id),
   checked: boolean("checked").notNull().default(false),
-});
+}, (table) => ({
+  uniqueAssessmentBehavior: unique().on(table.assessmentId, table.behaviorId),
+}));
 
 export const stepsRelations = relations(steps, ({ many }) => ({
   substeps: many(substeps),

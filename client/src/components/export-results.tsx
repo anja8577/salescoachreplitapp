@@ -29,6 +29,7 @@ export default function ExportResults({
 }: ExportResultsProps) {
   const { toast } = useToast();
   const [isSharing, setIsSharing] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
 
   const generateResultsText = () => {
     const stepResults = steps.map(step => {

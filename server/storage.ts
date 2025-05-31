@@ -4,7 +4,7 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -1098,18 +1098,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssessmentScore(assessmentId: number, behaviorId: number, checked: boolean): Promise<AssessmentScore> {
-    const [score] = await db.insert(assessmentScores)
-      .values({
-        assessmentId,
-        behaviorId,
-        checked
-      })
-      .onConflictDoUpdate({
-        target: [assessmentScores.assessmentId, assessmentScores.behaviorId],
-        set: { checked }
-      })
-      .returning();
-    return score;
+    // Check if score exists
+    const [existingScore] = await db.select()
+      .from(assessmentScores)
+      .where(and(eq(assessmentScores.assessmentId, assessmentId), eq(assessmentScores.behaviorId, behaviorId)));
+
+    if (existingScore) {
+      // Update existing score
+      const [score] = await db.update(assessmentScores)
+        .set({ checked })
+        .where(and(eq(assessmentScores.assessmentId, assessmentId), eq(assessmentScores.behaviorId, behaviorId)))
+        .returning();
+      return score;
+    } else {
+      // Insert new score
+      const [score] = await db.insert(assessmentScores)
+        .values({ assessmentId, behaviorId, checked })
+        .returning();
+      return score;
+    }
   }
 
   async initializeDefaultData(): Promise<void> {
