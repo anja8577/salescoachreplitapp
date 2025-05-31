@@ -163,6 +163,7 @@ export class MemStorage implements IStorage {
     const step1 = await this.createStep({
       title: "Preparation",
       description: "Strategic preparation, client understanding, and technical preparation",
+      targetScore: 3,
       order: 1,
     });
 
@@ -333,6 +334,7 @@ export class MemStorage implements IStorage {
     const step2 = await this.createStep({
       title: "Opening",
       description: "Greeting & introduction and relating behaviors",
+      targetScore: 3,
       order: 2,
     });
 
@@ -485,6 +487,7 @@ export class MemStorage implements IStorage {
     const step3 = await this.createStep({
       title: "Need Dialog",
       description: "Questioning and active listening behaviors",
+      targetScore: 3,
       order: 3,
     });
 
@@ -566,6 +569,7 @@ export class MemStorage implements IStorage {
     const step4 = await this.createStep({
       title: "Solution Dialog",
       description: "Structuring, positioning, and checking solution behaviors",
+      targetScore: 3,
       order: 4,
     });
 
@@ -705,6 +709,7 @@ export class MemStorage implements IStorage {
     const step5 = await this.createStep({
       title: "Objection Resolution",
       description: "Handling objections and maintaining dialogue",
+      targetScore: 3,
       order: 5,
     });
 
@@ -758,6 +763,7 @@ export class MemStorage implements IStorage {
     const step6 = await this.createStep({
       title: "Asking for Commitment",
       description: "Summarizing and securing commitment behaviors",
+      targetScore: 3,
       order: 6,
     });
 
@@ -867,6 +873,7 @@ export class MemStorage implements IStorage {
     const step7 = await this.createStep({
       title: "Follow up",
       description: "Post-call analysis and planning behaviors",
+      targetScore: 3,
       order: 7,
     });
 

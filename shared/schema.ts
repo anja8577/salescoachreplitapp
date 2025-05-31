@@ -7,6 +7,7 @@ export const steps = pgTable("steps", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  targetScore: integer("target_score").notNull(),
   order: integer("order").notNull(),
 });
 

@@ -10,6 +10,7 @@ type StepWithSubsteps = Step & {
 interface SpiderGraphProps {
   steps: StepWithSubsteps[];
   checkedBehaviors: Set<number>;
+  stepScores?: { [stepId: number]: number };
 }
 
 export default function SpiderGraph({ steps, checkedBehaviors }: SpiderGraphProps) {
