@@ -4,19 +4,20 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores
 } from "@shared/schema";
 import { db } from "./db";
+import type { Step, Substep, Behavior, User, Assessment, AssessmentScore, InsertStep, InsertSubstep, InsertBehavior, InsertUser, InsertAssessment, InsertAssessmentScore } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
   getAllSteps(): Promise<(Step & { substeps: (Substep & { behaviors: Behavior[] })[] })[]>;
   createStep(step: InsertStep): Promise<Step>;
-  
+
   // Substeps
   createSubstep(substep: InsertSubstep): Promise<Substep>;
-  
+
   // Behaviors
   createBehavior(behavior: InsertBehavior): Promise<Behavior>;
-  
+
   // Users
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
@@ -24,17 +25,17 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUser(id: number, user: Partial<User>): Promise<User>;
   deleteUser(id: number): Promise<void>;
-  
+
   // Assessments
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
   getAssessment(id: number): Promise<Assessment | undefined>;
   getAssessmentWithUser(id: number): Promise<(Assessment & { user: User }) | undefined>;
   getAllAssessments(): Promise<Assessment[]>;
-  
+
   // Assessment Scores
   getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]>;
   updateAssessmentScore(assessmentId: number, behaviorId: number, checked: boolean): Promise<AssessmentScore>;
-  
+
   // Initialize default data
   initializeDefaultData(): Promise<void>;
 }
@@ -50,7 +51,7 @@ export class MemStorage implements IStorage {
 
   async getAllSteps(): Promise<(Step & { substeps: (Substep & { behaviors: Behavior[] })[] })[]> {
     const stepsArray = Array.from(this.steps.values()).sort((a, b) => a.order - b.order);
-    
+
     return stepsArray.map(step => ({
       ...step,
       substeps: Array.from(this.substeps.values())
@@ -138,10 +139,10 @@ export class MemStorage implements IStorage {
   async getAssessmentWithUser(id: number): Promise<(Assessment & { user: User }) | undefined> {
     const assessment = this.assessments.get(id);
     if (!assessment) return undefined;
-    
+
     const user = this.users.get(assessment.userId);
     if (!user) return undefined;
-    
+
     return { ...assessment, user };
   }
 
@@ -1121,18 +1122,38 @@ export class DatabaseStorage implements IStorage {
 
   async initializeDefaultData(): Promise<void> {
     // Check if data already exists
-    const existingSteps = await db.select().from(steps).limit(1);
+    const existingSteps = await this.getAllSteps();
     if (existingSteps.length > 0) {
+      console.log("Database already initialized, skipping default data creation");
       return;
     }
+
+    // Add some sample users
+    await this.createUser({
+      fullName: "John Doe",
+      email: "john.doe@example.com",
+      team: "Sales Team A"
+    });
+
+    await this.createUser({
+      fullName: "Jane Smith", 
+      email: "jane.smith@example.com",
+      team: "Sales Team B"
+    });
+
+    await this.createUser({
+      fullName: "Mike Johnson",
+      email: "mike.johnson@example.com", 
+      team: "Sales Team A"
+    });
 
     // Use MemStorage to initialize data properly in database
     const memStorage = new MemStorage();
     await memStorage.initializeDefaultData();
-    
+
     // Get all data from MemStorage and insert into database
     const allSteps = await memStorage.getAllSteps();
-    
+
     for (let stepIndex = 0; stepIndex < allSteps.length; stepIndex++) {
       const step = allSteps[stepIndex];
       const insertedStep = await this.createStep({
@@ -1141,7 +1162,7 @@ export class DatabaseStorage implements IStorage {
         targetScore: step.targetScore,
         order: stepIndex + 1
       });
-      
+
       for (let substepIndex = 0; substepIndex < step.substeps.length; substepIndex++) {
         const substep = step.substeps[substepIndex];
         const insertedSubstep = await this.createSubstep({
@@ -1149,12 +1170,12 @@ export class DatabaseStorage implements IStorage {
           stepId: insertedStep.id,
           order: substepIndex + 1
         });
-        
+
         let behaviorOrder = 1;
         for (const behavior of substep.behaviors) {
           // Split behaviors that contain semicolons into separate behaviors
           const behaviorTexts = behavior.description.split(';').map(text => text.trim()).filter(text => text.length > 0);
-          
+
           for (const behaviorText of behaviorTexts) {
             await this.createBehavior({
               description: behaviorText,
@@ -1166,7 +1187,7 @@ export class DatabaseStorage implements IStorage {
         }
       }
     }
-    
+
     console.log("Database initialized with separated behaviors");
   }
 }
