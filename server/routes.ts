@@ -49,10 +49,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const behaviorId = parseInt(req.params.behaviorId);
       const { checked } = req.body;
       
+      console.log(`Updating score for assessment ${assessmentId}, behavior ${behaviorId}, checked: ${checked}`);
+      
       const score = await storage.updateAssessmentScore(assessmentId, behaviorId, checked);
       res.json(score);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to update assessment score" });
+    } catch (error: any) {
+      console.error("Score update error:", error);
+      res.status(500).json({ message: "Failed to update assessment score", error: error.message });
     }
   });
 
