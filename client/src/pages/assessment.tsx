@@ -87,6 +87,9 @@ export default function Assessment() {
       ...prev,
       [stepId]: level
     }));
+    
+    // Optional: You could save this to the backend here if needed
+    // This would require creating a new API endpoint for step-level scores
   };
 
   // Update checked behaviors when scores change

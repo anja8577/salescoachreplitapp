@@ -34,30 +34,72 @@ export default function AssessmentStep({
     return total + substep.behaviors.filter(behavior => checkedBehaviors.has(behavior.id)).length;
   }, 0);
 
-  // Calculate cumulative thresholds for this step
-  let stepLevel1Count = 0, stepLevel2Count = 0, stepLevel3Count = 0, stepLevel4Count = 0;
-  step.substeps.forEach(substep => {
-    substep.behaviors.forEach(behavior => {
-      if (behavior.proficiencyLevel === 1) stepLevel1Count++;
-      else if (behavior.proficiencyLevel === 2) stepLevel2Count++;
-      else if (behavior.proficiencyLevel === 3) stepLevel3Count++;
-      else if (behavior.proficiencyLevel === 4) stepLevel4Count++;
+  // Get manual step score or calculate automatic level
+  const getStepLevel = () => {
+    const manualLevel = currentStepScore;
+    if (manualLevel > 0) {
+      const levels = ["", "Learner", "Qualified", "Experienced", "Master"];
+      return levels[manualLevel];
+    }
+
+    // Calculate automatic level with custom thresholds for specific steps
+    const stepTitle = step.title.toLowerCase();
+    
+    // Custom thresholds for specific steps
+    const customThresholds: { [key: string]: { qualified: number; experienced: number; master: number } } = {
+      "analyzing results": { qualified: 2, experienced: 3, master: 4 },
+      "maintaining rapport": { qualified: 3, experienced: 4, master: 5 },
+      "asking for commitment": { qualified: 2, experienced: 3, master: 2 }, // Master threshold lowered
+      "summarizing": { qualified: 2, experienced: 3, master: 2 }, // Master threshold lowered
+      "objection handling": { qualified: 2, experienced: 3, master: 4 },
+      "active listening": { qualified: 2, experienced: 2, master: 3 } // Experienced threshold lowered
+    };
+
+    if (stepScore === 0) return "Not Assessed";
+
+    // Check if this step has custom thresholds
+    const customKey = Object.keys(customThresholds).find(key => stepTitle.includes(key));
+    
+    if (customKey) {
+      const thresholds = customThresholds[customKey];
+      if (stepScore >= thresholds.master) return "Master";
+      if (stepScore >= thresholds.experienced) return "Experienced";
+      if (stepScore >= thresholds.qualified) return "Qualified";
+      return "Learner";
+    }
+
+    // Default calculation for other steps
+    let stepLevel1Count = 0, stepLevel2Count = 0, stepLevel3Count = 0, stepLevel4Count = 0;
+    step.substeps.forEach(substep => {
+      substep.behaviors.forEach(behavior => {
+        if (behavior.proficiencyLevel === 1) stepLevel1Count++;
+        else if (behavior.proficiencyLevel === 2) stepLevel2Count++;
+        else if (behavior.proficiencyLevel === 3) stepLevel3Count++;
+        else if (behavior.proficiencyLevel === 4) stepLevel4Count++;
+      });
     });
-  });
 
-  const stepLevel1Max = stepLevel1Count * 1;
-  const stepLevel2Max = stepLevel1Max + (stepLevel2Count * 2);
-  const stepLevel3Max = stepLevel2Max + (stepLevel3Count * 3);
+    const stepLevel1Max = stepLevel1Count * 1;
+    const stepLevel2Max = stepLevel1Max + (stepLevel2Count * 2);
+    const stepLevel3Max = stepLevel2Max + (stepLevel3Count * 3);
 
-  const stepLevel = stepScore === 0 ? "Not Assessed" :
-    stepScore > stepLevel3Max ? "Master" :
-    stepScore > stepLevel2Max ? "Experienced" :
-    stepScore > stepLevel1Max ? "Qualified" : "Learner";
+    if (stepScore > stepLevel3Max) return "Master";
+    if (stepScore > stepLevel2Max) return "Experienced";
+    if (stepScore > stepLevel1Max) return "Qualified";
+    return "Learner";
+  };
 
-  const stepLevelClass = stepScore === 0 ? "bg-gray-100 text-gray-700" :
-    stepScore > stepLevel3Max ? "bg-purple-100 text-purple-700" :
-    stepScore > stepLevel2Max ? "bg-blue-100 text-blue-700" :
-    stepScore > stepLevel1Max ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700";
+  const stepLevel = getStepLevel();
+
+  const getStepLevelClass = () => {
+    if (stepLevel === "Not Assessed") return "bg-gray-100 text-gray-700";
+    if (stepLevel === "Master") return "bg-purple-100 text-purple-700";
+    if (stepLevel === "Experienced") return "bg-blue-100 text-blue-700";
+    if (stepLevel === "Qualified") return "bg-green-100 text-green-700";
+    return "bg-orange-100 text-orange-700";
+  };
+
+  const stepLevelClass = getStepLevelClass();
 
   const getBehaviorsByLevel = (behaviors: Behavior[], level: number) => {
     return behaviors.filter(behavior => behavior.proficiencyLevel === level);
@@ -99,14 +141,33 @@ export default function AssessmentStep({
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <div className="text-sm text-gray-500">Score</div>
-              <div className="text-lg font-semibold text-blue-600">{stepScore}</div>
+              <div className="text-sm text-gray-500">
+                Score {currentStepScore > 0 && <span className="text-xs">(Auto)</span>}
+              </div>
+              <div className={`text-lg font-semibold ${currentStepScore > 0 ? 'text-gray-400' : 'text-blue-600'}`}>
+                {stepScore}
+              </div>
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">Level</div>
               <span className={`px-2 py-1 rounded text-xs font-medium ${stepLevelClass}`}>
                 {stepLevel}
               </span>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500">Select Level for Step</div>
+              <select
+                value={currentStepScore}
+                onChange={(e) => handleStepLevelChange(parseInt(e.target.value), parseInt(e.target.value) > 0)}
+                className="px-2 py-1 border border-gray-300 rounded text-xs"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value={0}>Auto</option>
+                <option value={1}>1 - Learner</option>
+                <option value={2}>2 - Qualified</option>
+                <option value={3}>3 - Experienced</option>
+                <option value={4}>4 - Master</option>
+              </select>
             </div>
             <ChevronDown 
               className={`text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
