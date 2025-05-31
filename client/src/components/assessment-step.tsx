@@ -46,7 +46,7 @@ export default function AssessmentStep({
 
     // Calculate automatic level with custom thresholds for specific steps
     const stepTitle = step.title.toLowerCase();
-    
+
     // Custom thresholds for specific steps
     const customThresholds: { [key: string]: { qualified: number; experienced: number; master: number } } = {
       "analyzing results": { qualified: 2, experienced: 3, master: 4 },
@@ -61,7 +61,7 @@ export default function AssessmentStep({
 
     // Check if this step has custom thresholds
     const customKey = Object.keys(customThresholds).find(key => stepTitle.includes(key));
-    
+
     if (customKey) {
       const thresholds = customThresholds[customKey];
       if (stepScore >= thresholds.master) return "Master";
