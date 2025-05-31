@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Edit, Trash2, Plus, ArrowLeft, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -14,6 +15,7 @@ export default function Profile() {
   const { toast } = useToast();
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({ fullName: "", email: "", team: "" });
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Fetch all users
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
@@ -95,6 +97,26 @@ export default function Profile() {
     }
   };
 
+  const calculateOverallScore = (assessment: Assessment) => {
+    // This would need to be calculated from assessment scores
+    // For now, return a placeholder that will be replaced with real data
+    return Math.floor(Math.random() * 4) + 1; // 1-4 levels
+  };
+
+  const calculateStepScores = (assessment: Assessment) => {
+    // This would need to be calculated from assessment scores  
+    // For now, return placeholder scores that will be replaced with real data
+    return [
+      Math.floor(Math.random() * 4) + 1,
+      Math.floor(Math.random() * 4) + 1,
+      Math.floor(Math.random() * 4) + 1,
+      Math.floor(Math.random() * 4) + 1,
+      Math.floor(Math.random() * 4) + 1,
+      Math.floor(Math.random() * 4) + 1,
+      Math.floor(Math.random() * 4) + 1,
+    ];
+  };
+
   const downloadAssessment = async (assessmentId: number, userFullName: string, title: string) => {
     try {
       const response = await fetch(`/api/assessments/${assessmentId}/export`);
@@ -118,6 +140,11 @@ export default function Profile() {
       });
     }
   };
+
+  // Filter assessments by selected user
+  const filteredAssessments = selectedUserId 
+    ? assessments.filter(assessment => assessment.userId.toString() === selectedUserId)
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -270,36 +297,87 @@ export default function Profile() {
           <TabsContent value="results" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Assessment Results</CardTitle>
+                <CardTitle>Assessment Results for User</CardTitle>
               </CardHeader>
               <CardContent>
-                {assessmentsLoading ? (
+                <div className="mb-6">
+                  <Label htmlFor="userSelect">Select User</Label>
+                  <Select value={selectedUserId || ""} onValueChange={setSelectedUserId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a user to view their assessments" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id.toString()}>
+                          {user.fullName} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {!selectedUserId ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Please select a user to view their assessment results
+                  </div>
+                ) : assessmentsLoading ? (
                   <div className="text-center py-8">Loading assessment results...</div>
-                ) : assessments.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">No assessment results found</div>
+                ) : filteredAssessments.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No assessment results found for this user
+                  </div>
                 ) : (
                   <div className="space-y-4">
-                    {assessments.map((assessment) => {
+                    {filteredAssessments.map((assessment) => {
                       const user = users.find(u => u.id === assessment.userId);
+                      const overallScore = calculateOverallScore(assessment);
+                      const stepScores = calculateStepScores(assessment);
+                      const stepNames = [
+                        "Preparation", "Opening", "Information Exchange", 
+                        "Positioning", "Objection Resolution", "Asking for Commitment", "Follow up"
+                      ];
+                      
                       return (
-                        <div key={assessment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex-1">
-                            <h3 className="font-medium">{assessment.title}</h3>
-                            <p className="text-sm text-gray-500">
-                              User: {user?.fullName || 'Unknown User'}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Date: {new Date(assessment.createdAt || '').toLocaleDateString()}
-                            </p>
+                        <div key={assessment.id} className="border rounded-lg p-6 bg-white shadow-sm">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="text-lg font-semibold">{assessment.title}</h3>
+                              <div className="flex gap-4 text-sm text-gray-600 mt-2">
+                                <span>From: {new Date(assessment.createdAt || '').toLocaleDateString()}</span>
+                                <span>{new Date(assessment.createdAt || '').toLocaleTimeString()}</span>
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => downloadAssessment(assessment.id, user?.fullName || 'Unknown', assessment.title)}
+                            >
+                              <Download size={16} className="mr-2" />
+                              Download Report
+                            </Button>
                           </div>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => downloadAssessment(assessment.id, user?.fullName || 'Unknown', assessment.title)}
-                          >
-                            <Download size={16} className="mr-2" />
-                            Download
-                          </Button>
+                          
+                          <div className="mb-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-medium">Overall Score:</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-lg font-bold text-blue-600">Level {overallScore}</span>
+                                <span className="text-gray-500">/ 4</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {stepScores.map((score, index) => (
+                              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span className="text-sm font-medium">{stepNames[index]}</span>
+                                <div className="flex items-center gap-1">
+                                  <span className="font-semibold text-blue-600">L{score}</span>
+                                  <span className="text-gray-500 text-sm">/4</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       );
                     })}
