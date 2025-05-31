@@ -4,7 +4,7 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -143,6 +143,12 @@ export class MemStorage implements IStorage {
     if (!user) return undefined;
     
     return { ...assessment, user };
+  }
+
+  async getAllAssessments(): Promise<Assessment[]> {
+    return Array.from(this.assessments.values()).sort((a, b) => 
+      new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+    );
   }
 
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
@@ -1047,6 +1053,18 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
   async createAssessment(assessment: InsertAssessment): Promise<Assessment> {
     const [newAssessment] = await db.insert(assessments).values(assessment).returning();
     return newAssessment;
@@ -1065,6 +1083,13 @@ export class DatabaseStorage implements IStorage {
       }
     });
     return result;
+  }
+
+  async getAllAssessments(): Promise<Assessment[]> {
+    const allAssessments = await db.select().from(assessments);
+    return allAssessments.sort((a, b) => 
+      new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
+    );
   }
 
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
