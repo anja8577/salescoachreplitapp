@@ -510,6 +510,18 @@ The complete PDF report has been downloaded to your device for attachment.`;
         </div>
       </div>
 
+      {/* Save Assessment Button */}
+      {onSaveAssessment && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+          <button 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+            onClick={onSaveAssessment}
+          >
+            Save Assessment
+          </button>
+        </div>
+      )}
+
       {/* Export Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div className="grid grid-cols-4 gap-3">
