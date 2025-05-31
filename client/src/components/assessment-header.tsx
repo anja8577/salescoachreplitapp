@@ -24,8 +24,8 @@ export default function AssessmentHeader({ totalScore, totalBehaviors, steps, on
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">SSA Behavior Assessment</h1>
-            <p className="text-sm text-gray-600">Sales Skills Assessment Scoring Tool</p>
+            <h1 className="text-2xl font-bold text-gray-900">Selling Skills Assessment</h1>
+            <p className="text-sm text-gray-600">{totalBehaviors > 0 ? `${totalBehaviors} behaviors assessed` : 'Assessment in progress'}</p>
           </div>
           <div className="flex items-center space-x-4">
             {onNewAssessment && (
