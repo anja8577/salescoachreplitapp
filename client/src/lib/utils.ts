@@ -24,21 +24,26 @@ export function calculateSubstepProficiency(substep: Substep & { behaviors: Beha
   const level3Count = substep.behaviors.filter(b => b.proficiencyLevel === 3).length;
   const level4Count = substep.behaviors.filter(b => b.proficiencyLevel === 4).length;
   
-  // Calculate cumulative point thresholds
-  const level1Max = level1Count * 1;
-  const level2Max = level1Max + (level2Count * 2);
-  const level3Max = level2Max + (level3Count * 3);
-  const level4Max = level3Max + (level4Count * 4);
+  // Calculate point thresholds based on your logic:
+  // Qualified >3 points, Experienced >9 points, Master >15 points
+  // Logic: if points > max points in learner -> qualified
+  // if points > max points in learner + qualified -> experienced
+  // if points > max points in learner + qualified + experienced -> master
+  
+  const learnerMax = level1Count * 1; // Max points from level 1 behaviors
+  const qualifiedThreshold = learnerMax; // More than learner max
+  const experiencedThreshold = learnerMax + (level2Count * 2); // More than learner + qualified max
+  const masterThreshold = learnerMax + (level2Count * 2) + (level3Count * 3); // More than learner + qualified + experienced max
   
   if (score === 0) {
     return { level: "Not Assessed", className: "bg-gray-100 text-gray-700" };
   }
   
-  if (score > level3Max) {
+  if (score > masterThreshold) {
     return { level: "Master", className: "bg-purple-100 text-purple-700" };
-  } else if (score > level2Max) {
+  } else if (score > experiencedThreshold) {
     return { level: "Experienced", className: "bg-blue-100 text-blue-700" };
-  } else if (score > level1Max) {
+  } else if (score > qualifiedThreshold) {
     return { level: "Qualified", className: "bg-green-100 text-green-700" };
   } else {
     return { level: "Learner", className: "bg-orange-100 text-orange-700" };

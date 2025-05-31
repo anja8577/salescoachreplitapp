@@ -19,6 +19,7 @@ interface ExportResultsProps {
   user: User;
   assessmentTitle: string;
   stepScores?: { [stepId: number]: number };
+  onSaveAssessment?: () => void;
 }
 
 export default function ExportResults({ 
@@ -27,7 +28,8 @@ export default function ExportResults({
   totalScore, 
   user, 
   assessmentTitle,
-  stepScores = {}
+  stepScores = {},
+  onSaveAssessment
 }: ExportResultsProps) {
   const { toast } = useToast();
   const [isSharing, setIsSharing] = useState(false);

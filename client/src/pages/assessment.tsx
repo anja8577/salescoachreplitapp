@@ -225,19 +225,6 @@ export default function Assessment() {
         {/* Spider Graph */}
         <SpiderGraph steps={steps} checkedBehaviors={checkedBehaviors} stepScores={stepScores} />
         
-        {/* Save Button */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-          <button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-            onClick={() => {
-              // Auto-save functionality - assessment is already being saved in real-time
-              alert('Assessment saved successfully!');
-            }}
-          >
-            Save Assessment
-          </button>
-        </div>
-        
         {/* Export Results */}
         {currentUser && currentAssessment && (
           <ExportResults
@@ -247,6 +234,10 @@ export default function Assessment() {
             user={currentUser}
             assessmentTitle={currentAssessment.title}
             stepScores={stepScores}
+            onSaveAssessment={() => {
+              // Auto-save functionality - assessment is already being saved in real-time
+              alert('Assessment saved successfully!');
+            }}
           />
         )}
       </div>
