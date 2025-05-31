@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertAssessmentSchema, insertAssessmentScoreSchema } from "@shared/schema";
+import { AuthService } from "./auth";
+import type { User, Assessment, AssessmentScore, UserRegistration, UserLogin } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize default data
@@ -48,9 +50,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assessmentId = parseInt(req.params.assessmentId);
       const behaviorId = parseInt(req.params.behaviorId);
       const { checked } = req.body;
-      
+
       console.log(`Updating score for assessment ${assessmentId}, behavior ${behaviorId}, checked: ${checked}`);
-      
+
       const score = await storage.updateAssessmentScore(assessmentId, behaviorId, checked);
       res.json(score);
     } catch (error: any) {
@@ -122,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.id);
       const userData = req.body;
-      
+
       const updatedUser = await storage.updateUser(userId, userData);
       res.json(updatedUser);
     } catch (error) {
@@ -151,6 +153,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching assessments:", error);
       res.status(500).json({ message: "Failed to fetch assessments" });
+    }
+  });
+
+  // Authentication routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const userData: UserRegistration = req.body;
+
+      // Basic validation
+      if (!userData.email || !userData.password || !userData.fullName) {
+        return res.status(400).json({ error: "Email, password, and full name are required" });
+      }
+
+      if (userData.password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+
+      const user = await AuthService.register(userData);
+      const token = AuthService.generateToken(user.id);
+
+      res.json({ user, token });
+    } catch (error: any) {
+      if (error.message === 'User already exists') {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to register user" });
+      }
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const loginData: UserLogin = req.body;
+
+      if (!loginData.email || !loginData.password) {
+        return res.status(400).json({ error: "Email and password are required" });
+      }
+
+      const user = await AuthService.login(loginData);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const token = AuthService.generateToken(user.id);
+      res.json({ user, token });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to login" });
+    }
+  });
+
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) {
+        return res.status(401).json({ error: "No token provided" });
+      }
+
+      const decoded = AuthService.verifyToken(token);
+      if (!decoded) {
+        return res.status(401).json({ error: "Invalid token" });
+      }
+
+      const user = await AuthService.getUserById(decoded.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get user info" });
     }
   });
 

@@ -69,30 +69,86 @@ export function calculateStepLevel(step: any, checkedBehaviors: Set<number>): nu
   return substepLevels.reduce((sum: number, level: number) => sum + level, 0) / substepLevels.length;
 }
 
-export function calculateOverallProficiency(steps: any[], checkedBehaviors: Set<number>): { level: string; className: string; score: number } {
-  // Calculate level for each step (1-4)
-  const stepLevels = steps.map(step => calculateStepLevel(step, checkedBehaviors));
-  
-  // Sum all step levels and divide by 7
-  const totalStepLevels = stepLevels.reduce((sum, level) => sum + level, 0);
-  const averageLevel = totalStepLevels / 7;
-  
+export function calculateOverallProficiency(steps: any[], checkedBehaviors: Set<number>, stepScores: { [stepId: number]: number } = {}): { level: string; className: string; score: number } {
+  // Calculate level for each step using same logic as PDF
+  const stepLevels = steps.map(step => {
+    // Use manual step score if set, otherwise calculate from behaviors
+    const manualScore = stepScores[step.id];
+    if (manualScore && manualScore > 0) {
+      return manualScore; // Return the actual level (1-4)
+    }
+    
+    // Calculate automatic level based on behaviors
+    const stepScore = step.substeps.reduce((total: number, substep: any) => {
+      return total + substep.behaviors.reduce((substepTotal: number, behavior: any) => {
+        if (checkedBehaviors.has(behavior.id)) {
+          return substepTotal + behavior.proficiencyLevel;
+        }
+        return substepTotal;
+      }, 0);
+    }, 0);
+
+    if (stepScore === 0) return 0;
+
+    // Use same threshold logic as assessment-step.tsx
+    const stepTitle = step.title.toLowerCase();
+    const customThresholds: { [key: string]: { qualified: number; experienced: number; master: number } } = {
+      "analyzing results": { qualified: 2, experienced: 3, master: 4 },
+      "maintaining rapport": { qualified: 3, experienced: 4, master: 5 },
+      "asking for commitment": { qualified: 2, experienced: 3, master: 2 },
+      "summarizing": { qualified: 2, experienced: 3, master: 2 },
+      "objection handling": { qualified: 2, experienced: 3, master: 4 },
+      "active listening": { qualified: 2, experienced: 2, master: 3 }
+    };
+
+    const customKey = Object.keys(customThresholds).find(key => stepTitle.includes(key));
+    if (customKey) {
+      const thresholds = customThresholds[customKey];
+      if (stepScore >= thresholds.master) return 4;
+      if (stepScore >= thresholds.experienced) return 3;
+      if (stepScore >= thresholds.qualified) return 2;
+      return 1;
+    }
+
+    // Default calculation
+    let stepLevel1Count = 0, stepLevel2Count = 0, stepLevel3Count = 0, stepLevel4Count = 0;
+    step.substeps.forEach((substep: any) => {
+      substep.behaviors.forEach((behavior: any) => {
+        if (behavior.proficiencyLevel === 1) stepLevel1Count++;
+        else if (behavior.proficiencyLevel === 2) stepLevel2Count++;
+        else if (behavior.proficiencyLevel === 3) stepLevel3Count++;
+        else if (behavior.proficiencyLevel === 4) stepLevel4Count++;
+      });
+    });
+
+    const stepLevel1Max = stepLevel1Count * 1;
+    const stepLevel2Max = stepLevel1Max + (stepLevel2Count * 2);
+    const stepLevel3Max = stepLevel2Max + (stepLevel3Count * 3);
+
+    if (stepScore > stepLevel3Max) return 4;
+    if (stepScore > stepLevel2Max) return 3;
+    if (stepScore > stepLevel1Max) return 2;
+    return 1;
+  });
+
+  const currentScore = stepLevels.reduce((sum, level) => sum + level, 0) / steps.length;
+
   let level: string;
   let className: string;
   
-  if (averageLevel < 2) {
-    level = "Learner";
-    className = "bg-orange-100 text-orange-700";
-  } else if (averageLevel < 3) {
-    level = "Qualified";
-    className = "bg-green-100 text-green-700";
-  } else if (averageLevel < 4) {
-    level = "Experienced";
-    className = "bg-blue-100 text-blue-700";
-  } else {
+  if (currentScore >= 3.5) {
     level = "Master";
     className = "bg-purple-100 text-purple-700";
+  } else if (currentScore >= 2.5) {
+    level = "Experienced";
+    className = "bg-blue-100 text-blue-700";
+  } else if (currentScore >= 1.5) {
+    level = "Qualified";
+    className = "bg-green-100 text-green-700";
+  } else {
+    level = "Learner";
+    className = "bg-orange-100 text-orange-700";
   }
   
-  return { level, className, score: averageLevel };
+  return { level, className, score: currentScore };
 }

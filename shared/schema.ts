@@ -32,6 +32,10 @@ export const users = pgTable("users", {
   email: varchar("email").notNull().unique(),
   team: varchar("team"),
   createdAt: timestamp("created_at").defaultNow(),
+  passwordHash: text("password_hash"),
+  emailVerified: boolean("email_verified").default(false),
+  provider: text("provider").$type<"email" | "google" | "apple">(),
+  providerId: text("provider_id"),
 });
 
 export const assessments = pgTable("assessments", {
@@ -132,3 +136,20 @@ export type InsertBehavior = z.infer<typeof insertBehaviorSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type InsertAssessmentScore = z.infer<typeof insertAssessmentScoreSchema>;
+
+export interface UserRegistration {
+  fullName: string;
+  email: string;
+  password: string;
+  team?: string;
+}
+
+export interface UserLogin {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+}

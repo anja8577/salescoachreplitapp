@@ -7,6 +7,7 @@ import ScoringDashboard from "@/components/scoring-dashboard";
 import SpiderGraph from "@/components/spider-graph";
 import ExportResults from "@/components/export-results";
 import UserSelectionModal from "@/components/user-selection-modal";
+import AuthModal from "@/components/auth-modal";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { Step, Substep, Behavior, User, Assessment as AssessmentType, AssessmentScore } from "@shared/schema";
@@ -21,8 +22,10 @@ export default function Assessment() {
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentType | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [checkedBehaviors, setCheckedBehaviors] = useState<Set<number>>(new Set());
   const [stepScores, setStepScores] = useState<{ [stepId: number]: number }>({});
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Fetch all steps with substeps and behaviors
   const { data: steps = [], isLoading } = useQuery<StepWithSubsteps[]>({
@@ -91,6 +94,37 @@ export default function Assessment() {
     // Optional: You could save this to the backend here if needed
     // This would require creating a new API endpoint for step-level scores
   };
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setShowAuthModal(true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const user = await response.json();
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+        } else {
+          localStorage.removeItem('auth_token');
+          setShowAuthModal(true);
+        }
+      } catch {
+        localStorage.removeItem('auth_token');
+        setShowAuthModal(true);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   // Update checked behaviors when scores change
   useEffect(() => {
@@ -187,9 +221,29 @@ export default function Assessment() {
     );
   }
 
+  const handleAuthSuccess = (user: User, token: string) => {
+    setCurrentUser(user);
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+  };
+
   const handleNewAssessment = () => {
     setShowUserModal(true);
   };
+
+  // Show authentication modal if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {showAuthModal && (
+          <AuthModal 
+            onAuthSuccess={handleAuthSuccess}
+            onClose={() => setShowAuthModal(false)}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -198,6 +252,7 @@ export default function Assessment() {
         totalBehaviors={totalBehaviors} 
         steps={steps}
         checkedBehaviors={checkedBehaviors}
+        stepScores={stepScores}
         onNewAssessment={handleNewAssessment}
       />
       
