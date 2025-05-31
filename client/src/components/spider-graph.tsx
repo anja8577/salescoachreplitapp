@@ -14,16 +14,15 @@ interface SpiderGraphProps {
 }
 
 export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }: SpiderGraphProps) {
-  const calculateStepScore = (step: StepWithSubsteps) => {
+  const calculateStepLevel = (step: StepWithSubsteps) => {
     // Use manual step score if set, otherwise calculate from behaviors
     const manualScore = stepScores[step.id];
     if (manualScore && manualScore > 0) {
-      // Convert manual level (1-4) to points similar to behavior scoring
-      const totalBehaviors = step.substeps.reduce((total, substep) => total + substep.behaviors.length, 0);
-      return manualScore * Math.ceil(totalBehaviors / 4);
+      return manualScore; // Return the actual level (1-4)
     }
     
-    return step.substeps.reduce((total, substep) => {
+    // Calculate level based on behaviors - use same logic as assessment-step component
+    const stepScore = step.substeps.reduce((total, substep) => {
       return total + substep.behaviors.reduce((substepTotal, behavior) => {
         if (checkedBehaviors.has(behavior.id)) {
           return substepTotal + behavior.proficiencyLevel;
@@ -31,6 +30,28 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
         return substepTotal;
       }, 0);
     }, 0);
+
+    if (stepScore === 0) return 0;
+
+    // Calculate level thresholds based on behavior distribution
+    let stepLevel1Count = 0, stepLevel2Count = 0, stepLevel3Count = 0, stepLevel4Count = 0;
+    step.substeps.forEach(substep => {
+      substep.behaviors.forEach(behavior => {
+        if (behavior.proficiencyLevel === 1) stepLevel1Count++;
+        else if (behavior.proficiencyLevel === 2) stepLevel2Count++;
+        else if (behavior.proficiencyLevel === 3) stepLevel3Count++;
+        else if (behavior.proficiencyLevel === 4) stepLevel4Count++;
+      });
+    });
+
+    const stepLevel1Max = stepLevel1Count * 1;
+    const stepLevel2Max = stepLevel1Max + (stepLevel2Count * 2);
+    const stepLevel3Max = stepLevel2Max + (stepLevel3Count * 3);
+
+    if (stepScore > stepLevel3Max) return 4; // Master
+    if (stepScore > stepLevel2Max) return 3; // Experienced  
+    if (stepScore > stepLevel1Max) return 2; // Qualified
+    return 1; // Learner
   };
 
   const calculateTargetScore = (step: StepWithSubsteps) => {

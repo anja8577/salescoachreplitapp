@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Share2, Download, Mail } from "lucide-react";
+import { Share2, Download, Home, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Step, Substep, Behavior, User } from "@shared/schema";
 
