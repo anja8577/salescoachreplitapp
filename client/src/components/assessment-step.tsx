@@ -154,25 +154,27 @@ export default function AssessmentStep({
                 {stepLevel}
               </span>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Select Level for Step</div>
-              <select
-                value={currentStepScore}
-                onChange={(e) => handleStepLevelChange(parseInt(e.target.value), parseInt(e.target.value) > 0)}
-                className="px-2 py-1 border border-gray-300 rounded text-xs"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <option value={0}>Auto</option>
-                <option value={1}>1 - Learner</option>
-                <option value={2}>2 - Qualified</option>
-                <option value={3}>3 - Experienced</option>
-                <option value={4}>4 - Master</option>
-              </select>
+            <div className="flex items-center space-x-2">
+              <div>
+                <div className="text-sm text-gray-500">Scored Level</div>
+                <select
+                  value={currentStepScore}
+                  onChange={(e) => handleStepLevelChange(parseInt(e.target.value), parseInt(e.target.value) > 0)}
+                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <option value={0}>Auto</option>
+                  <option value={1}>1 - Learner</option>
+                  <option value={2}>2 - Qualified</option>
+                  <option value={3}>3 - Experienced</option>
+                  <option value={4}>4 - Master</option>
+                </select>
+              </div>
+              <ChevronDown 
+                className={`text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                size={20}
+              />
             </div>
-            <ChevronDown 
-              className={`text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-              size={20}
-            />
           </div>
         </div>
       </div>

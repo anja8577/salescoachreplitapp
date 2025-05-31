@@ -20,7 +20,7 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
     if (manualScore && manualScore > 0) {
       return manualScore; // Return the actual level (1-4)
     }
-    
+
     // Calculate level based on behaviors - use same logic as assessment-step component
     const stepScore = step.substeps.reduce((total, substep) => {
       return total + substep.behaviors.reduce((substepTotal, behavior) => {
@@ -63,7 +63,7 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
 
   const data = steps.map(step => {
     const actualLevel = calculateStepLevel(step);
-    
+
     return {
       step: step.title,
       actual: actualLevel,
@@ -112,15 +112,6 @@ export default function SpiderGraph({ steps, checkedBehaviors, stepScores = {} }
             <Legend />
           </RadarChart>
         </ResponsiveContainer>
-      </div>
-      
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        {data.map((item, index) => (
-          <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-            <span className="font-medium">{item.step}:</span>
-            <span className="text-blue-600">Avg: {item.averageActual.toFixed(1)}/4 (Benchmark: 3.0)</span>
-          </div>
-        ))}
       </div>
     </div>
   );
