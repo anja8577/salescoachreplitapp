@@ -16,6 +16,7 @@ export default function Profile() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({ fullName: "", email: "", team: "" });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [teamFilter, setTeamFilter] = useState<string | null>(null);
 
   // Fetch all users
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
@@ -146,6 +147,18 @@ export default function Profile() {
     ? assessments.filter(assessment => assessment.userId.toString() === selectedUserId)
     : [];
 
+  // Filter users by team
+  const filteredUsers = teamFilter 
+    ? users.filter(user => user.team === teamFilter)
+    : users;
+
+  // Get unique teams for filter dropdown
+  const teamSet = new Set<string>();
+  users.forEach(user => {
+    if (user.team) teamSet.add(user.team);
+  });
+  const uniqueTeams = Array.from(teamSet);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
@@ -227,6 +240,22 @@ export default function Profile() {
                 <CardTitle>Existing Users</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-4">
+                  <Label htmlFor="teamFilter">Filter by Team</Label>
+                  <Select value={teamFilter || ""} onValueChange={(value) => setTeamFilter(value || null)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All teams" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All teams</SelectItem>
+                      {uniqueTeams.map((team) => (
+                        <SelectItem key={team} value={team}>
+                          {team}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 {usersLoading ? (
                   <div className="text-center py-8">Loading users...</div>
                 ) : users.length === 0 ? (
@@ -333,8 +362,8 @@ export default function Profile() {
                       const overallScore = calculateOverallScore(assessment);
                       const stepScores = calculateStepScores(assessment);
                       const stepNames = [
-                        "Preparation", "Opening", "Information Exchange", 
-                        "Positioning", "Objection Resolution", "Asking for Commitment", "Follow up"
+                        "Preparation", "Opening", "Need Dialogue", 
+                        "Solution Dialog", "Objection Resolution", "Asking for Commitment", "Follow up"
                       ];
                       
                       return (
