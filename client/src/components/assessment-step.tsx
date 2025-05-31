@@ -34,6 +34,8 @@ export default function AssessmentStep({
     return total + substep.behaviors.filter(behavior => checkedBehaviors.has(behavior.id)).length;
   }, 0);
 
+  const currentStepScore = stepScores[step.id] || 0;
+
   // Get manual step score or calculate automatic level
   const getStepLevel = () => {
     const manualLevel = currentStepScore;
@@ -114,8 +116,6 @@ export default function AssessmentStep({
     };
     return configs[level as keyof typeof configs];
   };
-
-  const currentStepScore = stepScores[step.id] || 0;
 
   const handleStepLevelChange = (level: number, checked: boolean) => {
     if (onStepScoreChange) {
