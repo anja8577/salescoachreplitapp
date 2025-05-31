@@ -117,10 +117,25 @@ export default function Assessment() {
   }
 
   const handleUserSelected = async (userId: number) => {
-    // Fetch user details (simplified for now)
-    setCurrentUser({ id: userId, fullName: "", email: "", team: null, createdAt: new Date() } as User);
-    const title = `Assessment ${new Date().toLocaleDateString()}`;
-    createAssessmentMutation.mutate({ title, userId });
+    try {
+      // Fetch user details from API
+      const response = await fetch(`/api/users/${userId}`);
+      if (response.ok) {
+        const user = await response.json();
+        setCurrentUser(user);
+      } else {
+        // Fallback - set basic user info
+        setCurrentUser({ id: userId, fullName: "User", email: "", team: null, createdAt: new Date() } as User);
+      }
+      
+      const title = `Assessment ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+      createAssessmentMutation.mutate({ title, userId });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      setCurrentUser({ id: userId, fullName: "User", email: "", team: null, createdAt: new Date() } as User);
+      const title = `Assessment ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+      createAssessmentMutation.mutate({ title, userId });
+    }
   };
 
   // Show user selection if no user is selected
