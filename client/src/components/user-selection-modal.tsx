@@ -35,6 +35,11 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
     enabled: open,
   });
 
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/auth/me"],
+    enabled: open,
+  });
+
   const form = useForm<CreateUserForm>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -75,7 +80,7 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Select or Create User</DialogTitle>
+          <DialogTitle>Select Person to Assess</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -85,14 +90,14 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
               onClick={() => setMode("select")}
               className="flex-1"
             >
-              Existing User
+              Select Assessee
             </Button>
             <Button
               variant={mode === "create" ? "default" : "outline"}
               onClick={() => setMode("create")}
               className="flex-1"
             >
-              Create New User
+              Add New Person
             </Button>
           </div>
 
@@ -107,7 +112,10 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
                   <SelectContent>
                     {users.map((user: User) => (
                       <SelectItem key={user.id} value={user.id.toString()}>
-                        {user.fullName} ({user.email})
+                        {currentUser && user.id === currentUser.id 
+                          ? `Self-Assessment (${user.fullName})` 
+                          : `${user.fullName} (${user.email})`
+                        }
                       </SelectItem>
                     ))}
                   </SelectContent>
