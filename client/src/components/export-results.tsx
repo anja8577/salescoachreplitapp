@@ -16,10 +16,11 @@ interface ExportResultsProps {
   steps: StepWithSubsteps[];
   checkedBehaviors: Set<number>;
   totalScore: number;
-  user: User;
+  user: User; // This is the assessee (person being assessed)
   assessmentTitle: string;
   stepScores?: { [stepId: number]: number };
   onSaveAssessment?: () => void;
+  assessor?: User; // The person conducting the assessment
 }
 
 export default function ExportResults({ 
@@ -29,7 +30,8 @@ export default function ExportResults({
   user, 
   assessmentTitle,
   stepScores = {},
-  onSaveAssessment
+  onSaveAssessment,
+  assessor
 }: ExportResultsProps) {
   const { toast } = useToast();
   const [isSharing, setIsSharing] = useState(false);
@@ -199,17 +201,37 @@ The complete PDF report has been downloaded to your device for attachment.`;
 
       let yPosition = 40;
 
-      // Set up 2-column layout
+      // Set up improved layout with session info on left (1/3) and spider graph on right (2/3)
       const leftColumnX = 20;
-      const rightColumnX = 110;
+      const leftColumnWidth = 60; // 1/3 of page width
+      const rightColumnX = 85;     // Start right column earlier
+      const rightColumnWidth = 110; // 2/3 of page width for spider graph
 
-      // Add user information to the left column
-      pdf.setFontSize(11);
-      pdf.text(`Name: ${user.fullName}`, leftColumnX, yPosition);
-      pdf.text(`Email: ${user.email}`, leftColumnX, yPosition + 8);
-      if (user.team) pdf.text(`Team: ${user.team}`, leftColumnX, yPosition + 16);
-      pdf.text(`Date: ${new Date().toLocaleDateString()}`, leftColumnX, yPosition + 24);
-      pdf.text(`Time: ${new Date().toLocaleTimeString()}`, leftColumnX, yPosition + 32);
+      // Format date and time in European format
+      const now = new Date();
+      const dateEU = now.toLocaleDateString('de-DE'); // DD.MM.YYYY format
+      const timeEU = now.toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit' }); // HH:MM format
+
+      // Add session information to the left column with smaller font
+      pdf.setFontSize(9);
+      let leftYPos = yPosition;
+      
+      if (assessor) {
+        pdf.text(`Assessor: ${assessor.fullName}`, leftColumnX, leftYPos);
+        leftYPos += 8;
+      }
+      
+      pdf.text(`Assessee: ${user.fullName}`, leftColumnX, leftYPos);
+      leftYPos += 8;
+      
+      if (user.team) {
+        pdf.text(`Team: ${user.team}`, leftColumnX, leftYPos);
+        leftYPos += 8;
+      }
+      
+      pdf.text(`Date: ${dateEU}`, leftColumnX, leftYPos);
+      leftYPos += 8;
+      pdf.text(`Time: ${timeEU}`, leftColumnX, leftYPos);
 
       // Calculate overall score using same logic as assessment header
       const stepLevels = steps.map(step => {
