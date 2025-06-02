@@ -21,6 +21,7 @@ interface ExportResultsProps {
   stepScores?: { [stepId: number]: number };
   onSaveAssessment?: () => void;
   assessor?: User; // The person conducting the assessment
+  context?: string; // Assessment context
 }
 
 export default function ExportResults({ 
@@ -31,7 +32,8 @@ export default function ExportResults({
   assessmentTitle,
   stepScores = {},
   onSaveAssessment,
-  assessor
+  assessor,
+  context = ''
 }: ExportResultsProps) {
   const { toast } = useToast();
   const [isSharing, setIsSharing] = useState(false);
@@ -233,6 +235,21 @@ The complete PDF report has been downloaded to your device for attachment.`;
       leftYPos += 8;
       pdf.text(`Time: ${timeEU}`, leftColumnX, leftYPos);
 
+      // Add context below assessment data if provided
+      if (context) {
+        leftYPos += 12;
+        pdf.setFontSize(8);
+        pdf.setTextColor(60, 60, 60);
+        pdf.text('Context:', leftColumnX, leftYPos);
+        leftYPos += 6;
+        
+        const contextLines = pdf.splitTextToSize(context, leftColumnWidth - 5);
+        contextLines.forEach((line: string) => {
+          pdf.text(line, leftColumnX, leftYPos);
+          leftYPos += 4;
+        });
+      }
+
       // Calculate overall score using same logic as assessment header
       const stepLevels = steps.map(step => {
         // Use manual step score if set, otherwise calculate from behaviors
@@ -300,8 +317,10 @@ The complete PDF report has been downloaded to your device for attachment.`;
                                      currentScore >= 2.5 ? 'Experienced' : 
                                      currentScore >= 1.5 ? 'Qualified' : 'Learner';
       
-      pdf.setFontSize(12);
-      pdf.text(`Proficiency Level: ${overallProficiencyLevel}`, leftColumnX, yPosition + 45);
+      // Add proficiency level above the spider graph with same font size as session data
+      pdf.setFontSize(9);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`Proficiency Level: ${overallProficiencyLevel}`, rightColumnX, 30);
 
       // Capture and add spider graph to the right column with larger size
       try {

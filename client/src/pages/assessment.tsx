@@ -28,6 +28,7 @@ export default function Assessment() {
   const [stepScores, setStepScores] = useState<{ [stepId: number]: number }>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [assesseeName, setAssesseeName] = useState<string>('');
+  const [context, setContext] = useState<string>('');
 
   // Fetch all steps with substeps and behaviors
   const { data: steps = [], isLoading } = useQuery<StepWithSubsteps[]>({
@@ -291,6 +292,21 @@ export default function Assessment() {
       />
       
       <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+        {/* Context Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <label htmlFor="context" className="block text-sm font-medium text-gray-700 mb-2">
+            Context
+          </label>
+          <textarea
+            id="context"
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+            placeholder="Enter assessment context, background information, or specific focus areas..."
+            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            rows={3}
+          />
+        </div>
+
         {/* Assessment Steps - Mobile Optimized */}
         <div className="space-y-4">
           {steps.map((step) => (
@@ -318,6 +334,7 @@ export default function Assessment() {
             assessmentTitle={currentAssessment.title}
             stepScores={stepScores}
             assessor={assessor}
+            context={context}
             onSaveAssessment={() => {
               // Auto-save functionality - assessment is already being saved in real-time
               alert('Assessment saved successfully!');
