@@ -124,7 +124,8 @@ export class MemStorage implements IStorage {
 
   async getUniqueTeams(): Promise<string[]> {
     const teams = new Set<string>();
-    for (const user of this.users.values()) {
+    const userList = Array.from(this.users.values());
+    for (const user of userList) {
       if (user.team) {
         teams.add(user.team);
       }
@@ -1050,7 +1051,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
+    const [newUser] = await db.insert(users).values({
+      ...user,
+      passwordHash: user.passwordHash || null,
+      emailVerified: user.emailVerified || false,
+      provider: user.provider || null,
+      providerId: user.providerId || null
+    }).returning();
     return newUser;
   }
 

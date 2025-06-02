@@ -72,6 +72,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get unique teams for dropdown suggestions
+  app.get("/api/teams", async (req, res) => {
+    try {
+      const teams = await storage.getUniqueTeams();
+      res.json(teams);
+    } catch (error) {
+      console.error("Failed to fetch teams:", error);
+      res.status(500).json({ message: "Failed to fetch teams" });
+    }
+  });
+
   app.post("/api/users", async (req, res) => {
     try {
       const validatedData = insertUserSchema.parse(req.body);

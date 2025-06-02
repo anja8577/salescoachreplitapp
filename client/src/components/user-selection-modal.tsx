@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { insertUserSchema } from "@shared/schema";
 import type { User } from "@shared/schema";
 import { z } from "zod";
+import TeamInput from "@/components/team-input";
 
 interface UserSelectionModalProps {
   open: boolean;
@@ -167,7 +168,11 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
                     <FormItem>
                       <FormLabel>Team</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter team (optional)" {...field} value={field.value || ""} />
+                        <TeamInput 
+                          value={field.value || ""} 
+                          onChange={field.onChange}
+                          placeholder="Enter team (optional)"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
