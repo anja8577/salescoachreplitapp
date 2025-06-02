@@ -220,63 +220,59 @@ The complete PDF report has been downloaded to your device for attachment.`;
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(16);
       
-      // Left-aligned: "SalesCoach Report"
+      // First row in blue header
       pdf.text('SalesCoach Report', 20, 17);
       
-      // Right-aligned: "Proficiency level"
       const proficiencyText = `Proficiency level: ${overallProficiencyLevel}`;
       const proficiencyWidth = pdf.getTextWidth(proficiencyText);
       pdf.text(proficiencyText, 190 - proficiencyWidth, 17);
 
+      // Second row in blue header - smaller font
+      pdf.setFontSize(10);
+      
       // Format date and time in European format
       const now = new Date();
       const dateEU = now.toLocaleDateString('de-DE');
       const timeEU = now.toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-      // Below header: Coach/Coachee names and date/time
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(10);
-      
-      let yPosition = 35;
-      
       // Left side: Coach and Coachee names
-      if (assessor) {
-        pdf.text(`Coach: ${assessor.fullName}`, 20, yPosition);
-      }
-      pdf.text(`Coachee: ${user.fullName}`, 20, yPosition + 6);
+      const coachText = assessor ? `Coach: ${assessor.fullName}` : '';
+      const coacheeText = `Coachee: ${user.fullName}`;
+      pdf.text(coachText, 20, 25);
+      pdf.text(coacheeText, 80, 25);
       
-      // Right side: Date and time
+      // Right side: Date and time (no labels)
       const dateTimeText = `${dateEU} ${timeEU}`;
       const dateTimeWidth = pdf.getTextWidth(dateTimeText);
-      pdf.text(dateTimeText, 190 - dateTimeWidth, yPosition + 3);
+      pdf.text(dateTimeText, 190 - dateTimeWidth, 25);
 
-      yPosition = 55;
+      let yPosition = 45;
 
       // Set up new layout: Context box on left, spider graph on right
       const leftColumnX = 20;
       const leftColumnWidth = 70; // Width for context box
-      const rightColumnX = 100;    // Start right column for spider graph
-      const rightColumnWidth = 100; // Width for spider graph
+      const rightColumnX = 95;    // Start right column for spider graph (moved left)
+      const rightColumnWidth = 110; // Wider spider graph
 
-      // Context section styled like text boxes at bottom
+      // Context section - positioned higher and ending above step boxes
       if (context) {
-        pdf.setFontSize(12);
         pdf.setTextColor(0, 0, 0);
-        pdf.text('Context:', leftColumnX, yPosition);
+        pdf.setFontSize(9);
+        pdf.text('Context:', leftColumnX, yPosition - 5);
         
-        // Draw grey border box (vertical layout)
+        // Draw grey border box - shorter height to end above step boxes
         pdf.setDrawColor(180, 180, 180);
         pdf.setLineWidth(0.5);
-        pdf.rect(leftColumnX, yPosition + 3, leftColumnWidth, 60);
+        pdf.rect(leftColumnX, yPosition - 2, leftColumnWidth, 50);
         
         pdf.setFontSize(10);
         const contextLines = pdf.splitTextToSize(context, leftColumnWidth - 5);
         contextLines.forEach((line: string, index: number) => {
-          pdf.text(line, leftColumnX + 2, yPosition + 8 + (index * 5));
+          pdf.text(line, leftColumnX + 2, yPosition + 3 + (index * 5));
         });
       }
 
-      // Capture and add spider graph to the right column with larger size
+      // Capture and add spider graph to the right column - wider and starting from header area
       try {
         const spiderElement = document.querySelector('.recharts-wrapper') || document.querySelector('svg');
         if (spiderElement) {
@@ -287,8 +283,8 @@ The complete PDF report has been downloaded to your device for attachment.`;
           });
           const imgData = canvas.toDataURL('image/png');
 
-          // Make spider graph larger (2/3 of page width and taller)
-          pdf.addImage(imgData, 'PNG', rightColumnX, 35, rightColumnWidth, 80);
+          // Make spider graph wider and start higher
+          pdf.addImage(imgData, 'PNG', rightColumnX, 30, rightColumnWidth, 75);
         }
       } catch (error) {
         console.log('Could not capture spider graph:', error);
