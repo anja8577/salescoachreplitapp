@@ -42,8 +42,15 @@ export default function Assessment() {
   const createAssessmentMutation = useMutation<AssessmentType, Error, { title: string; userId: number; assesseeName: string }>({
     mutationFn: async ({ title, userId, assesseeName }) => {
       console.log("Creating assessment with:", { title, userId, assesseeName });
-      const res = await apiRequest("POST", "/api/assessments", { title, userId, assesseeName });
-      return await res.json();
+      try {
+        const res = await apiRequest("POST", "/api/assessments", { title, userId, assesseeName });
+        const data = await res.json();
+        console.log("Assessment API response:", data);
+        return data;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
     onSuccess: (assessment: AssessmentType) => {
       console.log("Assessment created successfully:", assessment);
@@ -53,6 +60,11 @@ export default function Assessment() {
     },
     onError: (error) => {
       console.error("Assessment creation failed:", error);
+      console.error("Error details:", { 
+        message: error.message, 
+        stack: error.stack,
+        name: error.name 
+      });
       alert(`Failed to create assessment: ${error.message}`);
     },
   });
