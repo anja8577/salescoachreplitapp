@@ -21,6 +21,7 @@ type StepWithSubsteps = Step & {
 export default function Assessment() {
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentType | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [assessor, setAssessor] = useState<User | null>(null); // The logged-in user conducting the assessment
   const [showUserModal, setShowUserModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [checkedBehaviors, setCheckedBehaviors] = useState<Set<number>>(new Set());
@@ -131,7 +132,7 @@ export default function Assessment() {
 
         if (response.ok) {
           const user = await response.json();
-          setCurrentUser(user);
+          setAssessor(user); // Store the logged-in user as the assessor
           setIsAuthenticated(true);
         } else {
           localStorage.removeItem('auth_token');
@@ -249,7 +250,7 @@ export default function Assessment() {
   }
 
   const handleAuthSuccess = (user: User, token: string) => {
-    setCurrentUser(user);
+    setAssessor(user); // Store the logged-in user as the assessor
     setIsAuthenticated(true);
     setShowAuthModal(false);
   };

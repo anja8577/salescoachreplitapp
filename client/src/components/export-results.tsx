@@ -303,18 +303,19 @@ The complete PDF report has been downloaded to your device for attachment.`;
       pdf.setFontSize(12);
       pdf.text(`Proficiency Level: ${overallProficiencyLevel}`, leftColumnX, yPosition + 45);
 
-      // Capture and add spider graph to the right column
+      // Capture and add spider graph to the right column with larger size
       try {
         const spiderElement = document.querySelector('.recharts-wrapper') || document.querySelector('svg');
         if (spiderElement) {
           const canvas = await html2canvas(spiderElement as HTMLElement, {
             backgroundColor: '#ffffff',
-            scale: 2,
+            scale: 3, // Higher scale for better quality
+            useCORS: true,
           });
           const imgData = canvas.toDataURL('image/png');
 
-          // Adjust position and size as needed
-          pdf.addImage(imgData, 'PNG', rightColumnX, 40, 80, 60);
+          // Make spider graph larger (2/3 of page width and taller)
+          pdf.addImage(imgData, 'PNG', rightColumnX, 35, rightColumnWidth, 80);
         }
       } catch (error) {
         console.log('Could not capture spider graph:', error);
@@ -451,6 +452,55 @@ The complete PDF report has been downloaded to your device for attachment.`;
             });
           }
         }
+
+        // Add signature section at the bottom
+        if (yPosition > 220) {
+          pdf.addPage();
+          yPosition = 20;
+        } else {
+          yPosition += 20;
+        }
+
+        // Signature section header
+        pdf.setFillColor(240, 240, 240);
+        pdf.rect(15, yPosition - 5, 180, 8, 'F');
+        pdf.setTextColor(0, 0, 0);
+        pdf.setFontSize(12);
+        pdf.text('Electronic Signatures', 20, yPosition);
+        yPosition += 15;
+
+        // Assessor signature field
+        if (assessor) {
+          pdf.setFontSize(10);
+          pdf.text('Assessor Signature:', 20, yPosition);
+          pdf.setDrawColor(150, 150, 150);
+          pdf.setLineWidth(0.5);
+          pdf.line(55, yPosition + 2, 100, yPosition + 2);
+          pdf.text('Date:', 110, yPosition);
+          pdf.line(125, yPosition + 2, 160, yPosition + 2);
+          yPosition += 8;
+          pdf.setFontSize(8);
+          pdf.text(`${assessor.fullName}`, 55, yPosition);
+          yPosition += 15;
+        }
+
+        // Assessee signature field
+        pdf.setFontSize(10);
+        pdf.text('Assessee Signature:', 20, yPosition);
+        pdf.setDrawColor(150, 150, 150);
+        pdf.setLineWidth(0.5);
+        pdf.line(55, yPosition + 2, 100, yPosition + 2);
+        pdf.text('Date:', 110, yPosition);
+        pdf.line(125, yPosition + 2, 160, yPosition + 2);
+        yPosition += 8;
+        pdf.setFontSize(8);
+        pdf.text(`${user.fullName}`, 55, yPosition);
+
+        // Add note about electronic signature
+        yPosition += 15;
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text('Note: This document supports electronic signatures for digital approval.', 20, yPosition);
 
       return pdf;
     } catch (error) {
