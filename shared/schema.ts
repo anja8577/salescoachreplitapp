@@ -32,6 +32,7 @@ export const users = pgTable("users", {
   email: varchar("email").notNull().unique(),
   team: varchar("team"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
   passwordHash: text("password_hash"),
   emailVerified: boolean("email_verified").default(false),
   provider: text("provider").$type<"email" | "google" | "apple">(),

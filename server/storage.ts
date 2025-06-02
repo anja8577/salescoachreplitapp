@@ -4,7 +4,6 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores
 } from "@shared/schema";
 import { db } from "./db";
-import type { Step, Substep, Behavior, User, Assessment, AssessmentScore, InsertStep, InsertSubstep, InsertBehavior, InsertUser, InsertAssessment, InsertAssessmentScore } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
@@ -25,6 +24,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUser(id: number, user: Partial<User>): Promise<User>;
   deleteUser(id: number): Promise<void>;
+  getUniqueTeams(): Promise<string[]>;
 
   // Assessments
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
@@ -120,6 +120,16 @@ export class MemStorage implements IStorage {
 
   async deleteUser(id: number): Promise<void> {
     this.users.delete(id);
+  }
+
+  async getUniqueTeams(): Promise<string[]> {
+    const teams = new Set<string>();
+    for (const user of this.users.values()) {
+      if (user.team) {
+        teams.add(user.team);
+      }
+    }
+    return Array.from(teams);
   }
 
   async createAssessment(assessment: InsertAssessment): Promise<Assessment> {
@@ -1056,10 +1066,20 @@ export class DatabaseStorage implements IStorage {
 
   async updateUser(id: number, userData: Partial<User>): Promise<User> {
     const [updatedUser] = await db.update(users)
-      .set(userData)
+      .set({
+        ...userData,
+        updatedAt: new Date()
+      })
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+
+  async getUniqueTeams(): Promise<string[]> {
+    const result = await db.selectDistinct({ team: users.team })
+      .from(users)
+      .where(eq(users.team, users.team)); // Only get non-null teams
+    return result.map(r => r.team).filter(Boolean) as string[];
   }
 
   async deleteUser(id: number): Promise<void> {
