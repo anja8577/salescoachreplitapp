@@ -16,11 +16,11 @@ interface ExportResultsProps {
   steps: StepWithSubsteps[];
   checkedBehaviors: Set<number>;
   totalScore: number;
-  user: User; // This is the assessee (person being assessed)
+  user: User; // This is the coachee (person being coached)
   assessmentTitle: string;
   stepScores?: { [stepId: number]: number };
   onSaveAssessment?: () => void;
-  assessor?: User; // The person conducting the assessment
+  assessor?: User; // The coach conducting the assessment
   context?: string; // Assessment context
 }
 

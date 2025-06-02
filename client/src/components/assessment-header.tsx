@@ -2,6 +2,7 @@ import { calculateOverallProficiency } from "@/lib/utils";
 import type { Step, Substep, Behavior } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import SalesCoachHeader from "@/components/sales-coach-header";
 
 type StepWithSubsteps = Step & {
   substeps: (Substep & {

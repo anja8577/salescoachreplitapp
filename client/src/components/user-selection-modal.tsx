@@ -81,7 +81,7 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Select Person to be assessed</DialogTitle>
+          <DialogTitle>Select Coachee</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -91,24 +91,23 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
               onClick={() => setMode("select")}
               className="flex-1"
             >
-              Select Assessee
+              Select Existing Coachee
             </Button>
             <Button
               variant={mode === "create" ? "default" : "outline"}
               onClick={() => setMode("create")}
               className="flex-1"
             >
-              Add New Person
+              Add New Coachee
             </Button>
           </div>
 
           {mode === "select" ? (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="user-select">Select User</Label>
                 <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a user..." />
+                    <SelectValue placeholder="Choose a coachee..." />
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((user: User) => (
