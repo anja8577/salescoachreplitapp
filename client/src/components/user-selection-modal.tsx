@@ -80,7 +80,7 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Select Person to Assess</DialogTitle>
+          <DialogTitle>Select Person to be assessed</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">

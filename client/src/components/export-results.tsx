@@ -188,77 +188,13 @@ The complete PDF report has been downloaded to your device for attachment.`;
     try {
       const pdf = new jsPDF();
 
-      // Header with colorful design
-      pdf.setFillColor(59, 130, 246); // Blue background
-      pdf.rect(0, 0, 210, 25, 'F');
-
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(16);
-      const headerText = `Selling Skills Assessment Report`;
-      pdf.text(headerText, 20, 17);
-
-      // User information section
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFontSize(14);
-
-      let yPosition = 40;
-
-      // Set up improved layout with session info on left (1/3) and spider graph on right (2/3)
-      const leftColumnX = 20;
-      const leftColumnWidth = 60; // 1/3 of page width
-      const rightColumnX = 85;     // Start right column earlier
-      const rightColumnWidth = 110; // 2/3 of page width for spider graph
-
-      // Format date and time in European format
-      const now = new Date();
-      const dateEU = now.toLocaleDateString('de-DE'); // DD.MM.YYYY format
-      const timeEU = now.toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit' }); // HH:MM format
-
-      // Add session information to the left column with smaller font
-      pdf.setFontSize(9);
-      let leftYPos = yPosition;
-      
-      if (assessor) {
-        pdf.text(`Assessor: ${assessor.fullName}`, leftColumnX, leftYPos);
-        leftYPos += 8;
-      }
-      
-      pdf.text(`Assessee: ${user.fullName}`, leftColumnX, leftYPos);
-      leftYPos += 8;
-      
-      if (user.team) {
-        pdf.text(`Team: ${user.team}`, leftColumnX, leftYPos);
-        leftYPos += 8;
-      }
-      
-      pdf.text(`Date: ${dateEU}`, leftColumnX, leftYPos);
-      leftYPos += 8;
-      pdf.text(`Time: ${timeEU}`, leftColumnX, leftYPos);
-
-      // Add context below assessment data if provided
-      if (context) {
-        leftYPos += 12;
-        pdf.setFontSize(8);
-        pdf.setTextColor(60, 60, 60);
-        pdf.text('Context:', leftColumnX, leftYPos);
-        leftYPos += 6;
-        
-        const contextLines = pdf.splitTextToSize(context, leftColumnWidth - 5);
-        contextLines.forEach((line: string) => {
-          pdf.text(line, leftColumnX, leftYPos);
-          leftYPos += 4;
-        });
-      }
-
-      // Calculate overall score using same logic as assessment header
+      // Calculate overall score for header
       const stepLevels = steps.map(step => {
-        // Use manual step score if set, otherwise calculate from behaviors
         const manualScore = stepScores[step.id];
         if (manualScore && manualScore > 0) {
-          return manualScore; // Return the actual level (1-4)
+          return manualScore;
         }
         
-        // Calculate automatic level based on behaviors
         const stepScore = step.substeps.reduce((total, substep) => {
           return total + substep.behaviors.reduce((substepTotal, behavior) => {
             if (checkedBehaviors.has(behavior.id)) {
@@ -269,58 +205,76 @@ The complete PDF report has been downloaded to your device for attachment.`;
         }, 0);
 
         if (stepScore === 0) return 0;
-
-        // Use same threshold logic as assessment-step.tsx
-        const stepTitle = step.title.toLowerCase();
-        const customThresholds: { [key: string]: { qualified: number; experienced: number; master: number } } = {
-          "analyzing results": { qualified: 2, experienced: 3, master: 4 },
-          "maintaining rapport": { qualified: 3, experienced: 4, master: 5 },
-          "asking for commitment": { qualified: 2, experienced: 3, master: 2 },
-          "summarizing": { qualified: 2, experienced: 3, master: 2 },
-          "objection handling": { qualified: 2, experienced: 3, master: 4 },
-          "active listening": { qualified: 2, experienced: 2, master: 3 }
-        };
-
-        const customKey = Object.keys(customThresholds).find(key => stepTitle.includes(key));
-        if (customKey) {
-          const thresholds = customThresholds[customKey];
-          if (stepScore >= thresholds.master) return 4;
-          if (stepScore >= thresholds.experienced) return 3;
-          if (stepScore >= thresholds.qualified) return 2;
-          return 1;
-        }
-
-        // Default calculation
-        let stepLevel1Count = 0, stepLevel2Count = 0, stepLevel3Count = 0, stepLevel4Count = 0;
-        step.substeps.forEach(substep => {
-          substep.behaviors.forEach(behavior => {
-            if (behavior.proficiencyLevel === 1) stepLevel1Count++;
-            else if (behavior.proficiencyLevel === 2) stepLevel2Count++;
-            else if (behavior.proficiencyLevel === 3) stepLevel3Count++;
-            else if (behavior.proficiencyLevel === 4) stepLevel4Count++;
-          });
-        });
-
-        const stepLevel1Max = stepLevel1Count * 1;
-        const stepLevel2Max = stepLevel1Max + (stepLevel2Count * 2);
-        const stepLevel3Max = stepLevel2Max + (stepLevel3Count * 3);
-
-        if (stepScore > stepLevel3Max) return 4;
-        if (stepScore > stepLevel2Max) return 3;
-        if (stepScore > stepLevel1Max) return 2;
-        return 1;
+        return stepScore > 15 ? 4 : stepScore > 10 ? 3 : stepScore > 5 ? 2 : 1;
       });
 
       const currentScore = stepLevels.reduce((sum, level) => sum + level, 0) / steps.length;
-
       const overallProficiencyLevel = currentScore >= 3.5 ? 'Master' : 
                                      currentScore >= 2.5 ? 'Experienced' : 
                                      currentScore >= 1.5 ? 'Qualified' : 'Learner';
+
+      // Header with new design
+      pdf.setFillColor(59, 130, 246); // Blue background
+      pdf.rect(0, 0, 210, 25, 'F');
+
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
       
-      // Add proficiency level above the spider graph with same font size as session data
-      pdf.setFontSize(9);
+      // Left-aligned: "SalesCoach Report"
+      pdf.text('SalesCoach Report', 20, 17);
+      
+      // Right-aligned: "Proficiency level"
+      const proficiencyText = `Proficiency level: ${overallProficiencyLevel}`;
+      const proficiencyWidth = pdf.getTextWidth(proficiencyText);
+      pdf.text(proficiencyText, 190 - proficiencyWidth, 17);
+
+      // Format date and time in European format
+      const now = new Date();
+      const dateEU = now.toLocaleDateString('de-DE');
+      const timeEU = now.toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+      // Below header: Coach/Coachee names and date/time
       pdf.setTextColor(0, 0, 0);
-      pdf.text(`Proficiency Level: ${overallProficiencyLevel}`, rightColumnX, 30);
+      pdf.setFontSize(10);
+      
+      let yPosition = 35;
+      
+      // Left side: Coach and Coachee names
+      if (assessor) {
+        pdf.text(`Coach: ${assessor.fullName}`, 20, yPosition);
+      }
+      pdf.text(`Coachee: ${user.fullName}`, 20, yPosition + 6);
+      
+      // Right side: Date and time
+      const dateTimeText = `${dateEU} ${timeEU}`;
+      const dateTimeWidth = pdf.getTextWidth(dateTimeText);
+      pdf.text(dateTimeText, 190 - dateTimeWidth, yPosition + 3);
+
+      yPosition = 55;
+
+      // Set up new layout: Context box on left, spider graph on right
+      const leftColumnX = 20;
+      const leftColumnWidth = 70; // Width for context box
+      const rightColumnX = 100;    // Start right column for spider graph
+      const rightColumnWidth = 100; // Width for spider graph
+
+      // Context section styled like text boxes at bottom
+      if (context) {
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Context:', leftColumnX, yPosition);
+        
+        // Draw grey border box (vertical layout)
+        pdf.setDrawColor(180, 180, 180);
+        pdf.setLineWidth(0.5);
+        pdf.rect(leftColumnX, yPosition + 3, leftColumnWidth, 60);
+        
+        pdf.setFontSize(10);
+        const contextLines = pdf.splitTextToSize(context, leftColumnWidth - 5);
+        contextLines.forEach((line: string, index: number) => {
+          pdf.text(line, leftColumnX + 2, yPosition + 8 + (index * 5));
+        });
+      }
 
       // Capture and add spider graph to the right column with larger size
       try {
