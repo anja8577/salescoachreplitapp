@@ -420,57 +420,67 @@ The complete PDF report has been downloaded to your device for attachment.`;
           yPosition += 5;
         });
 
-        // Add text input sections
-        if (keyObservations || developmentFocus || nextSteps) {
-          if (yPosition > 250) {
-            pdf.addPage();
-            yPosition = 20;
-          }
-
+        // Always add text input sections with grey borders (even if empty)
+        if (yPosition > 220) {
+          pdf.addPage();
+          yPosition = 20;
+        } else {
           yPosition += 10;
-
-          if (keyObservations) {
-            pdf.setFontSize(12);
-            pdf.setTextColor(0, 0, 0);
-            pdf.text('Key Observations:', 20, yPosition);
-            yPosition += 8;
-            
-            pdf.setFontSize(10);
-            const obsLines = pdf.splitTextToSize(keyObservations, 170);
-            obsLines.forEach((line: string) => {
-              pdf.text(line, 20, yPosition);
-              yPosition += 5;
-            });
-            yPosition += 5;
-          }
-
-          if (developmentFocus) {
-            pdf.setFontSize(12);
-            pdf.text('Development Focus Areas:', 20, yPosition);
-            yPosition += 8;
-            
-            pdf.setFontSize(10);
-            const devLines = pdf.splitTextToSize(developmentFocus, 170);
-            devLines.forEach((line: string) => {
-              pdf.text(line, 20, yPosition);
-              yPosition += 5;
-            });
-            yPosition += 5;
-          }
-
-          if (nextSteps) {
-            pdf.setFontSize(12);
-            pdf.text('Next Steps:', 20, yPosition);
-            yPosition += 8;
-            
-            pdf.setFontSize(10);
-            const stepLines = pdf.splitTextToSize(nextSteps, 170);
-            stepLines.forEach((line: string) => {
-              pdf.text(line, 20, yPosition);
-              yPosition += 5;
-            });
-          }
         }
+
+        // Key Observations section (always shown)
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Key Observations:', 20, yPosition);
+        yPosition += 8;
+        
+        // Draw grey border box
+        pdf.setDrawColor(180, 180, 180);
+        pdf.setLineWidth(0.5);
+        pdf.rect(20, yPosition - 2, 170, 20);
+        
+        if (keyObservations) {
+          pdf.setFontSize(10);
+          const obsLines = pdf.splitTextToSize(keyObservations, 165);
+          obsLines.forEach((line: string, index: number) => {
+            pdf.text(line, 22, yPosition + 3 + (index * 5));
+          });
+        }
+        yPosition += 25;
+
+        // Development Focus Areas section (always shown)
+        pdf.setFontSize(12);
+        pdf.text('Development Focus Areas:', 20, yPosition);
+        yPosition += 8;
+        
+        // Draw grey border box
+        pdf.rect(20, yPosition - 2, 170, 20);
+        
+        if (developmentFocus) {
+          pdf.setFontSize(10);
+          const devLines = pdf.splitTextToSize(developmentFocus, 165);
+          devLines.forEach((line: string, index: number) => {
+            pdf.text(line, 22, yPosition + 3 + (index * 5));
+          });
+        }
+        yPosition += 25;
+
+        // Next Steps section (always shown)
+        pdf.setFontSize(12);
+        pdf.text('Next Steps:', 20, yPosition);
+        yPosition += 8;
+        
+        // Draw grey border box
+        pdf.rect(20, yPosition - 2, 170, 20);
+        
+        if (nextSteps) {
+          pdf.setFontSize(10);
+          const stepLines = pdf.splitTextToSize(nextSteps, 165);
+          stepLines.forEach((line: string, index: number) => {
+            pdf.text(line, 22, yPosition + 3 + (index * 5));
+          });
+        }
+        yPosition += 25;
 
         // Add signature section at the bottom
         if (yPosition > 220) {
