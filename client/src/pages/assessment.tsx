@@ -26,6 +26,7 @@ export default function Assessment() {
   const [checkedBehaviors, setCheckedBehaviors] = useState<Set<number>>(new Set());
   const [stepScores, setStepScores] = useState<{ [stepId: number]: number }>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [assesseeName, setAssesseeName] = useState<string>('');
 
   // Fetch all steps with substeps and behaviors
   const { data: steps = [], isLoading } = useQuery<StepWithSubsteps[]>({
@@ -256,8 +257,6 @@ export default function Assessment() {
   const handleNewAssessment = () => {
     setShowUserModal(true);
   };
-  
-  const [assesseeName, setAssesseeName] = useState<string>('');
 
   // Show authentication modal if not authenticated
   if (!isAuthenticated) {
