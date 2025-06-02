@@ -8,6 +8,7 @@ import SpiderGraph from "@/components/spider-graph";
 import ExportResults from "@/components/export-results";
 import UserSelectionModal from "@/components/user-selection-modal";
 import AuthModal from "@/components/auth-modal";
+import SalesCoachHeader from "@/components/sales-coach-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { Step, Substep, Behavior, User, Assessment as AssessmentType, AssessmentScore } from "@shared/schema";

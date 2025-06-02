@@ -42,8 +42,8 @@ export const users = pgTable("users", {
 export const assessments = pgTable("assessments", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(), // Assessor (person doing the assessment)
-  assesseeName: text("assessee_name").notNull(), // Person being assessed
+  userId: integer("user_id").references(() => users.id).notNull(), // Coach (person doing the assessment)
+  assesseeName: text("assessee_name").notNull(), // Coachee being assessed
   createdAt: timestamp("created_at").defaultNow(),
 });
 

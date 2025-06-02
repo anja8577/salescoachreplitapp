@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { Step, Substep, Behavior, User } from "@shared/schema";
+import logoPath from "@assets/Sales Coach icon 11339b.png";
 
 type StepWithSubsteps = Step & {
   substeps: (Substep & {
@@ -217,11 +218,31 @@ The complete PDF report has been downloaded to your device for attachment.`;
       pdf.setFillColor(59, 130, 246); // Blue background
       pdf.rect(0, 0, 210, 25, 'F');
 
+      // Add SalesCoach logo to header
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 15, 10, 6, 6);
+          }
+        };
+        img.src = logoPath;
+      } catch (error) {
+        console.log('Could not load logo:', error);
+      }
+
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(16);
       
-      // First row in blue header
-      pdf.text('SalesCoach Report', 20, 17);
+      // First row in blue header - with space for logo
+      pdf.text('SalesCoach Report', 25, 17);
       
       const proficiencyText = `Proficiency level: ${overallProficiencyLevel}`;
       const proficiencyWidth = pdf.getTextWidth(proficiencyText);
