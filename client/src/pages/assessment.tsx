@@ -317,6 +317,7 @@ export default function Assessment() {
             user={currentUser}
             assessmentTitle={currentAssessment.title}
             stepScores={stepScores}
+            assessor={assessor}
             onSaveAssessment={() => {
               // Auto-save functionality - assessment is already being saved in real-time
               alert('Assessment saved successfully!');
