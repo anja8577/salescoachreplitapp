@@ -613,7 +613,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
             onChange={(e) => setWhatWorkedWell(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Highlight what worked well in the meeting. What skills did the Coachee use successfully?"
+            placeholder={previousSessionData.whatWorkedWell || "Highlight what worked well in the meeting. What skills did the Coachee use successfully?"}
           />
         </div>
         
@@ -624,7 +624,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
             onChange={(e) => setWhatCanBeImproved(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Identify 1 or 2 specific areas or skills for improvement. Determine with your Coachee how they could adjust their behavior to improve in this area."
+            placeholder={previousSessionData.whatCanBeImproved || "Identify 1 or 2 specific areas or skills for improvement. Determine with your Coachee how they could adjust their behavior to improve in this area."}
           />
         </div>
         
@@ -635,7 +635,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
             onChange={(e) => setNextSteps(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Outline the next steps and action items..."
+            placeholder={previousSessionData.nextSteps || "Outline the next steps and action items..."}
           />
         </div>
       </div>
