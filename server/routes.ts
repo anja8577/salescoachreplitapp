@@ -161,25 +161,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/assessments", async (req, res) => {
     try {
       const { title, userId, assesseeName } = req.body;
+      console.log("Assessment creation request body:", req.body);
       
       if (!title || !userId) {
         return res.status(400).json({ message: "Title and userId are required" });
       }
 
-      const assessment = await storage.createAssessment({
+      const validatedData = {
         title,
         userId,
         assesseeName: assesseeName || "Unknown",
-        keyObservations: req.body.keyObservations,
-        whatWorkedWell: req.body.whatWorkedWell,
-        whatCanBeImproved: req.body.whatCanBeImproved,
-        nextSteps: req.body.nextSteps
-      });
+        keyObservations: req.body.keyObservations || null,
+        whatWorkedWell: req.body.whatWorkedWell || null,
+        whatCanBeImproved: req.body.whatCanBeImproved || null,
+        nextSteps: req.body.nextSteps || null
+      };
+      
+      console.log("Validated data:", validatedData);
+
+      const assessment = await storage.createAssessment(validatedData);
       
       res.json(assessment);
     } catch (error) {
       console.error("Error creating assessment:", error);
       res.status(500).json({ message: "Failed to create assessment" });
+    }
+  });
+
+  // Update assessment with coaching session data
+  app.put("/api/assessments/:id", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const { keyObservations, whatWorkedWell, whatCanBeImproved, nextSteps } = req.body;
+      
+      const currentAssessment = await storage.getAssessment(assessmentId);
+      if (!currentAssessment) {
+        return res.status(404).json({ message: "Assessment not found" });
+      }
+
+      const updatedAssessment = await storage.createAssessment({
+        ...currentAssessment,
+        keyObservations,
+        whatWorkedWell,
+        whatCanBeImproved,
+        nextSteps
+      });
+      
+      res.json(updatedAssessment);
+    } catch (error) {
+      console.error("Error updating assessment:", error);
+      res.status(500).json({ message: "Failed to update assessment" });
     }
   });
 
@@ -224,6 +255,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(latestAssessment);
     } catch (error) {
       console.error("Error fetching latest assessment:", error);
+      res.status(500).json({ message: "Failed to fetch latest assessment" });
+    }
+  });
+
+  // Get latest assessment for a coachee by name
+  app.get("/api/coachees/:coacheeName/latest-assessment", async (req, res) => {
+    try {
+      const coacheeName = decodeURIComponent(req.params.coacheeName);
+      const latestAssessment = await storage.getLatestAssessmentForCoachee(coacheeName);
+      
+      if (!latestAssessment) {
+        return res.status(404).json({ message: "No previous assessment found for this coachee" });
+      }
+      
+      res.json(latestAssessment);
+    } catch (error) {
+      console.error("Error fetching latest assessment for coachee:", error);
       res.status(500).json({ message: "Failed to fetch latest assessment" });
     }
   });

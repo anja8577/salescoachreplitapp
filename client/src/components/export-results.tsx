@@ -48,36 +48,40 @@ export default function ExportResults({
   // Load previous coaching session data when component mounts
   useEffect(() => {
     const loadPreviousCoachingData = async () => {
-      if (!user?.id) return;
+      if (!user?.fullName) return;
       
       setIsLoadingPreviousData(true);
       try {
-        const response = await fetch(`/api/users/${user.id}/latest-assessment`);
+        const encodedName = encodeURIComponent(user.fullName);
+        const response = await fetch(`/api/coachees/${encodedName}/latest-assessment`);
         if (response.ok) {
           const previousAssessment = await response.json();
           
-          // Set text from previous session as starting content
-          setKeyObservations(previousAssessment.keyObservations || '');
-          setWhatWorkedWell(previousAssessment.whatWorkedWell || '');
-          setWhatCanBeImproved(previousAssessment.whatCanBeImproved || '');
-          setNextSteps(previousAssessment.nextSteps || '');
-          
-          console.log('Loaded previous coaching session data:', {
-            keyObservations: previousAssessment.keyObservations,
-            whatWorkedWell: previousAssessment.whatWorkedWell,
-            whatCanBeImproved: previousAssessment.whatCanBeImproved,
-            nextSteps: previousAssessment.nextSteps
-          });
+          // Only populate if there's actual data and it's not the current session
+          if (previousAssessment.keyObservations || previousAssessment.whatWorkedWell || 
+              previousAssessment.whatCanBeImproved || previousAssessment.nextSteps) {
+            setKeyObservations(previousAssessment.keyObservations || '');
+            setWhatWorkedWell(previousAssessment.whatWorkedWell || '');
+            setWhatCanBeImproved(previousAssessment.whatCanBeImproved || '');
+            setNextSteps(previousAssessment.nextSteps || '');
+            
+            console.log('Loaded previous coaching session data for', user.fullName, ':', {
+              keyObservations: previousAssessment.keyObservations,
+              whatWorkedWell: previousAssessment.whatWorkedWell,
+              whatCanBeImproved: previousAssessment.whatCanBeImproved,
+              nextSteps: previousAssessment.nextSteps
+            });
+          }
         }
       } catch (error) {
-        console.log("No previous coaching session found or error loading data");
+        console.log("No previous coaching session found or error loading data for", user.fullName);
       } finally {
         setIsLoadingPreviousData(false);
       }
     };
 
     loadPreviousCoachingData();
-  }, [user?.id]);
+  }, [user?.fullName]);
 
   const generateResultsText = () => {
     const stepResults = steps.map(step => {
