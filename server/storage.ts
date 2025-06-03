@@ -31,6 +31,7 @@ export interface IStorage {
   getAssessment(id: number): Promise<Assessment | undefined>;
   getAssessmentWithUser(id: number): Promise<(Assessment & { user: User }) | undefined>;
   getAllAssessments(): Promise<Assessment[]>;
+  getLatestAssessmentForUser(userId: number): Promise<Assessment | undefined>;
 
   // Assessment Scores
   getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]>;
@@ -161,6 +162,14 @@ export class MemStorage implements IStorage {
     return Array.from(this.assessments.values()).sort((a, b) => 
       new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
     );
+  }
+
+  async getLatestAssessmentForUser(userId: number): Promise<Assessment | undefined> {
+    const userAssessments = Array.from(this.assessments.values())
+      .filter(assessment => assessment.userId === userId)
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    
+    return userAssessments[0];
   }
 
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
@@ -1118,6 +1127,17 @@ export class DatabaseStorage implements IStorage {
     return allAssessments.sort((a, b) => 
       new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime()
     );
+  }
+
+  async getLatestAssessmentForUser(userId: number): Promise<Assessment | undefined> {
+    const [latestAssessment] = await db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.userId, userId))
+      .orderBy(desc(assessments.createdAt))
+      .limit(1);
+    
+    return latestAssessment;
   }
 
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
