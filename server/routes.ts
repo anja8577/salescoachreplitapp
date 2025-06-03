@@ -169,7 +169,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assessment = await storage.createAssessment({
         title,
         userId,
-        assesseeName: assesseeName || "Unknown"
+        assesseeName: assesseeName || "Unknown",
+        keyObservations: req.body.keyObservations,
+        whatWorkedWell: req.body.whatWorkedWell,
+        whatCanBeImproved: req.body.whatCanBeImproved,
+        nextSteps: req.body.nextSteps
       });
       
       res.json(assessment);
