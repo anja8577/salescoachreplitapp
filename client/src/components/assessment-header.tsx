@@ -27,7 +27,7 @@ export default function AssessmentHeader({ totalScore, totalBehaviors, steps, ch
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Selling Skills Assessment</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Sales Coaching</h1>
           </div>
           <div className="text-right">
             <div className="text-sm text-gray-500">Proficiency Level</div>

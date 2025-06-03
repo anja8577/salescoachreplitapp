@@ -40,7 +40,8 @@ export default function ExportResults({
   const [isSharing, setIsSharing] = useState(false);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [keyObservations, setKeyObservations] = useState('');
-  const [developmentFocus, setDevelopmentFocus] = useState('');
+  const [whatWorkedWell, setWhatWorkedWell] = useState('');
+  const [whatCanBeImproved, setWhatCanBeImproved] = useState('');
   const [nextSteps, setNextSteps] = useState('');
 
   const generateResultsText = () => {
@@ -214,41 +215,17 @@ The complete PDF report has been downloaded to your device for attachment.`;
                                      currentScore >= 2.5 ? 'Experienced' : 
                                      currentScore >= 1.5 ? 'Qualified' : 'Learner';
 
-      // Header with new design
+      // Header with new design - taller blue box
       pdf.setFillColor(59, 130, 246); // Blue background
-      pdf.rect(0, 0, 210, 25, 'F');
-
-      // Add SalesCoach logo to header
-      try {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', 15, 10, 6, 6);
-          }
-        };
-        img.src = logoPath;
-      } catch (error) {
-        console.log('Could not load logo:', error);
-      }
+      pdf.rect(0, 0, 210, 30, 'F');
 
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(16);
       
-      // First row in blue header - with space for logo
-      pdf.text('SalesCoach Report', 25, 17);
-      
-      const proficiencyText = `Proficiency level: ${overallProficiencyLevel}`;
-      const proficiencyWidth = pdf.getTextWidth(proficiencyText);
-      pdf.text(proficiencyText, 190 - proficiencyWidth, 17);
+      // First row - SalesCoach Report aligned left
+      pdf.text('SalesCoach Report', 20, 15);
 
-      // Second row in blue header - smaller font
+      // Second row - Coach and Coachee names on left, date/time on right
       pdf.setFontSize(10);
       
       // Format date and time in European format
@@ -256,16 +233,16 @@ The complete PDF report has been downloaded to your device for attachment.`;
       const dateEU = now.toLocaleDateString('de-DE');
       const timeEU = now.toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-      // Left side: Coach and Coachee names
+      // Left side: Coach and Coachee names on same line
       const coachText = assessor ? `Coach: ${assessor.fullName}` : '';
       const coacheeText = `Coachee: ${user.fullName}`;
-      pdf.text(coachText, 20, 25);
-      pdf.text(coacheeText, 80, 25);
+      pdf.text(coachText, 20, 23);
+      pdf.text(coacheeText, 80, 23);
       
-      // Right side: Date and time (no labels)
-      const dateTimeText = `${dateEU} ${timeEU}`;
+      // Right side: Date and time with separator
+      const dateTimeText = `${dateEU}  |  ${timeEU}`;
       const dateTimeWidth = pdf.getTextWidth(dateTimeText);
-      pdf.text(dateTimeText, 190 - dateTimeWidth, 25);
+      pdf.text(dateTimeText, 190 - dateTimeWidth, 23);
 
       let yPosition = 45;
 
@@ -304,8 +281,8 @@ The complete PDF report has been downloaded to your device for attachment.`;
           });
           const imgData = canvas.toDataURL('image/png');
 
-          // Make spider graph wider and start higher
-          pdf.addImage(imgData, 'PNG', rightColumnX, 30, rightColumnWidth, 75);
+          // Make spider graph wider with 90% height and space below
+          pdf.addImage(imgData, 'PNG', rightColumnX, 35, rightColumnWidth, 67);
         }
       } catch (error) {
         console.log('Could not capture spider graph:', error);
@@ -419,18 +396,35 @@ The complete PDF report has been downloaded to your device for attachment.`;
         }
         yPosition += 25;
 
-        // Development Focus Areas section (always shown)
+        // What Worked Well section (always shown)
         pdf.setFontSize(12);
-        pdf.text('Development Focus Areas:', 20, yPosition);
+        pdf.text('What Worked Well:', 20, yPosition);
         yPosition += 8;
         
         // Draw grey border box
         pdf.rect(20, yPosition - 2, 170, 20);
         
-        if (developmentFocus) {
+        if (whatWorkedWell) {
           pdf.setFontSize(10);
-          const devLines = pdf.splitTextToSize(developmentFocus, 165);
-          devLines.forEach((line: string, index: number) => {
+          const workedLines = pdf.splitTextToSize(whatWorkedWell, 165);
+          workedLines.forEach((line: string, index: number) => {
+            pdf.text(line, 22, yPosition + 3 + (index * 5));
+          });
+        }
+        yPosition += 25;
+
+        // What Can Be Improved section (always shown)
+        pdf.setFontSize(12);
+        pdf.text('What Can Be Improved:', 20, yPosition);
+        yPosition += 8;
+        
+        // Draw grey border box
+        pdf.rect(20, yPosition - 2, 170, 20);
+        
+        if (whatCanBeImproved) {
+          pdf.setFontSize(10);
+          const improvedLines = pdf.splitTextToSize(whatCanBeImproved, 165);
+          improvedLines.forEach((line: string, index: number) => {
             pdf.text(line, 22, yPosition + 3 + (index * 5));
           });
         }
@@ -560,13 +554,24 @@ The complete PDF report has been downloaded to your device for attachment.`;
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Development Focus Areas</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">What Worked Well</label>
           <textarea
-            value={developmentFocus}
-            onChange={(e) => setDevelopmentFocus(e.target.value)}
+            value={whatWorkedWell}
+            onChange={(e) => setWhatWorkedWell(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Identify areas for development and improvement..."
+            placeholder="Highlight what worked well in this coaching session..."
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">What Can Be Improved</label>
+          <textarea
+            value={whatCanBeImproved}
+            onChange={(e) => setWhatCanBeImproved(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            rows={3}
+            placeholder="Identify areas for improvement and development..."
           />
         </div>
         
