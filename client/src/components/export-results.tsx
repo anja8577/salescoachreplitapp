@@ -47,10 +47,17 @@ export default function ExportResults({
   const [nextSteps, setNextSteps] = useState('');
   const [isLoadingPreviousData, setIsLoadingPreviousData] = useState(false);
 
-  // Load previous coaching session data when component mounts
+  // Load previous coaching session data for placeholder text
+  const [previousSessionData, setPreviousSessionData] = useState<{
+    keyObservations?: string;
+    whatWorkedWell?: string;
+    whatCanBeImproved?: string;
+    nextSteps?: string;
+  }>({});
+  
   useEffect(() => {
     const loadPreviousCoachingData = async () => {
-      if (!user?.fullName) return;
+      if (!user?.fullName || !assessmentId) return;
       
       setIsLoadingPreviousData(true);
       try {
@@ -59,15 +66,19 @@ export default function ExportResults({
         if (response.ok) {
           const previousAssessment = await response.json();
           
-          // Only populate if there's actual data and it's not the current session
-          if (previousAssessment.keyObservations || previousAssessment.whatWorkedWell || 
-              previousAssessment.whatCanBeImproved || previousAssessment.nextSteps) {
-            setKeyObservations(previousAssessment.keyObservations || '');
-            setWhatWorkedWell(previousAssessment.whatWorkedWell || '');
-            setWhatCanBeImproved(previousAssessment.whatCanBeImproved || '');
-            setNextSteps(previousAssessment.nextSteps || '');
+          // Only use if it's not the current session and has actual data
+          if (previousAssessment.id !== assessmentId && 
+              (previousAssessment.keyObservations || previousAssessment.whatWorkedWell || 
+               previousAssessment.whatCanBeImproved || previousAssessment.nextSteps)) {
             
-            console.log('Loaded previous coaching session data for', user.fullName, ':', {
+            setPreviousSessionData({
+              keyObservations: previousAssessment.keyObservations,
+              whatWorkedWell: previousAssessment.whatWorkedWell,
+              whatCanBeImproved: previousAssessment.whatCanBeImproved,
+              nextSteps: previousAssessment.nextSteps
+            });
+            
+            console.log('Loaded previous coaching session data for placeholder text:', {
               keyObservations: previousAssessment.keyObservations,
               whatWorkedWell: previousAssessment.whatWorkedWell,
               whatCanBeImproved: previousAssessment.whatCanBeImproved,
@@ -83,7 +94,7 @@ export default function ExportResults({
     };
 
     loadPreviousCoachingData();
-  }, [user?.fullName]);
+  }, [user?.fullName, assessmentId]);
 
   const generateResultsText = () => {
     const stepResults = steps.map(step => {
@@ -591,7 +602,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
             onChange={(e) => setKeyObservations(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Enter key observations of the meeting. Be as concrete and specific as possible. What behaviors did you notice?"
+            placeholder={previousSessionData.keyObservations || "Enter key observations of the meeting. Be as concrete and specific as possible. What behaviors did you notice?"}
           />
         </div>
         

@@ -31,6 +31,61 @@ export default function Assessment() {
   const [assesseeName, setAssesseeName] = useState<string>('');
   const [context, setContext] = useState<string>('');
 
+  // Function to duplicate previous session as baseline
+  const duplicatePreviousSessionAsBaseline = async (newAssessment: AssessmentType, assesseeName: string) => {
+    try {
+      console.log("Looking for previous session to duplicate for:", assesseeName);
+      
+      // Fetch previous coaching session
+      const encodedName = encodeURIComponent(assesseeName);
+      const previousResponse = await fetch(`/api/coachees/${encodedName}/latest-assessment`);
+      
+      if (!previousResponse.ok) {
+        console.log("No previous session found for", assesseeName);
+        return;
+      }
+      
+      const previousSession = await previousResponse.json();
+      console.log("Found previous session to duplicate:", previousSession);
+      
+      // Check if this is the same session we just created (avoid self-duplication)
+      if (previousSession.id === newAssessment.id) {
+        console.log("Previous session is the same as current, skipping duplication");
+        return;
+      }
+      
+      // Fetch previous behavioral scores
+      const scoresResponse = await fetch(`/api/assessments/${previousSession.id}/scores`);
+      if (scoresResponse.ok) {
+        const previousScores = await scoresResponse.json();
+        console.log("Duplicating", previousScores.length, "behavioral scores as baseline");
+        
+        const newCheckedBehaviors = new Set<number>();
+        
+        // Duplicate each behavioral score to new assessment
+        for (const score of previousScores) {
+          if (score.checked) {
+            newCheckedBehaviors.add(score.behaviorId);
+            
+            // Save score to new assessment
+            await fetch(`/api/assessments/${newAssessment.id}/scores/${score.behaviorId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ checked: true }),
+            });
+          }
+        }
+        
+        // Update UI with duplicated scores
+        setCheckedBehaviors(newCheckedBehaviors);
+        console.log("Baseline duplication completed - duplicated", newCheckedBehaviors.size, "behavioral scores");
+      }
+      
+    } catch (error) {
+      console.log("Could not duplicate previous session as baseline:", error);
+    }
+  };
+
   // Fetch all steps with substeps and behaviors
   const { data: steps = [], isLoading } = useQuery<StepWithSubsteps[]>({
     queryKey: ["/api/steps"],
@@ -56,11 +111,18 @@ export default function Assessment() {
         throw error;
       }
     },
-    onSuccess: (assessment: AssessmentType) => {
+    onSuccess: async (assessment: AssessmentType) => {
       console.log("Assessment created successfully:", assessment);
       setCurrentAssessment(assessment);
       setShowUserModal(false);
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
+      
+      // Check for baseline duplication
+      const pendingData = (window as any).pendingBaselineDuplication;
+      if (pendingData) {
+        await duplicatePreviousSessionAsBaseline(assessment, pendingData.assesseeName);
+        (window as any).pendingBaselineDuplication = null;
+      }
     },
     onError: (error) => {
       console.error("Assessment creation failed:", error);
@@ -212,6 +274,10 @@ export default function Assessment() {
       
       const title = `Assessment for ${assesseeName} - ${new Date().toLocaleDateString()}`;
       console.log("About to create assessment with title:", title);
+      
+      // Store the user data for baseline duplication after assessment creation
+      (window as any).pendingBaselineDuplication = { selectedUser, assesseeName };
+      
       createAssessmentMutation.mutate({ title, userId, assesseeName });
     } catch (error) {
       console.error("Error in handleUserSelected:", error);
