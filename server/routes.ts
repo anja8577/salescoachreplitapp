@@ -194,19 +194,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const assessmentId = parseInt(req.params.id);
       const { keyObservations, whatWorkedWell, whatCanBeImproved, nextSteps } = req.body;
       
-      const currentAssessment = await storage.getAssessment(assessmentId);
-      if (!currentAssessment) {
-        return res.status(404).json({ message: "Assessment not found" });
-      }
+      console.log("Updating assessment", assessmentId, "with coaching data:", {
+        keyObservations,
+        whatWorkedWell,
+        whatCanBeImproved,
+        nextSteps
+      });
 
-      const updatedAssessment = await storage.createAssessment({
-        ...currentAssessment,
+      const updatedAssessment = await storage.updateAssessment(assessmentId, {
         keyObservations,
         whatWorkedWell,
         whatCanBeImproved,
         nextSteps
       });
       
+      console.log("Assessment updated successfully:", updatedAssessment);
       res.json(updatedAssessment);
     } catch (error) {
       console.error("Error updating assessment:", error);

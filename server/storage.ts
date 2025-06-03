@@ -1140,6 +1140,14 @@ export class DatabaseStorage implements IStorage {
     return newAssessment;
   }
 
+  async updateAssessment(id: number, assessmentUpdate: Partial<Assessment>): Promise<Assessment> {
+    const [updatedAssessment] = await db.update(assessments)
+      .set(assessmentUpdate)
+      .where(eq(assessments.id, id))
+      .returning();
+    return updatedAssessment;
+  }
+
   async getAssessment(id: number): Promise<Assessment | undefined> {
     const [assessment] = await db.select().from(assessments).where(eq(assessments.id, id));
     return assessment;
