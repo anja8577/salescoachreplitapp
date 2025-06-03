@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, Download, Home, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +43,42 @@ export default function ExportResults({
   const [whatWorkedWell, setWhatWorkedWell] = useState('');
   const [whatCanBeImproved, setWhatCanBeImproved] = useState('');
   const [nextSteps, setNextSteps] = useState('');
+  const [isLoadingPreviousData, setIsLoadingPreviousData] = useState(false);
+
+  // Load previous coaching session data when component mounts
+  useEffect(() => {
+    const loadPreviousCoachingData = async () => {
+      if (!user?.id) return;
+      
+      setIsLoadingPreviousData(true);
+      try {
+        const response = await fetch(`/api/users/${user.id}/latest-assessment`);
+        if (response.ok) {
+          const previousAssessment = await response.json();
+          
+          // Set placeholder text from previous session
+          if (previousAssessment.keyObservations) {
+            setKeyObservations(previousAssessment.keyObservations);
+          }
+          if (previousAssessment.whatWorkedWell) {
+            setWhatWorkedWell(previousAssessment.whatWorkedWell);
+          }
+          if (previousAssessment.whatCanBeImproved) {
+            setWhatCanBeImproved(previousAssessment.whatCanBeImproved);
+          }
+          if (previousAssessment.nextSteps) {
+            setNextSteps(previousAssessment.nextSteps);
+          }
+        }
+      } catch (error) {
+        console.log("No previous coaching session found or error loading data");
+      } finally {
+        setIsLoadingPreviousData(false);
+      }
+    };
+
+    loadPreviousCoachingData();
+  }, [user?.id]);
 
   const generateResultsText = () => {
     const stepResults = steps.map(step => {

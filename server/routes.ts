@@ -207,6 +207,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get latest assessment for a user
+  app.get("/api/users/:userId/latest-assessment", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const latestAssessment = await storage.getLatestAssessmentForUser(userId);
+      
+      if (!latestAssessment) {
+        return res.status(404).json({ message: "No previous assessment found" });
+      }
+      
+      res.json(latestAssessment);
+    } catch (error) {
+      console.error("Error fetching latest assessment:", error);
+      res.status(500).json({ message: "Failed to fetch latest assessment" });
+    }
+  });
+
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {

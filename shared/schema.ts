@@ -44,6 +44,10 @@ export const assessments = pgTable("assessments", {
   title: text("title").notNull(),
   userId: integer("user_id").references(() => users.id).notNull(), // Coach (person doing the assessment)
   assesseeName: text("assessee_name").notNull(), // Coachee being assessed
+  keyObservations: text("key_observations"),
+  whatWorkedWell: text("what_worked_well"),
+  whatCanBeImproved: text("what_can_be_improved"),
+  nextSteps: text("next_steps"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
