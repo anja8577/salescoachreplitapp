@@ -589,7 +589,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
             onChange={(e) => setKeyObservations(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Enter key observations from the assessment..."
+            placeholder="Enter key observations of the meeting. Be as concrete and specific as possible. What behaviors did you notice?"
           />
         </div>
         
@@ -600,7 +600,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
             onChange={(e) => setWhatWorkedWell(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Highlight what worked well in this coaching session..."
+            placeholder="Highlight what worked well in the meeting. What skills did the Coachee use successfully?"
           />
         </div>
         
@@ -611,7 +611,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
             onChange={(e) => setWhatCanBeImproved(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
-            placeholder="Identify areas for improvement and development..."
+            placeholder="Identify 1 or 2 specific areas or skills for improvement. Determine with your Coachee how they could adjust their behavior to improve in this area."
           />
         </div>
         
