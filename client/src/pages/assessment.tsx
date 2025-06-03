@@ -337,10 +337,29 @@ export default function Assessment() {
             stepScores={stepScores}
             assessor={assessor}
             context={context}
-            onSaveAssessment={() => {
-              // Auto-save functionality - assessment is already being saved in real-time
-              alert('Assessment saved successfully!');
+            onSaveAssessment={async (coachingData) => {
+              if (!currentAssessment) return;
+              
+              try {
+                const response = await fetch(`/api/assessments/${currentAssessment.id}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(coachingData),
+                });
+                
+                if (response.ok) {
+                  alert('Coaching session saved successfully!');
+                } else {
+                  alert('Failed to save coaching session. Please try again.');
+                }
+              } catch (error) {
+                console.error('Error saving coaching session:', error);
+                alert('Failed to save coaching session. Please try again.');
+              }
             }}
+            assessmentId={currentAssessment.id}
           />
         )}
       </div>

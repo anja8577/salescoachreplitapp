@@ -28,6 +28,7 @@ export interface IStorage {
 
   // Assessments
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
+  updateAssessment(id: number, assessment: Partial<Assessment>): Promise<Assessment>;
   getAssessment(id: number): Promise<Assessment | undefined>;
   getAssessmentWithUser(id: number): Promise<(Assessment & { user: User }) | undefined>;
   getAllAssessments(): Promise<Assessment[]>;
@@ -149,6 +150,23 @@ export class MemStorage implements IStorage {
     };
     this.assessments.set(newAssessment.id, newAssessment);
     return newAssessment;
+  }
+
+  async updateAssessment(id: number, assessmentUpdate: Partial<Assessment>): Promise<Assessment> {
+    const existingAssessment = this.assessments.get(id);
+    if (!existingAssessment) {
+      throw new Error(`Assessment with id ${id} not found`);
+    }
+    
+    const updatedAssessment: Assessment = {
+      ...existingAssessment,
+      ...assessmentUpdate,
+      id: existingAssessment.id,
+      createdAt: existingAssessment.createdAt
+    };
+    
+    this.assessments.set(id, updatedAssessment);
+    return updatedAssessment;
   }
 
   async getAssessment(id: number): Promise<Assessment | undefined> {

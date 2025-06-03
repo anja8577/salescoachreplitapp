@@ -20,9 +20,10 @@ interface ExportResultsProps {
   user: User; // This is the coachee (person being coached)
   assessmentTitle: string;
   stepScores?: { [stepId: number]: number };
-  onSaveAssessment?: () => void;
+  onSaveAssessment?: (coachingData: { keyObservations: string; whatWorkedWell: string; whatCanBeImproved: string; nextSteps: string }) => void;
   assessor?: User; // The coach conducting the assessment
   context?: string; // Assessment context
+  assessmentId?: number; // Current assessment ID
 }
 
 export default function ExportResults({ 
@@ -34,7 +35,8 @@ export default function ExportResults({
   stepScores = {},
   onSaveAssessment,
   assessor,
-  context = ''
+  context = '',
+  assessmentId
 }: ExportResultsProps) {
   const { toast } = useToast();
   const [isSharing, setIsSharing] = useState(false);
@@ -632,7 +634,12 @@ The complete PDF report has been downloaded to your device for attachment.`;
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
           <button 
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-            onClick={onSaveAssessment}
+            onClick={() => onSaveAssessment({
+              keyObservations,
+              whatWorkedWell,
+              whatCanBeImproved,
+              nextSteps
+            })}
           >
             Save Coaching Session
           </button>
