@@ -284,6 +284,7 @@ export default function Assessment() {
         checkedBehaviors={checkedBehaviors}
         stepScores={stepScores}
         onNewAssessment={handleNewAssessment}
+        coacheeName={currentUser?.fullName}
       />
       
       <UserSelectionModal 

@@ -56,19 +56,18 @@ export default function ExportResults({
         if (response.ok) {
           const previousAssessment = await response.json();
           
-          // Set placeholder text from previous session
-          if (previousAssessment.keyObservations) {
-            setKeyObservations(previousAssessment.keyObservations);
-          }
-          if (previousAssessment.whatWorkedWell) {
-            setWhatWorkedWell(previousAssessment.whatWorkedWell);
-          }
-          if (previousAssessment.whatCanBeImproved) {
-            setWhatCanBeImproved(previousAssessment.whatCanBeImproved);
-          }
-          if (previousAssessment.nextSteps) {
-            setNextSteps(previousAssessment.nextSteps);
-          }
+          // Set text from previous session as starting content
+          setKeyObservations(previousAssessment.keyObservations || '');
+          setWhatWorkedWell(previousAssessment.whatWorkedWell || '');
+          setWhatCanBeImproved(previousAssessment.whatCanBeImproved || '');
+          setNextSteps(previousAssessment.nextSteps || '');
+          
+          console.log('Loaded previous coaching session data:', {
+            keyObservations: previousAssessment.keyObservations,
+            whatWorkedWell: previousAssessment.whatWorkedWell,
+            whatCanBeImproved: previousAssessment.whatCanBeImproved,
+            nextSteps: previousAssessment.nextSteps
+          });
         }
       } catch (error) {
         console.log("No previous coaching session found or error loading data");
