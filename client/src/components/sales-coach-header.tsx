@@ -32,7 +32,7 @@ export default function SalesCoachHeader({
           className={`${logoSizes[size]} object-contain`}
         />
       )}
-      <h1 className={`font-bold ${sizeClasses[size]}`} style={{ color: '#11339b' }}>
+      <h1 className={`font-bold ${sizeClasses[size]} text-black`}>
         SalesCoach
       </h1>
     </div>

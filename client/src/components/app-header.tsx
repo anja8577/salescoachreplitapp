@@ -43,14 +43,9 @@ export default function AppHeader({ showBack = false, onBack, title }: AppHeader
             </div>
           )}
 
-          {/* Right side - Home link for profile page */}
+          {/* Right side - spacing for layout balance */}
           <div className="flex items-center">
-            <button
-              onClick={handleHomeClick}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
-            >
-              <Home size={20} />
-            </button>
+            {/* Removed home icon as requested */}
           </div>
         </div>
       </div>

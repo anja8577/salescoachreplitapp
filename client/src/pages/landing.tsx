@@ -1,64 +1,49 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Plus, History } from "lucide-react";
-import AppHeader from "@/components/app-header";
-import UserSelectionModal from "@/components/user-selection-modal";
 import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, History } from "lucide-react";
+import SalesCoachHeader from "@/components/sales-coach-header";
+import AppFooter from "@/components/app-footer";
 
 export default function Landing() {
-  const [showUserModal, setShowUserModal] = useState(false);
   const [, setLocation] = useLocation();
 
-  const handleStartNewSession = () => {
-    setShowUserModal(true);
-  };
-
-  const handleViewHistory = () => {
-    setLocation("/coaching-history");
-  };
-
-  const handleUserSelected = (userId: number) => {
-    setShowUserModal(false);
-    setLocation(`/assessment?userId=${userId}`);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AppHeader />
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* No header as requested */}
       
-      <div className="flex items-center justify-center p-4 pt-20">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">SalesCoach</h1>
-          <p className="text-gray-600 mb-8">Choose an option to continue</p>
+      <div className="max-w-md mx-auto px-4 pt-12">
+        {/* Logo and Title Box */}
+        <Card className="mb-8">
+          <CardContent className="pt-8 pb-8 text-center">
+            <SalesCoachHeader showLogo={true} size="lg" className="justify-center mb-2" />
+          </CardContent>
+        </Card>
+
+        {/* Side by side buttons */}
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            onClick={() => setLocation("/assessment")}
+            className="h-24 flex flex-col items-center justify-center space-y-2 bg-[#11339b] hover:bg-blue-700"
+            size="lg"
+          >
+            <Calendar size={24} />
+            <span className="text-sm font-medium">New Session</span>
+          </Button>
           
-          <div className="space-y-4">
-            <Button 
-              onClick={handleStartNewSession} 
-              className="w-full h-12 text-lg"
-              size="lg"
-            >
-              <Plus className="mr-2" size={20} />
-              Start New Session
-            </Button>
-            
-            <Button 
-              onClick={handleViewHistory} 
-              variant="outline"
-              className="w-full h-12 text-lg"
-              size="lg"
-            >
-              <History className="mr-2" size={20} />
-              View History
-            </Button>
-          </div>
+          <Button
+            onClick={() => setLocation("/coaching-history")}
+            variant="outline"
+            className="h-24 flex flex-col items-center justify-center space-y-2 border-[#11339b] text-[#11339b] hover:bg-[#11339b] hover:text-white"
+            size="lg"
+          >
+            <History size={24} />
+            <span className="text-sm font-medium">History</span>
+          </Button>
         </div>
       </div>
       
-      <UserSelectionModal 
-        open={showUserModal}
-        onClose={() => setShowUserModal(false)}
-        onUserSelected={handleUserSelected}
-      />
+      <AppFooter />
     </div>
   );
 }
