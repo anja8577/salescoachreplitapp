@@ -342,16 +342,35 @@ export default function Assessment() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AssessmentHeader 
-        totalScore={totalScore} 
-        totalBehaviors={totalBehaviors} 
-        steps={steps}
-        checkedBehaviors={checkedBehaviors}
-        stepScores={stepScores}
-        onNewAssessment={handleNewAssessment}
-        coacheeName={currentUser?.fullName}
-      />
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header with Logo, SalesCoach left, Coaching Session title right */}
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Left side - Logo and SalesCoach */}
+            <div className="flex items-center">
+              <SalesCoachHeader showLogo={true} size="sm" />
+            </div>
+
+            {/* Right side - Title */}
+            <div className="flex items-center">
+              <h1 className="text-lg font-semibold text-gray-900">Coaching Session</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Sub-header with Coachee name left, Date/Time right */}
+      <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
+        <div className="max-w-4xl mx-auto flex justify-between items-center">
+          <div className="text-sm font-medium text-gray-700">
+            Coachee: {currentUser?.fullName}
+          </div>
+          <div className="text-sm text-gray-500">
+            {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        </div>
+      </div>
       
       <UserSelectionModal 
         open={showUserModal}

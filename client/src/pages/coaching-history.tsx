@@ -257,7 +257,7 @@ ${reportData.nextSteps}`;
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewAssessment(assessment.id)}
-                          className="w-20"
+                          className="min-w-[90px]"
                         >
                           <Eye className="mr-1" size={14} />
                           View
@@ -266,7 +266,7 @@ ${reportData.nextSteps}`;
                           variant="outline"
                           size="sm"
                           onClick={() => handleDownloadAssessment(assessment)}
-                          className="w-20"
+                          className="min-w-[90px]"
                         >
                           <Download className="mr-1" size={14} />
                           Download
