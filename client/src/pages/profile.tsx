@@ -1,61 +1,90 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Plus, Trash2, Edit, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit, Trash2, Plus, ArrowLeft, Download } from "lucide-react";
+import AppHeader from "@/components/app-header";
+import AppFooter from "@/components/app-footer";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { User, Assessment } from "@shared/schema";
+import { useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import type { User } from "@shared/schema";
 
 export default function Profile() {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [newUser, setNewUser] = useState({ fullName: "", email: "", team: "" });
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [teamFilter, setTeamFilter] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  
+  // Get current user from localStorage
+  const currentUser = JSON.parse(localStorage.getItem("current_user") || "{}");
+  
+  // Form states
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserTeam, setNewUserTeam] = useState("");
+  const [newTeamName, setNewTeamName] = useState("");
 
   // Fetch all users
-  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+  const { data: users = [] } = useQuery<User[]>({
     queryKey: ["/api/users"],
   });
 
-  // Fetch all assessments
-  const { data: assessments = [], isLoading: assessmentsLoading } = useQuery<Assessment[]>({
-    queryKey: ["/api/assessments"],
+  // Fetch teams
+  const { data: teams = [] } = useQuery<string[]>({
+    queryKey: ["/api/teams"],
+  });
+
+  // Password change mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: async (passwordData: { currentPassword: string; newPassword: string }) => {
+      const response = await apiRequest("PUT", "/api/auth/change-password", passwordData);
+      if (!response.ok) throw new Error("Failed to change password");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Password changed",
+        description: "Your password has been updated successfully.",
+      });
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Password change failed",
+        description: error.message || "Unable to change password",
+        variant: "destructive",
+      });
+    },
   });
 
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: { fullName: string; email: string; team?: string }) => {
-      const res = await apiRequest("POST", "/api/users", userData);
-      return await res.json();
+      const response = await apiRequest("POST", "/api/users", userData);
+      if (!response.ok) throw new Error("Failed to create user");
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      setNewUser({ fullName: "", email: "", team: "" });
       toast({
-        title: "User Created",
-        description: "New user has been created successfully.",
+        title: "User created",
+        description: "New user has been added successfully.",
       });
-    },
-  });
-
-  // Update user mutation
-  const updateUserMutation = useMutation({
-    mutationFn: async (userData: User) => {
-      const res = await apiRequest("PUT", `/api/users/${userData.id}`, userData);
-      return await res.json();
-    },
-    onSuccess: () => {
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserTeam("");
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      setEditingUser(null);
+    },
+    onError: (error: any) => {
       toast({
-        title: "User Updated",
-        description: "User information has been updated successfully.",
+        title: "User creation failed",
+        description: error.message || "Unable to create user",
+        variant: "destructive",
       });
     },
   });
@@ -63,33 +92,59 @@ export default function Profile() {
   // Delete user mutation
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
-      await apiRequest("DELETE", `/api/users/${userId}`);
+      const response = await apiRequest("DELETE", `/api/users/${userId}`);
+      if (!response.ok) throw new Error("Failed to delete user");
+      return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "User Deleted",
-        description: "User has been deleted successfully.",
+        title: "User deleted",
+        description: "User has been removed successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "User deletion failed",
+        description: error.message || "Unable to delete user",
+        variant: "destructive",
       });
     },
   });
 
-  const handleCreateUser = () => {
-    if (!newUser.fullName || !newUser.email) {
+  const handleBack = () => {
+    window.history.back();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("current_user");
+    setLocation("/login");
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in name and email fields.",
+        title: "Password mismatch",
+        description: "New password and confirmation don't match",
         variant: "destructive",
       });
       return;
     }
-    createUserMutation.mutate(newUser);
+    changePasswordMutation.mutate({
+      currentPassword: "", // Would need current password in real implementation
+      newPassword,
+    });
   };
 
-  const handleUpdateUser = () => {
-    if (editingUser) {
-      updateUserMutation.mutate(editingUser);
-    }
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    createUserMutation.mutate({
+      fullName: newUserName,
+      email: newUserEmail,
+      team: newUserTeam || undefined,
+    });
   };
 
   const handleDeleteUser = (userId: number) => {
@@ -98,334 +153,252 @@ export default function Profile() {
     }
   };
 
-  const calculateOverallScore = (assessment: Assessment) => {
-    // This would need to be calculated from assessment scores
-    // For now, return a placeholder that will be replaced with real data
-    return Math.floor(Math.random() * 4) + 1; // 1-4 levels
-  };
-
-  const calculateStepScores = (assessment: Assessment) => {
-    // This would need to be calculated from assessment scores  
-    // For now, return placeholder scores that will be replaced with real data
-    return [
-      Math.floor(Math.random() * 4) + 1,
-      Math.floor(Math.random() * 4) + 1,
-      Math.floor(Math.random() * 4) + 1,
-      Math.floor(Math.random() * 4) + 1,
-      Math.floor(Math.random() * 4) + 1,
-      Math.floor(Math.random() * 4) + 1,
-      Math.floor(Math.random() * 4) + 1,
-    ];
-  };
-
-  const downloadAssessment = async (assessmentId: number, userFullName: string, title: string) => {
-    try {
-      const response = await fetch(`/api/assessments/${assessmentId}/export`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${userFullName}_${title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
-    } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download Error",
-        description: "Failed to download assessment.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Filter assessments by selected user
-  const filteredAssessments = selectedUserId 
-    ? assessments.filter(assessment => assessment.userId.toString() === selectedUserId)
-    : [];
-
-  // Filter users by team
-  const filteredUsers = teamFilter 
-    ? users.filter(user => user.team === teamFilter)
-    : users;
-
-  // Get unique teams for filter dropdown
-  const teamSet = new Set<string>();
-  users.forEach(user => {
-    if (user.team) teamSet.add(user.team);
-  });
-  const uniqueTeams = Array.from(teamSet);
+  // Group users by team
+  const usersByTeam = users.reduce((acc, user) => {
+    const team = user.team || "No Team";
+    if (!acc[team]) acc[team] = [];
+    acc[team].push(user);
+    return acc;
+  }, {} as Record<string, User[]>);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => window.location.href = '/'}
-              >
-                <ArrowLeft className="mr-2" size={16} />
-                Back to Assessment
-              </Button>
-              <h1 className="text-2xl font-bold text-gray-900">User Profile Management</h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <AppHeader 
+        title="Profile Management" 
+        showBack={true} 
+        onBack={handleBack}
+      />
+      
+      <div className="max-w-4xl mx-auto px-4 pt-20">
+        <Tabs defaultValue="account" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="account">My Account</TabsTrigger>
             <TabsTrigger value="users">Manage Users</TabsTrigger>
-            <TabsTrigger value="results">Assessment Results</TabsTrigger>
+            <TabsTrigger value="teams">Manage Teams</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="users" className="space-y-6">
-            {/* Add New User */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Add New User</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* My Account Tab */}
+          <TabsContent value="account">
+            <div className="space-y-6">
+              {/* Account Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="newFullName">Full Name</Label>
-                    <Input
-                      id="newFullName"
-                      value={newUser.fullName}
-                      onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
-                      placeholder="Enter full name"
-                    />
+                    <Label>Name</Label>
+                    <Input value={currentUser.fullName || ""} disabled />
                   </div>
                   <div>
-                    <Label htmlFor="newEmail">Email</Label>
-                    <Input
-                      id="newEmail"
-                      type="email"
-                      value={newUser.email}
-                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                      placeholder="Enter email address"
-                    />
+                    <Label>Email</Label>
+                    <Input value={currentUser.email || ""} disabled />
                   </div>
                   <div>
-                    <Label htmlFor="newTeam">Team (Optional)</Label>
-                    <Input
-                      id="newTeam"
-                      value={newUser.team}
-                      onChange={(e) => setNewUser({ ...newUser, team: e.target.value })}
-                      placeholder="Enter team name"
-                    />
+                    <Label>Team</Label>
+                    <Input value={currentUser.team || "No Team"} disabled />
                   </div>
-                </div>
-                <Button 
-                  onClick={handleCreateUser}
-                  disabled={createUserMutation.isPending}
-                  className="mt-4"
-                >
-                  <Plus className="mr-2" size={16} />
-                  {createUserMutation.isPending ? "Creating..." : "Create User"}
-                </Button>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            {/* Existing Users */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Existing Users</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <Label htmlFor="teamFilter">Filter by Team</Label>
-                  <Select value={teamFilter || "all"} onValueChange={(value) => setTeamFilter(value === "all" ? null : value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All teams" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All teams</SelectItem>
-                      {uniqueTeams.map((team) => (
-                        <SelectItem key={team} value={team}>
-                          {team}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {usersLoading ? (
-                  <div className="text-center py-8">Loading users...</div>
-                ) : users.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">No users found</div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredUsers.map((user) => (
-                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        {editingUser?.id === user.id ? (
-                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 mr-4">
-                            <Input
-                              value={editingUser.fullName}
-                              onChange={(e) => setEditingUser({ ...editingUser, fullName: e.target.value })}
-                              placeholder="Full name"
-                            />
-                            <Input
-                              value={editingUser.email}
-                              onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-                              placeholder="Email"
-                            />
-                            <Input
-                              value={editingUser.team || ""}
-                              onChange={(e) => setEditingUser({ ...editingUser, team: e.target.value })}
-                              placeholder="Team"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex-1">
-                            <h3 className="font-medium">{user.fullName}</h3>
-                            <p className="text-sm text-gray-500">{user.email}</p>
-                            {user.team && <p className="text-sm text-gray-500">Team: {user.team}</p>}
-                          </div>
-                        )}
-                        
-                        <div className="flex space-x-2">
-                          {editingUser?.id === user.id ? (
-                            <>
-                              <Button size="sm" onClick={handleUpdateUser}>
-                                Save
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => setEditingUser(null)}>
-                                Cancel
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button size="sm" variant="outline" onClick={() => setEditingUser(user)}>
-                                <Edit size={16} />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="destructive"
-                                onClick={() => handleDeleteUser(user.id)}
-                              >
-                                <Trash2 size={16} />
-                              </Button>
-                            </>
+              {/* Change Password */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Change Password</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div>
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      disabled={changePasswordMutation.isPending}
+                    >
+                      {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Logout */}
+              <Card>
+                <CardContent className="pt-6">
+                  <Button
+                    onClick={handleLogout}
+                    variant="destructive"
+                    className="w-full"
+                  >
+                    <LogOut className="mr-2" size={16} />
+                    Logout
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Manage Users Tab */}
+          <TabsContent value="users">
+            <div className="space-y-6">
+              {/* Add New User */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New User</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleCreateUser} className="space-y-4">
+                    <div>
+                      <Label htmlFor="user-name">Full Name</Label>
+                      <Input
+                        id="user-name"
+                        type="text"
+                        value={newUserName}
+                        onChange={(e) => setNewUserName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="user-email">Email</Label>
+                      <Input
+                        id="user-email"
+                        type="email"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="user-team">Team (Optional)</Label>
+                      <Input
+                        id="user-team"
+                        type="text"
+                        value={newUserTeam}
+                        onChange={(e) => setNewUserTeam(e.target.value)}
+                        placeholder="Enter team name"
+                      />
+                    </div>
+                    <Button 
+                      type="submit" 
+                      disabled={createUserMutation.isPending}
+                      className="w-full"
+                    >
+                      <Plus className="mr-2" size={16} />
+                      {createUserMutation.isPending ? "Creating..." : "Add User"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Users List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>All Users ({users.length})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {users.map((user) => (
+                      <div
+                        key={user.id}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
+                        <div>
+                          <div className="font-medium">{user.fullName}</div>
+                          <div className="text-sm text-gray-600">{user.email}</div>
+                          {user.team && (
+                            <div className="text-xs text-blue-600">{user.team}</div>
                           )}
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user.id)}
+                          disabled={user.id === currentUser.id}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
                       </div>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
-          <TabsContent value="results" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Assessment Results for User</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-6">
-                  <Label htmlFor="userSelect">Select User</Label>
-                  <Select value={selectedUserId || ""} onValueChange={setSelectedUserId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a user to view their assessments" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.fullName} ({user.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Manage Teams Tab */}
+          <TabsContent value="teams">
+            <div className="space-y-6">
+              {/* Create New Team */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create New Team</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Team name"
+                      value={newTeamName}
+                      onChange={(e) => setNewTeamName(e.target.value)}
+                    />
+                    <Button onClick={() => setNewTeamName("")}>
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-                {!selectedUserId ? (
-                  <div className="text-center py-8 text-gray-500">
-                    Please select a user to view their assessment results
-                  </div>
-                ) : assessmentsLoading ? (
-                  <div className="text-center py-8">Loading assessment results...</div>
-                ) : filteredAssessments.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    No assessment results found for this user
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredAssessments.map((assessment) => {
-                      const user = users.find(u => u.id === assessment.userId);
-                      const overallScore = calculateOverallScore(assessment);
-                      const stepScores = calculateStepScores(assessment);
-                      const stepNames = [
-                        "Preparation", "Opening", "Need Dialogue", 
-                        "Solution Dialog", "Objection Resolution", "Asking for Commitment", "Follow up"
-                      ];
-                      
-                      return (
-                        <div key={assessment.id} className="border rounded-lg p-6 bg-white shadow-sm">
-                          <div className="flex justify-between items-start mb-4">
+              {/* Teams List */}
+              <div className="space-y-4">
+                {Object.entries(usersByTeam).map(([teamName, teamUsers]) => (
+                  <Card key={teamName}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{teamName} ({teamUsers.length} members)</span>
+                        <Button variant="outline" size="sm">
+                          <Edit size={14} />
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {teamUsers.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded"
+                          >
                             <div>
-                              <h3 className="text-lg font-semibold">{assessment.title}</h3>
-                            </div>
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => downloadAssessment(assessment.id, user?.fullName || 'Unknown', assessment.title)}
-                            >
-                              <Download size={16} className="mr-2" />
-                              Download Report
-                            </Button>
-                          </div>
-                          
-                          <div className="mb-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-medium">Overall Score:</span>
-                              <div className="flex items-center gap-1">
-                                <span className={`text-lg font-bold ${
-                                  overallScore === 1 ? 'text-orange-500' :
-                                  overallScore === 2 ? 'text-yellow-400' :
-                                  overallScore === 3 ? 'text-green-500' :
-                                  'text-blue-500'
-                                }`}>Level {overallScore}</span>
-                                <span className="text-gray-500">/ 4</span>
-                              </div>
+                              <div className="font-medium text-sm">{user.fullName}</div>
+                              <div className="text-xs text-gray-600">{user.email}</div>
                             </div>
                           </div>
-
-                          <div className="text-sm">
-                            <div className="flex flex-wrap gap-2">
-                              {stepScores.map((score, index) => {
-                                const levelColor = 
-                                  score === 1 ? 'text-orange-500' :
-                                  score === 2 ? 'text-yellow-400' :
-                                  score === 3 ? 'text-green-500' :
-                                  'text-blue-500';
-                                
-                                return (
-                                  <span key={index} className="flex items-center">
-                                    <span className="font-medium">{stepNames[index]}</span>
-                                    <span className={`font-bold ml-1 ${levelColor}`}>L{score}</span>
-                                    {index < stepScores.length - 1 && <span className="ml-2 text-gray-400">-</span>}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
+      
+      <AppFooter />
     </div>
   );
 }
