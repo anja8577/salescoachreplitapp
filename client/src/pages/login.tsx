@@ -22,7 +22,6 @@ export default function Login() {
   const [registerName, setRegisterName] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
-  const [registerTeam, setRegisterTeam] = useState("");
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState("");
@@ -79,7 +78,6 @@ export default function Login() {
         fullName: registerName,
         email: registerEmail,
         password: registerPassword,
-        team: registerTeam || null,
       });
 
       if (response.ok) {
@@ -273,18 +271,11 @@ export default function Login() {
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
                     required
+                    minLength={3}
+                    placeholder="At least 3 characters"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="register-team">Team (Optional)</Label>
-                  <Input
-                    id="register-team"
-                    type="text"
-                    value={registerTeam}
-                    onChange={(e) => setRegisterTeam(e.target.value)}
-                    placeholder="Enter your team name"
-                  />
-                </div>
+
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>

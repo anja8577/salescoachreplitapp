@@ -288,8 +288,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Email, password, and full name are required" });
       }
 
-      if (userData.password.length < 6) {
-        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      if (userData.password.length < 3) {
+        return res.status(400).json({ error: "Password must be at least 3 characters" });
       }
 
       const user = await AuthService.register(userData);
