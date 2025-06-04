@@ -31,6 +31,18 @@ export default function Assessment() {
   const [assesseeName, setAssesseeName] = useState<string>('');
   const [context, setContext] = useState<string>('');
 
+  // Check URL parameters for userId on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    
+    if (userId && !currentUser && !currentAssessment) {
+      handleUserSelected(parseInt(userId));
+    } else if (!userId && !currentUser && !showUserModal) {
+      setShowUserModal(true);
+    }
+  }, []);
+
   // Function to duplicate previous session as baseline
   const duplicatePreviousSessionAsBaseline = async (newAssessment: AssessmentType, assesseeName: string) => {
     try {
@@ -284,19 +296,6 @@ export default function Assessment() {
       alert("Failed to create assessment. Please try again.");
     }
   };
-
-  // Check URL parameters for userId on component mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    
-    if (userId && !currentUser && !currentAssessment) {
-      handleUserSelected(parseInt(userId));
-    } else if (!userId && !currentUser) {
-      // Show user modal immediately if no user is selected
-      setShowUserModal(true);
-    }
-  }, []);
 
   // Show user selection if no user is selected
   if (!currentUser && !showUserModal) {
