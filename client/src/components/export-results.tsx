@@ -435,68 +435,89 @@ The complete PDF report has been downloaded to your device for attachment.`;
         pdf.text('Key Observations:', 20, yPosition);
         yPosition += 8;
         
-        // Draw grey border box
-        pdf.setDrawColor(180, 180, 180);
-        pdf.setLineWidth(0.5);
-        pdf.rect(20, yPosition - 2, 170, 20);
-        
+        // Calculate box height based on content
+        let obsBoxHeight = 20; // minimum height
         if (keyObservations) {
           pdf.setFontSize(10);
           const obsLines = pdf.splitTextToSize(keyObservations, 165);
+          obsBoxHeight = Math.max(20, obsLines.length * 5 + 8);
+          
+          // Draw expandable grey border box
+          pdf.setDrawColor(180, 180, 180);
+          pdf.setLineWidth(0.5);
+          pdf.rect(20, yPosition - 2, 170, obsBoxHeight);
+          
           obsLines.forEach((line: string, index: number) => {
             pdf.text(line, 22, yPosition + 3 + (index * 5));
           });
+        } else {
+          // Draw standard box if no content
+          pdf.setDrawColor(180, 180, 180);
+          pdf.setLineWidth(0.5);
+          pdf.rect(20, yPosition - 2, 170, obsBoxHeight);
         }
-        yPosition += 25;
+        yPosition += obsBoxHeight + 5;
 
         // What Worked Well section (always shown)
         pdf.setFontSize(12);
         pdf.text('What Worked Well:', 20, yPosition);
         yPosition += 8;
         
-        // Draw grey border box
-        pdf.rect(20, yPosition - 2, 170, 20);
-        
+        // Calculate box height based on content
+        let workedBoxHeight = 20;
         if (whatWorkedWell) {
           pdf.setFontSize(10);
           const workedLines = pdf.splitTextToSize(whatWorkedWell, 165);
+          workedBoxHeight = Math.max(20, workedLines.length * 5 + 8);
+          
+          pdf.rect(20, yPosition - 2, 170, workedBoxHeight);
           workedLines.forEach((line: string, index: number) => {
             pdf.text(line, 22, yPosition + 3 + (index * 5));
           });
+        } else {
+          pdf.rect(20, yPosition - 2, 170, workedBoxHeight);
         }
-        yPosition += 25;
+        yPosition += workedBoxHeight + 5;
 
         // What Can Be Improved section (always shown)
         pdf.setFontSize(12);
         pdf.text('What Can Be Improved:', 20, yPosition);
         yPosition += 8;
         
-        // Draw grey border box
-        pdf.rect(20, yPosition - 2, 170, 20);
-        
+        // Calculate box height based on content
+        let improvedBoxHeight = 20;
         if (whatCanBeImproved) {
           pdf.setFontSize(10);
           const improvedLines = pdf.splitTextToSize(whatCanBeImproved, 165);
+          improvedBoxHeight = Math.max(20, improvedLines.length * 5 + 8);
+          
+          pdf.rect(20, yPosition - 2, 170, improvedBoxHeight);
           improvedLines.forEach((line: string, index: number) => {
             pdf.text(line, 22, yPosition + 3 + (index * 5));
           });
+        } else {
+          pdf.rect(20, yPosition - 2, 170, improvedBoxHeight);
         }
-        yPosition += 25;
+        yPosition += improvedBoxHeight + 5;
 
         // Next Steps section (always shown)
         pdf.setFontSize(12);
         pdf.text('Next Steps:', 20, yPosition);
         yPosition += 8;
         
-        // Draw grey border box
-        pdf.rect(20, yPosition - 2, 170, 20);
-        
+        // Calculate box height based on content
+        let stepsBoxHeight = 20;
         if (nextSteps) {
           pdf.setFontSize(10);
           const stepLines = pdf.splitTextToSize(nextSteps, 165);
+          stepsBoxHeight = Math.max(20, stepLines.length * 5 + 8);
+          
+          pdf.rect(20, yPosition - 2, 170, stepsBoxHeight);
           stepLines.forEach((line: string, index: number) => {
             pdf.text(line, 22, yPosition + 3 + (index * 5));
           });
+        } else {
+          pdf.rect(20, yPosition - 2, 170, stepsBoxHeight);
         }
         yPosition += 25;
 
@@ -666,43 +687,7 @@ The complete PDF report has been downloaded to your device for attachment.`;
         </div>
       )}
 
-      {/* Export Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="grid grid-cols-4 gap-3">
-          <button
-            onClick={handleWebShare}
-            disabled={isSharing}
-            className="flex flex-col items-center justify-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <Share2 size={24} className="text-green-600" />
-            <span className="text-xs text-gray-600">{isSharing ? "Sharing..." : "Share"}</span>
-          </button>
-
-          <button
-            onClick={handleDownload}
-            className="flex flex-col items-center justify-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <Download size={24} className="text-blue-600" />
-            <span className="text-xs text-gray-600">Download</span>
-          </button>
-
-          <button
-            onClick={handleHome}
-            className="flex flex-col items-center justify-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <Home size={24} className="text-purple-600" />
-            <span className="text-xs text-gray-600">Home</span>
-          </button>
-
-          <button
-            onClick={handleProfile}
-            className="flex flex-col items-center justify-center space-y-2 p-3 hover:bg-gray-50 rounded-lg transition-colors"
-          >
-            <UserIcon size={24} className="text-orange-600" />
-            <span className="text-xs text-gray-600">Profile</span>
-          </button>
-        </div>
-      </div>
+      {/* Export Actions - Removed since footer navigation is now available */}
     </div>
   );
 }
