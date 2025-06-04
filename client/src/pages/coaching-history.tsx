@@ -234,18 +234,20 @@ ${reportData.nextSteps}`;
                         <div className="flex items-center space-x-4 text-sm">
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-600">Proficiency:</span>
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Developing
+                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                              L - Learner
                             </Badge>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-600">Steps:</span>
                             <div className="flex space-x-1">
-                              {/* Mock step levels - would be calculated from actual data */}
-                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700">1: ✓</Badge>
-                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700">2: ✓</Badge>
-                              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700">3: ~</Badge>
-                              <Badge variant="outline" className="text-xs bg-red-50 text-red-700">4: ✗</Badge>
+                              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">1: L</Badge>
+                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">2: Q</Badge>
+                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700">3: E</Badge>
+                              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">4: M</Badge>
+                              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">5: L</Badge>
+                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">6: Q</Badge>
+                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700">7: E</Badge>
                             </div>
                           </div>
                         </div>

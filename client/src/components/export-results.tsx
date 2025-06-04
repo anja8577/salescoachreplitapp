@@ -640,20 +640,29 @@ The complete PDF report has been downloaded to your device for attachment.`;
         </div>
       </div>
 
-      {/* Save Assessment Button */}
+      {/* Save Assessment and Download Buttons */}
       {onSaveAssessment && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-          <button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-            onClick={() => onSaveAssessment({
-              keyObservations,
-              whatWorkedWell,
-              whatCanBeImproved,
-              nextSteps
-            })}
-          >
-            Save Coaching Session
-          </button>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex flex-col space-y-3">
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+              onClick={() => onSaveAssessment({
+                keyObservations,
+                whatWorkedWell,
+                whatCanBeImproved,
+                nextSteps
+              })}
+            >
+              Save Coaching Session
+            </button>
+            <button
+              onClick={handleDownload}
+              className="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2"
+            >
+              <Download size={18} />
+              <span>Download Coaching Report</span>
+            </button>
+          </div>
         </div>
       )}
 
