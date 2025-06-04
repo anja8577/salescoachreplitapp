@@ -124,13 +124,13 @@ export default function Assessment() {
     if (scores.length > 0) {
       const checkedIds = scores.filter(score => score.checked).map(score => score.behaviorId);
       const newCheckedSet = new Set(checkedIds);
-      
-      if (newCheckedSet.size !== checkedBehaviors.size || 
-          !Array.from(newCheckedSet).every(id => checkedBehaviors.has(id))) {
-        setCheckedBehaviors(newCheckedSet);
-      }
+      console.log("Loading saved scores:", checkedIds.length, "behaviors checked");
+      setCheckedBehaviors(newCheckedSet);
+    } else if (currentAssessment) {
+      // Clear checkboxes if no scores found for this assessment
+      setCheckedBehaviors(new Set());
     }
-  }, [scores]);
+  }, [scores, currentAssessment]);
 
   const handleUserSelected = async (userId: number) => {
     console.log("User selected:", userId);
