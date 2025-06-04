@@ -39,6 +39,62 @@ export default function Assessment() {
     enabled: !!currentAssessment,
   });
 
+  const duplicateBaselineFromPreviousSession = async (coacheeName: string, newAssessmentId: number) => {
+    try {
+      console.log("Attempting to duplicate baseline for:", coacheeName);
+      
+      // Get previous assessment for this coachee (excluding current one)
+      const response = await fetch(`/api/coachees/${encodeURIComponent(coacheeName)}/latest-assessment`);
+      
+      if (!response.ok) {
+        console.log("No previous coaching session found for", coacheeName);
+        return;
+      }
+      
+      const previousAssessment = await response.json();
+      
+      // Skip if this is the same assessment
+      if (previousAssessment.id === newAssessmentId) {
+        console.log("Previous assessment is the same as current, skipping duplication");
+        return;
+      }
+      
+      console.log("Found previous assessment:", previousAssessment.id);
+      
+      // Get scores from previous assessment
+      const scoresResponse = await fetch(`/api/assessments/${previousAssessment.id}/scores`);
+      if (scoresResponse.ok) {
+        const previousScores = await scoresResponse.json();
+        console.log("Found", previousScores.length, "previous behavior scores to duplicate");
+        
+        // Duplicate each score to the new assessment
+        const newCheckedBehaviors = new Set<number>();
+        for (const score of previousScores) {
+          if (score.checked) {
+            newCheckedBehaviors.add(score.behaviorId);
+            
+            // Save score to new assessment
+            await fetch(`/api/assessments/${newAssessmentId}/scores/${score.behaviorId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ checked: true }),
+            });
+          }
+        }
+        
+        // Update UI with duplicated scores
+        setCheckedBehaviors(newCheckedBehaviors);
+        console.log("Baseline duplication completed - duplicated", newCheckedBehaviors.size, "behavioral scores");
+        
+        // Invalidate queries to refresh scores
+        queryClient.invalidateQueries({ queryKey: ["/api/assessments", newAssessmentId, "scores"] });
+      }
+      
+    } catch (error) {
+      console.log("Could not duplicate previous session as baseline:", error);
+    }
+  };
+
   const createAssessmentMutation = useMutation<AssessmentType, Error, { title: string; userId: number; assesseeName: string }>({
     mutationFn: async ({ title, userId, assesseeName }) => {
       console.log("Creating assessment with:", { title, userId, assesseeName });
@@ -51,6 +107,10 @@ export default function Assessment() {
       console.log("Assessment created successfully:", assessment);
       setCurrentAssessment(assessment);
       setShowUserModal(false);
+      
+      // Try to duplicate baseline from previous coaching session
+      await duplicateBaselineFromPreviousSession(assessment.assesseeName, assessment.id);
+      
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
     },
     onError: (error: Error) => {
@@ -111,13 +171,41 @@ export default function Assessment() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
+    const assessmentId = urlParams.get('id');
     
-    if (userId && !currentUser && !currentAssessment) {
+    if (assessmentId) {
+      // Load existing assessment by ID
+      loadExistingAssessment(parseInt(assessmentId));
+    } else if (userId && !currentUser && !currentAssessment) {
       handleUserSelected(parseInt(userId));
     } else if (!userId && !currentUser && !showUserModal) {
       setShowUserModal(true);
     }
   }, []);
+
+  const loadExistingAssessment = async (assessmentId: number) => {
+    try {
+      const response = await fetch(`/api/assessments/${assessmentId}`);
+      if (response.ok) {
+        const assessment = await response.json();
+        setCurrentAssessment(assessment);
+        
+        // Get user details
+        const userResponse = await fetch(`/api/users/${assessment.userId}`);
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setCurrentUser(userData);
+        }
+        
+        setAssesseeName(assessment.assesseeName);
+        setContext(assessment.context || '');
+      }
+    } catch (error) {
+      console.error("Error loading existing assessment:", error);
+    }
+  };
+
+
 
   // Update checked behaviors when scores change
   useEffect(() => {
