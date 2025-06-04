@@ -34,6 +34,7 @@ export interface IStorage {
   getAllAssessments(): Promise<Assessment[]>;
   getLatestAssessmentForUser(userId: number): Promise<Assessment | undefined>;
   getLatestAssessmentForCoachee(coacheeName: string): Promise<Assessment | undefined>;
+  getPreviousAssessmentForCoachee(coacheeName: string, excludeId: number): Promise<Assessment | undefined>;
 
   // Assessment Scores
   getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]>;
