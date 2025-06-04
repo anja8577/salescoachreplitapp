@@ -286,14 +286,19 @@ The complete PDF report has been downloaded to your device for attachment.`;
       const dateEU = now.toLocaleDateString('de-DE');
       const timeEU = now.toLocaleTimeString('de-DE', { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-      // Left side: Coach and Coachee names on same line
-      const coachText = assessor ? `Coach: ${assessor.fullName}` : '';
+      // Left side: Coach, Coachee, and Proficiency level with vertical separators
+      const coachText = assessor ? `Coach: ${assessor.fullName}` : 'Coach: Unknown';
       const coacheeText = `Coachee: ${user.fullName}`;
+      const proficiencyText = `Proficiency Level: ${overallProficiencyLevel}`;
+      
       pdf.text(coachText, 20, 23);
-      pdf.text(coacheeText, 80, 23);
+      pdf.text('|', 20 + pdf.getTextWidth(coachText) + 3, 23);
+      pdf.text(coacheeText, 20 + pdf.getTextWidth(coachText) + 8, 23);
+      pdf.text('|', 20 + pdf.getTextWidth(coachText + coacheeText) + 11, 23);
+      pdf.text(proficiencyText, 20 + pdf.getTextWidth(coachText + coacheeText) + 16, 23);
       
       // Right side: Date and time with separator
-      const dateTimeText = `${dateEU}  |  ${timeEU}`;
+      const dateTimeText = `${dateEU} | ${timeEU}`;
       const dateTimeWidth = pdf.getTextWidth(dateTimeText);
       pdf.text(dateTimeText, 190 - dateTimeWidth, 23);
 

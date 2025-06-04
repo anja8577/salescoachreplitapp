@@ -4,7 +4,7 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, ne } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -1191,6 +1191,17 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     return latestAssessment;
+  }
+
+  async getPreviousAssessmentForCoachee(coacheeName: string, excludeId: number): Promise<Assessment | undefined> {
+    const [previousAssessment] = await db
+      .select()
+      .from(assessments)
+      .where(and(eq(assessments.assesseeName, coacheeName), ne(assessments.id, excludeId)))
+      .orderBy(desc(assessments.createdAt))
+      .limit(1);
+    
+    return previousAssessment;
   }
 
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
