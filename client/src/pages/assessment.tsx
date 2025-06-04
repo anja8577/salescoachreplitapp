@@ -224,10 +224,17 @@ export default function Assessment() {
     );
   }
 
-  if (!currentUser) {
-    // Redirect to home page instead of showing user selection screen
-    window.location.href = '/';
-    return null;
+  // Show user selection if no user is selected and no assessment exists
+  if (!currentUser && !currentAssessment) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <UserSelectionModal 
+          open={true}
+          onClose={() => window.location.href = '/'}
+          onUserSelected={handleUserSelected}
+        />
+      </div>
+    );
   }
 
   if (!currentAssessment) {
