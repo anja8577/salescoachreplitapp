@@ -278,6 +278,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get assessment scores
+  app.get("/api/assessments/:id/scores", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const scores = await storage.getAssessmentScores(assessmentId);
+      res.json(scores);
+    } catch (error) {
+      console.error("Error fetching assessment scores:", error);
+      res.status(500).json({ message: "Failed to fetch assessment scores" });
+    }
+  });
+
+  // Update assessment score (behavior checkbox)
+  app.put("/api/assessments/:id/scores/:behaviorId", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const behaviorId = parseInt(req.params.behaviorId);
+      const { checked } = req.body;
+      
+      const score = await storage.updateAssessmentScore(assessmentId, behaviorId, checked);
+      res.json(score);
+    } catch (error) {
+      console.error("Error updating assessment score:", error);
+      res.status(500).json({ message: "Failed to update assessment score" });
+    }
+  });
+
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
