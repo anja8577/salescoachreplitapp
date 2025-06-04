@@ -206,6 +206,14 @@ export class MemStorage implements IStorage {
     return coacheeAssessments[0];
   }
 
+  async getPreviousAssessmentForCoachee(coacheeName: string, excludeId: number): Promise<Assessment | undefined> {
+    const coacheeAssessments = Array.from(this.assessments.values())
+      .filter(assessment => assessment.assesseeName === coacheeName && assessment.id !== excludeId)
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    
+    return coacheeAssessments[0];
+  }
+
   async getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]> {
     return Array.from(this.assessmentScores.values())
       .filter(score => score.assessmentId === assessmentId);
