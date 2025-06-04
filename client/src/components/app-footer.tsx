@@ -7,7 +7,9 @@ export default function AppFooter() {
   const [location, setLocation] = useLocation();
   const [showUserModal, setShowUserModal] = useState(false);
 
-  const handleNewSession = () => {
+  const handleNewSession = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setShowUserModal(true);
   };
 

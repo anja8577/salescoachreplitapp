@@ -285,24 +285,26 @@ export default function Assessment() {
     }
   };
 
+  // Check URL parameters for userId on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    
+    if (userId && !currentUser && !currentAssessment) {
+      handleUserSelected(parseInt(userId));
+    } else if (!userId && !currentUser) {
+      // Show user modal immediately if no user is selected
+      setShowUserModal(true);
+    }
+  }, []);
+
   // Show user selection if no user is selected
-  if (!currentUser) {
+  if (!currentUser && !showUserModal) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-          <SalesCoachHeader className="mb-4" showLogo={true} size="lg" />
-          <p className="text-gray-600 mb-6">Select or create a user to begin Sales Coaching</p>
-          <Button onClick={() => setShowUserModal(true)} className="w-full">
-            <Plus className="mr-2" size={16} />
-            Start Sales Coaching
-          </Button>
+        <div className="text-center">
+          <div className="text-lg text-gray-600">Loading...</div>
         </div>
-        
-        <UserSelectionModal 
-          open={showUserModal}
-          onClose={() => setShowUserModal(false)}
-          onUserSelected={handleUserSelected}
-        />
       </div>
     );
   }
