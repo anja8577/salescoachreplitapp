@@ -22,7 +22,7 @@ type StepWithSubsteps = Step & {
 export default function Assessment() {
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentType | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [assessor, setAssessor] = useState<User | null>(null); // The logged-in user conducting the assessment
+  const [assessor, setAssessor] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [checkedBehaviors, setCheckedBehaviors] = useState<Set<number>>(new Set());
@@ -30,6 +30,7 @@ export default function Assessment() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [assesseeName, setAssesseeName] = useState<string>('');
   const [context, setContext] = useState<string>('');
+  const [initialized, setInitialized] = useState(false);
 
   // Function to duplicate previous session as baseline
   const duplicatePreviousSessionAsBaseline = async (newAssessment: AssessmentType, assesseeName: string) => {
@@ -285,28 +286,20 @@ export default function Assessment() {
     }
   };
 
-  // Check URL parameters for userId on component mount
+  // Initialize component on mount
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    
-    if (userId && !currentUser && !currentAssessment) {
-      handleUserSelected(parseInt(userId));
-    } else if (!userId && !currentUser && !showUserModal) {
-      setShowUserModal(true);
+    if (!initialized) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('userId');
+      
+      if (userId && !currentUser && !currentAssessment) {
+        handleUserSelected(parseInt(userId));
+      } else if (!userId && !currentUser) {
+        setShowUserModal(true);
+      }
+      setInitialized(true);
     }
-  }, []);
-
-  // Show user selection if no user is selected
-  if (!currentUser && !showUserModal) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="text-lg text-gray-600">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+  }, [initialized, currentUser, currentAssessment]);
 
   if (!currentAssessment) {
     return (
