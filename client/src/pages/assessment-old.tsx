@@ -1,7 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
+import AssessmentHeader from "@/components/assessment-header";
 import AssessmentStep from "@/components/assessment-step";
+import ScoringDashboard from "@/components/scoring-dashboard";
 import SpiderGraph from "@/components/spider-graph";
 import ExportResults from "@/components/export-results";
 import UserSelectionModal from "@/components/user-selection-modal";
@@ -29,8 +31,8 @@ export default function Assessment() {
   const [assesseeName, setAssesseeName] = useState<string>('');
   const [context, setContext] = useState<string>('');
 
-  // Always call hooks in same order
-  const { data: steps = [], isLoading: stepsLoading } = useQuery<StepWithSubsteps[]>({
+  // Always call hooks in same order - declare all queries here
+  const { data: steps = [], isLoading } = useQuery<StepWithSubsteps[]>({
     queryKey: ["/api/steps"],
   });
 
@@ -39,42 +41,145 @@ export default function Assessment() {
     enabled: !!currentAssessment,
   });
 
+  // Function to duplicate previous session as baseline
+  const duplicatePreviousSessionAsBaseline = async (newAssessment: AssessmentType, assesseeName: string) => {
+    try {
+      console.log("Looking for previous session to duplicate for:", assesseeName);
+      
+      // Fetch previous coaching session
+      const encodedName = encodeURIComponent(assesseeName);
+      const previousResponse = await fetch(`/api/coachees/${encodedName}/latest-assessment`);
+      
+      if (!previousResponse.ok) {
+        console.log("No previous session found for", assesseeName);
+        return;
+      }
+      
+      const previousSession = await previousResponse.json();
+      console.log("Found previous session to duplicate:", previousSession);
+      
+      // Check if this is the same session we just created (avoid self-duplication)
+      if (previousSession.id === newAssessment.id) {
+        console.log("Previous session is the same as current, skipping duplication");
+        return;
+      }
+      
+      // Fetch previous behavioral scores
+      const scoresResponse = await fetch(`/api/assessments/${previousSession.id}/scores`);
+      if (scoresResponse.ok) {
+        const previousScores = await scoresResponse.json();
+        console.log("Duplicating", previousScores.length, "behavioral scores as baseline");
+        
+        const newCheckedBehaviors = new Set<number>();
+        
+        // Duplicate each behavioral score to new assessment
+        for (const score of previousScores) {
+          if (score.checked) {
+            newCheckedBehaviors.add(score.behaviorId);
+            
+            // Save score to new assessment
+            await fetch(`/api/assessments/${newAssessment.id}/scores/${score.behaviorId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ checked: true }),
+            });
+          }
+        }
+        
+        // Update UI with duplicated scores
+        setCheckedBehaviors(newCheckedBehaviors);
+        console.log("Baseline duplication completed - duplicated", newCheckedBehaviors.size, "behavioral scores");
+      }
+      
+    } catch (error) {
+      console.log("Could not duplicate previous session as baseline:", error);
+    }
+  };
+
+  // Create assessment mutation
   const createAssessmentMutation = useMutation<AssessmentType, Error, { title: string; userId: number; assesseeName: string }>({
     mutationFn: async ({ title, userId, assesseeName }) => {
       console.log("Creating assessment with:", { title, userId, assesseeName });
-      const res = await apiRequest("POST", "/api/assessments", { title, userId, assesseeName });
-      const data = await res.json();
-      console.log("Assessment API response:", data);
-      return data;
+      try {
+        const res = await apiRequest("POST", "/api/assessments", { title, userId, assesseeName });
+        const data = await res.json();
+        console.log("Assessment API response:", data);
+        return data;
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
     },
     onSuccess: async (assessment: AssessmentType) => {
       console.log("Assessment created successfully:", assessment);
       setCurrentAssessment(assessment);
       setShowUserModal(false);
       queryClient.invalidateQueries({ queryKey: ["/api/assessments"] });
-    },
-    onError: (error: Error) => {
-      console.error("Error creating assessment:", error);
-      alert("Failed to create assessment. Please try again.");
-    },
-  });
-
-  const updateScoreMutation = useMutation({
-    mutationFn: async ({ behaviorId, checked }: { behaviorId: number; checked: boolean }) => {
-      if (!currentAssessment) throw new Error("No current assessment");
       
-      const res = await apiRequest("PUT", `/api/assessments/${currentAssessment.id}/scores/${behaviorId}`, { checked });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/assessments", currentAssessment?.id, "scores"] });
+      // Check for baseline duplication
+      const pendingData = (window as any).pendingBaselineDuplication;
+      if (pendingData) {
+        await duplicatePreviousSessionAsBaseline(assessment, pendingData.assesseeName);
+        (window as any).pendingBaselineDuplication = null;
+      }
     },
     onError: (error) => {
-      console.error("Error updating score:", error);
+      console.error("Assessment creation failed:", error);
+      console.error("Error details:", { 
+        message: error.message, 
+        stack: error.stack,
+        name: error.name 
+      });
+      alert(`Failed to create assessment: ${error.message}`);
     },
   });
 
-  // Check authentication
+  // Update score mutation
+  const updateScoreMutation = useMutation({
+    mutationFn: async ({ assessmentId, behaviorId, checked }: { assessmentId: number; behaviorId: number; checked: boolean }) => {
+      const response = await apiRequest("PUT", `/api/assessments/${assessmentId}/scores/${behaviorId}`, { checked });
+      return response.json();
+    },
+    onSuccess: () => {
+      if (currentAssessment) {
+        queryClient.invalidateQueries({ queryKey: ["/api/assessments", currentAssessment.id, "scores"] });
+      }
+    },
+  });
+
+
+
+  // Handle checkbox changes
+  const handleBehaviorCheck = (behaviorId: number, checked: boolean) => {
+    if (!currentAssessment) return;
+    
+    updateScoreMutation.mutate({
+      assessmentId: currentAssessment.id,
+      behaviorId,
+      checked,
+    });
+
+    const newCheckedBehaviors = new Set(checkedBehaviors);
+    if (checked) {
+      newCheckedBehaviors.add(behaviorId);
+    } else {
+      newCheckedBehaviors.delete(behaviorId);
+    }
+    setCheckedBehaviors(newCheckedBehaviors);
+  };
+
+  // Handle step-level scoring
+  const handleStepScoreChange = (stepId: number, level: number) => {
+    setStepScores(prev => ({
+      ...prev,
+      [stepId]: level
+    }));
+    
+    // Optional: You could save this to the backend here if needed
+    // This would require creating a new API endpoint for step-level scores
+  };
+
+  // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('auth_token');
@@ -85,14 +190,12 @@ export default function Assessment() {
 
       try {
         const response = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
 
         if (response.ok) {
-          const userData = await response.json();
-          setAssessor(userData);
+          const user = await response.json();
+          setAssessor(user); // Store the logged-in user as the assessor
           setIsAuthenticated(true);
         } else {
           localStorage.removeItem('auth_token');
@@ -107,24 +210,13 @@ export default function Assessment() {
     checkAuth();
   }, []);
 
-  // Handle URL parameters
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    
-    if (userId && !currentUser && !currentAssessment) {
-      handleUserSelected(parseInt(userId));
-    } else if (!userId && !currentUser && !showUserModal) {
-      setShowUserModal(true);
-    }
-  }, []);
-
   // Update checked behaviors when scores change
   useEffect(() => {
     if (scores.length > 0) {
       const checkedIds = scores.filter(score => score.checked).map(score => score.behaviorId);
       const newCheckedSet = new Set(checkedIds);
       
+      // Only update if the sets are actually different
       if (newCheckedSet.size !== checkedBehaviors.size || 
           !Array.from(newCheckedSet).every(id => checkedBehaviors.has(id))) {
         setCheckedBehaviors(newCheckedSet);
@@ -132,54 +224,7 @@ export default function Assessment() {
     }
   }, [scores]);
 
-  const handleUserSelected = async (userId: number) => {
-    console.log("User selected:", userId);
-    try {
-      setCurrentAssessment(null);
-      setCheckedBehaviors(new Set());
-      setStepScores({});
-      
-      console.log("Fetching user details for ID:", userId);
-      const response = await fetch(`/api/users/${userId}`);
-      let selectedUser;
-      if (response.ok) {
-        selectedUser = await response.json();
-        console.log("User details fetched:", selectedUser);
-      } else {
-        console.log("Failed to fetch user details, using fallback");
-        selectedUser = { id: userId, fullName: "User", email: "", team: null, createdAt: new Date() };
-      }
-      
-      const assesseeName = selectedUser.fullName;
-      setAssesseeName(assesseeName);
-      setCurrentUser(selectedUser);
-      
-      const title = `Assessment for ${assesseeName} - ${new Date().toLocaleDateString()}`;
-      console.log("About to create assessment with title:", title);
-      
-      createAssessmentMutation.mutate({ title, userId, assesseeName });
-    } catch (error) {
-      console.error("Error in handleUserSelected:", error);
-      alert("Failed to create assessment. Please try again.");
-    }
-  };
-
-  const handleBehaviorCheck = (behaviorId: number, checked: boolean) => {
-    const newCheckedBehaviors = new Set(checkedBehaviors);
-    if (checked) {
-      newCheckedBehaviors.add(behaviorId);
-    } else {
-      newCheckedBehaviors.delete(behaviorId);
-    }
-    setCheckedBehaviors(newCheckedBehaviors);
-    
-    updateScoreMutation.mutate({ behaviorId, checked });
-  };
-
-  const handleStepScoreChange = (stepId: number, level: number) => {
-    setStepScores(prev => ({ ...prev, [stepId]: level }));
-  };
-
+  // Calculate total score
   const totalScore = steps.reduce((stepTotal, step) => {
     return stepTotal + step.substeps.reduce((substepTotal, substep) => {
       return substepTotal + substep.behaviors.reduce((behaviorTotal, behavior) => {
@@ -193,8 +238,76 @@ export default function Assessment() {
 
   const totalBehaviors = checkedBehaviors.size;
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-lg text-gray-600">Loading assessment...</div>
+      </div>
+    );
+  }
+
+  const handleUserSelected = async (userId: number) => {
+    console.log("User selected:", userId);
+    try {
+      // Reset current state for new assessment
+      setCurrentAssessment(null);
+      setCheckedBehaviors(new Set());
+      setStepScores({});
+      
+      // Fetch user details from API - this user becomes the assessee
+      console.log("Fetching user details for ID:", userId);
+      const response = await fetch(`/api/users/${userId}`);
+      let selectedUser;
+      if (response.ok) {
+        selectedUser = await response.json();
+        console.log("User details fetched:", selectedUser);
+      } else {
+        console.log("Failed to fetch user details, using fallback");
+        selectedUser = { id: userId, fullName: "User", email: "", team: null, createdAt: new Date() };
+      }
+      
+      // The selected user becomes the assessee
+      const assesseeName = selectedUser.fullName;
+      setAssesseeName(assesseeName);
+      setCurrentUser(selectedUser);
+      
+      const title = `Assessment for ${assesseeName} - ${new Date().toLocaleDateString()}`;
+      console.log("About to create assessment with title:", title);
+      
+      // Store the user data for baseline duplication after assessment creation
+      (window as any).pendingBaselineDuplication = { selectedUser, assesseeName };
+      
+      createAssessmentMutation.mutate({ title, userId, assesseeName });
+    } catch (error) {
+      console.error("Error in handleUserSelected:", error);
+      alert("Failed to create assessment. Please try again.");
+    }
+  };
+
+  // Initialize component on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    
+    if (userId && !currentUser && !currentAssessment) {
+      handleUserSelected(parseInt(userId));
+    } else if (!userId && !currentUser && !showUserModal) {
+      setShowUserModal(true);
+    }
+  }, []);
+
+  if (!currentAssessment) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="text-lg text-gray-600">Creating assessment...</div>
+        </div>
+      </div>
+    );
+  }
+
   const handleAuthSuccess = (user: User, token: string) => {
-    setAssessor(user);
+    setAssessor(user); // Store the logged-in user as the assessor
     setIsAuthenticated(true);
     setShowAuthModal(false);
   };
@@ -203,14 +316,7 @@ export default function Assessment() {
     setShowUserModal(true);
   };
 
-  if (stepsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-lg text-gray-600">Loading assessment...</div>
-      </div>
-    );
-  }
-
+  // Show authentication modal if not authenticated
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -220,37 +326,6 @@ export default function Assessment() {
             onClose={() => setShowAuthModal(false)}
           />
         )}
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-          <SalesCoachHeader className="mb-4" showLogo={true} size="lg" />
-          <p className="text-gray-600 mb-6">Select or create a user to begin Sales Coaching</p>
-          <Button onClick={() => setShowUserModal(true)} className="w-full">
-            <Plus className="mr-2" size={16} />
-            Start Sales Coaching
-          </Button>
-        </div>
-        
-        <UserSelectionModal 
-          open={showUserModal}
-          onClose={() => setShowUserModal(false)}
-          onUserSelected={handleUserSelected}
-        />
-      </div>
-    );
-  }
-
-  if (!currentAssessment) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="text-lg text-gray-600">Creating assessment...</div>
-        </div>
       </div>
     );
   }
