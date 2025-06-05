@@ -464,12 +464,44 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
         </Button>
 
         <Button
-          onClick={generatePDF}
+          onClick={async () => {
+            if (!assessmentId) return;
+            try {
+              const response = await fetch(`/api/assessments/${assessmentId}/pdf`);
+              if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `coaching-report-${user.fullName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                toast({
+                  title: "PDF Downloaded",
+                  description: "Your assessment report has been downloaded successfully.",
+                });
+              } else {
+                toast({
+                  title: "PDF Generation Failed",
+                  description: "Failed to generate PDF report. Please try again.",
+                  variant: "destructive",
+                });
+              }
+            } catch (error) {
+              console.error('PDF download error:', error);
+              toast({
+                title: "PDF Download Failed",
+                description: "There was an error downloading the PDF. Please try again.",
+                variant: "destructive",
+              });
+            }
+          }}
           variant="outline"
           className="px-6 py-2"
         >
           <Download className="mr-2 h-4 w-4" />
-          Generate PDF Report
+          Download PDF Report
         </Button>
 
         <Button

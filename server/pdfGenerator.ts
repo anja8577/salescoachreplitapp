@@ -36,140 +36,193 @@ export class PDFGenerator {
   static async generateCoachingReport(data: CoachingReportData): Promise<string> {
     const { assessment, coach, steps, assessmentScores, stepScores } = data;
     
-    // Create PDF document
+    // Create comprehensive PDF with all behavioral details
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     let yPosition = 20;
     
     // Header
     doc.setFontSize(20);
-    doc.text('Sales Coaching Assessment Report', 20, yPosition);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Sales Coaching Assessment Report', pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 20;
     
-    // Assessment Details
-    doc.setFontSize(12);
-    doc.text(`Coachee: ${assessment.assesseeName}`, 20, yPosition);
-    yPosition += 10;
-    doc.text(`Coach: ${coach.fullName}`, 20, yPosition);
-    yPosition += 10;
-    doc.text(`Date: ${new Date(assessment.createdAt || new Date()).toLocaleDateString()}`, 20, yPosition);
-    yPosition += 10;
-    doc.text(`Assessment: ${assessment.title}`, 20, yPosition);
-    yPosition += 20;
-
-    // Calculate overall performance
-    const totalBehaviors = steps.reduce((sum, step) => 
-      sum + step.substeps.reduce((subSum, substep) => subSum + substep.behaviors.length, 0), 0
-    );
-    const checkedBehaviors = assessmentScores.filter(score => score.checked).length;
-    const overallScore = totalBehaviors > 0 ? Math.round((checkedBehaviors / totalBehaviors) * 100) : 0;
-
-    doc.text(`Overall Performance: ${overallScore}% (${checkedBehaviors}/${totalBehaviors} behaviors demonstrated)`, 20, yPosition);
-    yPosition += 20;
-
-    // Step-by-Step Performance
-    doc.setFontSize(14);
-    doc.text('Step-by-Step Performance:', 20, yPosition);
+    // Assessment info box
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.rect(20, yPosition, pageWidth - 40, 25);
+    yPosition += 8;
+    doc.text(`Coach: ${coach.fullName}`, 25, yPosition);
+    yPosition += 6;
+    doc.text(`Coachee: ${assessment.assesseeName}`, 25, yPosition);
+    yPosition += 6;
+    doc.text(`Date: ${new Date(assessment.createdAt!).toLocaleDateString()}`, 25, yPosition);
+    yPosition += 6;
+    doc.text(`Assessment: ${assessment.title}`, 25, yPosition);
     yPosition += 15;
 
-    doc.setFontSize(10);
-    for (const step of steps) {
-      // Calculate step performance
-      const stepBehaviors = step.substeps.reduce((sum, substep) => sum + substep.behaviors.length, 0);
-      const stepChecked = assessmentScores.filter(score => 
-        score.checked && step.substeps.some(substep => 
-          substep.behaviors.some(behavior => behavior.id === score.behaviorId)
-        )
-      ).length;
-      const stepPercentage = stepBehaviors > 0 ? Math.round((stepChecked / stepBehaviors) * 100) : 0;
-
-      // Get manual step score
-      const stepScore = stepScores.find(score => score.stepId === step.id);
-      const levelText = stepScore ? LEVEL_NAMES[stepScore.level as keyof typeof LEVEL_NAMES] : 'Not Evaluated';
-
-      doc.text(`${step.title}: ${stepPercentage}% behavioral | Manual Level: ${levelText}`, 20, yPosition);
+    // Context section
+    if (assessment.context) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Assessment Context', 20, yPosition);
       yPosition += 8;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const contextLines = doc.splitTextToSize(assessment.context, pageWidth - 40);
+      doc.text(contextLines, 20, yPosition);
+      yPosition += contextLines.length * 5 + 10;
+    }
 
+    // Performance Overview
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Performance Overview', 20, yPosition);
+    yPosition += 10;
+
+    // Create checked behaviors set
+    const checkedBehaviorIds = new Set(assessmentScores.filter(score => score.checked).map(score => score.behaviorId));
+    
+    // Create step scores map
+    const stepScoresMap: { [key: number]: number } = {};
+    stepScores.forEach(score => {
+      stepScoresMap[score.stepId] = score.level;
+    });
+
+    // Process each step
+    steps.forEach((step, stepIndex) => {
       // Check if we need a new page
-      if (yPosition > 250) {
+      if (yPosition > pageHeight - 60) {
         doc.addPage();
         yPosition = 20;
       }
-    }
 
-    yPosition += 10;
+      const checkedCount = step.substeps.reduce((total, substep) => {
+        return total + substep.behaviors.reduce((subtotal, behavior) => {
+          return subtotal + (checkedBehaviorIds.has(behavior.id) ? 1 : 0);
+        }, 0);
+      }, 0);
 
-    // Coaching Observations
-    if (assessment.keyObservations || assessment.whatWorkedWell || assessment.whatCanBeImproved || assessment.nextSteps) {
-      doc.setFontSize(14);
-      doc.text('Coaching Observations:', 20, yPosition);
-      yPosition += 15;
+      const totalCount = step.substeps.reduce((total, substep) => {
+        return total + substep.behaviors.length;
+      }, 0);
 
+      const percentage = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+      const manualLevel = stepScoresMap[step.id];
+
+      // Step header
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${stepIndex + 1}. ${step.title}`, 20, yPosition);
+      yPosition += 8;
+
+      // Progress info
       doc.setFontSize(10);
-      
-      if (assessment.keyObservations) {
-        doc.text('Key Observations:', 20, yPosition);
-        yPosition += 8;
-        const observations = doc.splitTextToSize(assessment.keyObservations, 170);
-        doc.text(observations, 20, yPosition);
-        yPosition += observations.length * 5 + 10;
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Behaviors: ${checkedCount}/${totalCount} (${percentage}%)`, 25, yPosition);
+      yPosition += 5;
+
+      if (manualLevel) {
+        doc.text(`Manual Score: Level ${manualLevel} - ${LEVEL_NAMES[manualLevel as keyof typeof LEVEL_NAMES]}`, 25, yPosition);
+        yPosition += 5;
       }
 
-      if (assessment.whatWorkedWell) {
-        if (yPosition > 240) {
+      // Progress bar representation
+      doc.rect(25, yPosition, 100, 3);
+      const progressWidth = percentage;
+      doc.setFillColor(percentage >= 80 ? 34 : percentage >= 60 ? 245 : 239, 
+                       percentage >= 80 ? 197 : percentage >= 60 ? 158 : 68, 
+                       percentage >= 80 ? 129 : percentage >= 60 ? 11 : 68);
+      doc.rect(25, yPosition, progressWidth, 3, 'F');
+      yPosition += 10;
+
+      // Demonstrated behaviors
+      if (checkedCount > 0) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Demonstrated Behaviors:', 25, yPosition);
+        yPosition += 6;
+
+        step.substeps.forEach(substep => {
+          const checkedBehaviors = substep.behaviors.filter(behavior => checkedBehaviorIds.has(behavior.id));
+          if (checkedBehaviors.length > 0) {
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${substep.title}:`, 30, yPosition);
+            yPosition += 5;
+
+            checkedBehaviors.forEach(behavior => {
+              doc.setFont('helvetica', 'normal');
+              const behaviorLines = doc.splitTextToSize(`• ${behavior.description}`, pageWidth - 70);
+              doc.text(behaviorLines, 35, yPosition);
+              yPosition += behaviorLines.length * 4;
+              
+              if (yPosition > pageHeight - 40) {
+                doc.addPage();
+                yPosition = 20;
+              }
+            });
+            yPosition += 3;
+          }
+        });
+      }
+      yPosition += 5;
+    });
+
+    // Coaching notes sections
+    const sections = [
+      { title: 'Key Observations', content: assessment.keyObservations },
+      { title: 'What Worked Well', content: assessment.whatWorkedWell },
+      { title: 'What Can Be Improved', content: assessment.whatCanBeImproved },
+      { title: 'Next Steps', content: assessment.nextSteps }
+    ];
+
+    sections.forEach(section => {
+      if (section.content) {
+        if (yPosition > pageHeight - 40) {
           doc.addPage();
           yPosition = 20;
         }
-        doc.text('What Worked Well:', 20, yPosition);
-        yPosition += 8;
-        const worked = doc.splitTextToSize(assessment.whatWorkedWell, 170);
-        doc.text(worked, 20, yPosition);
-        yPosition += worked.length * 5 + 10;
-      }
 
-      if (assessment.whatCanBeImproved) {
-        if (yPosition > 240) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        doc.text('What Can Be Improved:', 20, yPosition);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(section.title, 20, yPosition);
         yPosition += 8;
-        const improved = doc.splitTextToSize(assessment.whatCanBeImproved, 170);
-        doc.text(improved, 20, yPosition);
-        yPosition += improved.length * 5 + 10;
-      }
 
-      if (assessment.nextSteps) {
-        if (yPosition > 240) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        doc.text('Next Steps:', 20, yPosition);
-        yPosition += 8;
-        const steps = doc.splitTextToSize(assessment.nextSteps, 170);
-        doc.text(steps, 20, yPosition);
-        yPosition += steps.length * 5 + 10;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const lines = doc.splitTextToSize(section.content, pageWidth - 40);
+        doc.text(lines, 20, yPosition);
+        yPosition += lines.length * 5 + 10;
       }
+    });
+
+    // Footer
+    if (yPosition > pageHeight - 30) {
+      doc.addPage();
+      yPosition = 20;
     }
-
-    // Generate filename and save
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`Generated by SalesCoach Assessment Platform - ${new Date().toLocaleDateString()}`, 
+              pageWidth / 2, pageHeight - 15, { align: 'center' });
+    
+    // Save PDF to file
     const uploadsDir = this.ensureUploadsDirectory();
     const filename = `coaching-report-${assessment.id}-${Date.now()}.pdf`;
-    const filePath = path.join(uploadsDir, filename);
+    const filepath = path.join(uploadsDir, filename);
     
-    // Save PDF
-    const pdfBuffer = doc.output('arraybuffer');
-    fs.writeFileSync(filePath, Buffer.from(pdfBuffer));
+    // Write PDF to file
+    fs.writeFileSync(filepath, Buffer.from(doc.output('arraybuffer')));
     
-    // Return relative path for storage in database
-    return `uploads/${filename}`;
+    return filename; // Return relative filename for database storage
   }
 
   static getFilePath(relativePath: string): string {
-    return path.join(process.cwd(), relativePath);
+    return path.join(process.cwd(), 'uploads', relativePath);
   }
 
   static fileExists(relativePath: string): boolean {
-    const fullPath = this.getFilePath(relativePath);
-    return fs.existsSync(fullPath);
+    return fs.existsSync(this.getFilePath(relativePath));
   }
 }
