@@ -123,43 +123,7 @@ export default function CoachingHistory() {
     setLocation(`/assessment?id=${assessmentId}`);
   };
 
-  const handleDownloadAssessment = (assessment: Assessment) => {
-    const reportData = {
-      assesseeName: assessment.assesseeName || 'Unknown',
-      date: assessment.createdAt ? format(new Date(assessment.createdAt), 'PPP') : 'N/A',
-      title: assessment.title || 'Assessment',
-      keyObservations: assessment.keyObservations || 'None recorded',
-      whatWorkedWell: assessment.whatWorkedWell || 'None recorded',
-      whatCanBeImproved: assessment.whatCanBeImproved || 'None recorded',
-      nextSteps: assessment.nextSteps || 'None recorded'
-    };
-    
-    const reportText = `SalesCoach Assessment Report
 
-Coachee: ${reportData.assesseeName}
-Date: ${reportData.date}
-Title: ${reportData.title}
-
-Key Observations:
-${reportData.keyObservations}
-
-What Worked Well:
-${reportData.whatWorkedWell}
-
-What Can Be Improved:
-${reportData.whatCanBeImproved}
-
-Next Steps:
-${reportData.nextSteps}`;
-    
-    const blob = new Blob([reportText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `assessment-${assessment.assesseeName}-${assessment.id}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   const handleDownloadPDF = async (assessment: Assessment) => {
     try {
@@ -373,15 +337,7 @@ ${reportData.nextSteps}`;
                           <FileText className="mr-1" size={14} />
                           PDF Report
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownloadAssessment(assessment)}
-                          className="min-w-[100px]"
-                        >
-                          <Download className="mr-1" size={14} />
-                          Text Report
-                        </Button>
+
                       </div>
                     </div>
                   </CardContent>
