@@ -207,18 +207,21 @@ export default function Assessment() {
 
 
 
-  // Update checked behaviors when scores change
+  // Update checked behaviors when scores change - fixed to prevent infinite loops
   useEffect(() => {
     if (scores.length > 0) {
       const checkedIds = scores.filter(score => score.checked).map(score => score.behaviorId);
-      const newCheckedSet = new Set(checkedIds);
       console.log("Loading saved scores:", checkedIds.length, "behaviors checked");
-      setCheckedBehaviors(newCheckedSet);
-    } else if (currentAssessment) {
-      // Clear checkboxes if no scores found for this assessment
+      setCheckedBehaviors(new Set(checkedIds));
+    }
+  }, [scores.map(s => `${s.behaviorId}-${s.checked}`).join(',')]);
+
+  // Clear behaviors when switching assessments
+  useEffect(() => {
+    if (currentAssessment && scores.length === 0) {
       setCheckedBehaviors(new Set());
     }
-  }, [scores, currentAssessment]);
+  }, [currentAssessment?.id, scores.length]);
 
   const handleUserSelected = async (userId: number) => {
     console.log("User selected:", userId);
