@@ -214,8 +214,13 @@ export default function Assessment() {
       if (scoresResponse.ok) {
         const scoresData = await scoresResponse.json();
         const checkedIds = scoresData.filter((score: any) => score.checked).map((score: any) => score.behaviorId);
-        console.log("Manually loading scores:", checkedIds.length, "behaviors checked");
-        setCheckedBehaviors(new Set(checkedIds));
+        console.log("Manually loading scores:", checkedIds.length, "behaviors checked", checkedIds);
+        
+        // Force state update and trigger re-render
+        setCheckedBehaviors(new Set());
+        setTimeout(() => {
+          setCheckedBehaviors(new Set(checkedIds));
+        }, 100);
         
         // Invalidate query cache to ensure fresh data
         queryClient.invalidateQueries({ queryKey: ["/api/assessments", assessmentId, "scores"] });
