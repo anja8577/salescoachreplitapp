@@ -173,6 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title,
         userId,
         assesseeName: assesseeName || "Unknown",
+        context: req.body.context || null,
         keyObservations: req.body.keyObservations || null,
         whatWorkedWell: req.body.whatWorkedWell || null,
         whatCanBeImproved: req.body.whatCanBeImproved || null,
@@ -194,9 +195,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/assessments/:id", async (req, res) => {
     try {
       const assessmentId = parseInt(req.params.id);
-      const { keyObservations, whatWorkedWell, whatCanBeImproved, nextSteps } = req.body;
+      const { context, keyObservations, whatWorkedWell, whatCanBeImproved, nextSteps } = req.body;
       
       console.log("Updating assessment", assessmentId, "with coaching data:", {
+        context,
         keyObservations,
         whatWorkedWell,
         whatCanBeImproved,
@@ -204,6 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const updatedAssessment = await storage.updateAssessment(assessmentId, {
+        context,
         keyObservations,
         whatWorkedWell,
         whatCanBeImproved,

@@ -148,6 +148,7 @@ export class MemStorage implements IStorage {
       title: assessment.title,
       userId: assessment.userId,
       assesseeName: assessment.assesseeName,
+      context: assessment.context ?? null,
       keyObservations: assessment.keyObservations ?? null,
       whatWorkedWell: assessment.whatWorkedWell ?? null,
       whatCanBeImproved: assessment.whatCanBeImproved ?? null,
