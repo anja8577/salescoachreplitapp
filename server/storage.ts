@@ -1267,6 +1267,23 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getStepScores(assessmentId: number): Promise<StepScore[]> {
+    const scores = await db.select().from(stepScores).where(eq(stepScores.assessmentId, assessmentId));
+    return scores;
+  }
+
+  async updateStepScore(assessmentId: number, stepId: number, level: number): Promise<StepScore> {
+    const [score] = await db
+      .insert(stepScores)
+      .values({ assessmentId, stepId, level })
+      .onConflictDoUpdate({
+        target: [stepScores.assessmentId, stepScores.stepId],
+        set: { level }
+      })
+      .returning();
+    return score;
+  }
+
   async initializeDefaultData(): Promise<void> {
     // Check if data already exists
     const existingSteps = await this.getAllSteps();

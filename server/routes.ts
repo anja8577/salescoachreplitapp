@@ -305,6 +305,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get step scores
+  app.get("/api/assessments/:id/step-scores", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const stepScores = await storage.getStepScores(assessmentId);
+      res.json(stepScores);
+    } catch (error) {
+      console.error("Error fetching step scores:", error);
+      res.status(500).json({ message: "Failed to fetch step scores" });
+    }
+  });
+
+  // Update step score (manual step level)
+  app.put("/api/assessments/:id/step-scores/:stepId", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const stepId = parseInt(req.params.stepId);
+      const { level } = req.body;
+      
+      console.log(`Updating step score for assessment ${assessmentId}, step ${stepId}, level: ${level}`);
+      
+      const stepScore = await storage.updateStepScore(assessmentId, stepId, level);
+      res.json(stepScore);
+    } catch (error) {
+      console.error("Error updating step score:", error);
+      res.status(500).json({ message: "Failed to update step score" });
+    }
+  });
+
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {

@@ -39,6 +39,11 @@ export default function Assessment() {
     enabled: !!currentAssessment,
   });
 
+  const { data: stepScoresData = [] } = useQuery<StepScore[]>({
+    queryKey: ["/api/assessments", currentAssessment?.id, "step-scores"],
+    enabled: !!currentAssessment,
+  });
+
   const duplicateBaselineFromPreviousSession = async (coacheeName: string, newAssessmentId: number) => {
     try {
       console.log("Attempting to duplicate baseline for:", coacheeName);
