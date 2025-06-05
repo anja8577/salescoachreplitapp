@@ -259,7 +259,25 @@ export default function Assessment() {
     }
   };
 
-
+  const loadStepScoresForAssessment = async (assessmentId: number) => {
+    try {
+      const stepScoresResponse = await fetch(`/api/assessments/${assessmentId}/step-scores`);
+      if (stepScoresResponse.ok) {
+        const stepScoresData = await stepScoresResponse.json();
+        const stepScoresMap = stepScoresData.reduce((acc: any, score: any) => {
+          acc[score.stepId] = score.level;
+          return acc;
+        }, {});
+        console.log("Manually loading step scores:", Object.keys(stepScoresMap).length, "steps scored");
+        setStepScores(stepScoresMap);
+        
+        // Invalidate query cache to ensure fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/assessments", assessmentId, "step-scores"] });
+      }
+    } catch (error) {
+      console.error("Error loading step scores:", error);
+    }
+  };
 
   // Simple state watcher - only update when assessment changes, like context text
   useEffect(() => {
