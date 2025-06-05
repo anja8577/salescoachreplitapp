@@ -127,33 +127,125 @@ export default function CoachingHistory() {
 
   const handleDownloadPDF = async (assessment: Assessment) => {
     try {
+      // Fetch the detailed assessment data including steps, behaviors, and scores
+      const [stepsResponse, scoresResponse, stepScoresResponse] = await Promise.all([
+        fetch('/api/steps'),
+        fetch(`/api/assessments/${assessment.id}/scores`),
+        fetch(`/api/assessments/${assessment.id}/step-scores`)
+      ]);
+
+      const steps = await stepsResponse.json();
+      const behaviorScores = await scoresResponse.json();
+      const stepScores = await stepScoresResponse.json();
+
+      // Create a set of checked behaviors
+      const checkedBehaviors = new Set(behaviorScores.filter((score: any) => score.checked).map((score: any) => score.behaviorId));
+      
+      // Create step scores map
+      const stepScoresMap: { [key: number]: number } = {};
+      stepScores.forEach((score: any) => {
+        stepScoresMap[score.stepId] = score.level;
+      });
+
       const element = document.createElement('div');
       element.innerHTML = `
-        <div style="padding: 20px; font-family: Arial, sans-serif;">
-          <h1>Sales Coaching Assessment Report</h1>
-          <p><strong>Coachee:</strong> ${assessment.assesseeName || 'Unknown'}</p>
-          <p><strong>Date:</strong> ${assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString() : 'N/A'}</p>
-          <p><strong>Title:</strong> ${assessment.title || 'Assessment Session'}</p>
-          
+        <div style="padding: 20px; font-family: Arial, sans-serif; line-height: 1.6; background: white;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #1f2937; margin-bottom: 10px; font-size: 24px;">Sales Coaching Assessment Report</h1>
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Coachee:</strong> ${assessment.assesseeName || 'Unknown'}</p>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString() : 'N/A'}</p>
+              <p style="margin: 5px 0;"><strong>Title:</strong> ${assessment.title || 'Assessment Session'}</p>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h2 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; font-size: 18px;">Performance Overview</h2>
+            <div style="margin-top: 20px;">
+              ${steps.map((step: any, stepIndex: number) => {
+                const manualLevel = stepScoresMap[step.id];
+                const checkedCount = step.substeps.reduce((total: number, substep: any) => {
+                  return total + substep.behaviors.reduce((substepTotal: number, behavior: any) => {
+                    if (checkedBehaviors.has(behavior.id)) {
+                      return substepTotal + 1;
+                    }
+                    return substepTotal;
+                  }, 0);
+                }, 0);
+                const totalCount = step.substeps.reduce((total: number, substep: any) => {
+                  return total + substep.behaviors.length;
+                }, 0);
+                const percentage = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+                
+                return `
+                  <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 15px;">
+                    <h3 style="color: #374151; margin: 0 0 15px 0; font-size: 16px;">${stepIndex + 1}. ${step.title}</h3>
+                    <div style="margin-bottom: 15px;">
+                      <div style="font-size: 14px; color: #6b7280; margin-bottom: 5px;">Behaviors: ${checkedCount}/${totalCount} (${percentage}%)</div>
+                      <div style="background: #e5e7eb; height: 12px; border-radius: 6px; margin: 8px 0;">
+                        <div style="background: ${percentage >= 80 ? '#10b981' : percentage >= 60 ? '#f59e0b' : '#ef4444'}; height: 100%; border-radius: 6px; width: ${percentage}%;"></div>
+                      </div>
+                      ${manualLevel ? `
+                        <div style="font-size: 14px; color: #6b7280; margin-top: 8px;">
+                          <strong>Manual Score: Level ${manualLevel}</strong>
+                        </div>
+                      ` : ''}
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                      <h4 style="color: #4b5563; margin: 0 0 10px 0; font-size: 14px;">Demonstrated Behaviors:</h4>
+                      ${step.substeps.map((substep: any) => {
+                        const checkedBehaviorsList = substep.behaviors.filter((behavior: any) => checkedBehaviors.has(behavior.id));
+                        if (checkedBehaviorsList.length === 0) return '';
+                        return `
+                          <div style="margin-bottom: 10px;">
+                            <strong style="color: #374151; font-size: 13px;">${substep.title}:</strong>
+                            <ul style="margin: 5px 0 0 20px; padding: 0;">
+                              ${checkedBehaviorsList.map((behavior: any) => `
+                                <li style="font-size: 12px; color: #6b7280; margin-bottom: 3px;">${behavior.description}</li>
+                              `).join('')}
+                            </ul>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
           ${assessment.keyObservations ? `
-            <h3>Key Observations:</h3>
-            <p>${assessment.keyObservations}</p>
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">Key Observations</h3>
+              <p style="background: #f9fafb; padding: 15px; border-radius: 6px; margin: 0; line-height: 1.5;">${assessment.keyObservations}</p>
+            </div>
           ` : ''}
-          
+
           ${assessment.whatWorkedWell ? `
-            <h3>What Worked Well:</h3>
-            <p>${assessment.whatWorkedWell}</p>
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">What Worked Well</h3>
+              <p style="background: #f0fdf4; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #10b981; line-height: 1.5;">${assessment.whatWorkedWell}</p>
+            </div>
           ` : ''}
-          
+
           ${assessment.whatCanBeImproved ? `
-            <h3>What Can Be Improved:</h3>
-            <p>${assessment.whatCanBeImproved}</p>
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">What Can Be Improved</h3>
+              <p style="background: #fef2f2; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #ef4444; line-height: 1.5;">${assessment.whatCanBeImproved}</p>
+            </div>
           ` : ''}
-          
+
           ${assessment.nextSteps ? `
-            <h3>Next Steps:</h3>
-            <p>${assessment.nextSteps}</p>
+            <div style="margin-bottom: 25px;">
+              <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">Next Steps</h3>
+              <p style="background: #eff6ff; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #3b82f6; line-height: 1.5;">${assessment.nextSteps}</p>
+            </div>
           ` : ''}
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
+            <p>Generated by SalesCoach Assessment Platform - ${new Date().toLocaleDateString()}</p>
+          </div>
         </div>
       `;
       
@@ -162,7 +254,12 @@ export default function CoachingHistory() {
       const { jsPDF } = await import('jspdf');
       const html2canvas = await import('html2canvas');
       
-      const canvas = await html2canvas.default(element);
+      const canvas = await html2canvas.default(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
       const imgData = canvas.toDataURL('image/png');
       
       const pdf = new jsPDF();

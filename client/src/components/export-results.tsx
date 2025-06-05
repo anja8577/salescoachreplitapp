@@ -179,106 +179,107 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
   };
 
   const generatePDF = async () => {
-    const reportData = {
-      steps: steps.map(step => {
-        const manualLevel = stepScores[step.id];
-        
-        const checkedCount = step.substeps.reduce((total, substep) => {
-          return total + substep.behaviors.reduce((substepTotal, behavior) => {
-            if (checkedBehaviors.has(behavior.id)) {
-              return substepTotal + 1;
-            }
-            return substepTotal;
-          }, 0);
-        }, 0);
-
-        const totalCount = step.substeps.reduce((total, substep) => {
-          return total + substep.behaviors.length;
-        }, 0);
-
-        const percentage = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
-        
-        return {
-          title: step.title,
-          percentage,
-          manualLevel,
-          checkedCount,
-          totalCount
-        };
-      }),
-      totalScore,
-      overallLevel: stepScores && Object.keys(stepScores).length > 0 ? 
-        Object.values(stepScores).reduce((sum, level) => sum + level, 0) / Object.keys(stepScores).length : null
-    };
-
     const element = document.createElement('div');
     element.innerHTML = `
-      <div style="padding: 20px; font-family: Arial, sans-serif; line-height: 1.6;">
+      <div style="padding: 20px; font-family: Arial, sans-serif; line-height: 1.6; background: white;">
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #1f2937; margin-bottom: 10px;">Sales Coaching Assessment Report</h1>
+          <h1 style="color: #1f2937; margin-bottom: 10px; font-size: 24px;">Sales Coaching Assessment Report</h1>
           <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p><strong>Coach:</strong> ${assessor ? assessor.fullName : 'N/A'}</p>
-            <p><strong>Coachee:</strong> ${user.fullName}</p>
-            <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-            <p><strong>Assessment Title:</strong> ${assessmentTitle}</p>
+            <p style="margin: 5px 0;"><strong>Coach:</strong> ${assessor ? assessor.fullName : 'N/A'}</p>
+            <p style="margin: 5px 0;"><strong>Coachee:</strong> ${user.fullName}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <p style="margin: 5px 0;"><strong>Assessment Title:</strong> ${assessmentTitle}</p>
           </div>
         </div>
 
         ${context ? `
           <div style="margin-bottom: 30px;">
-            <h2 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Assessment Context</h2>
+            <h2 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; font-size: 18px;">Assessment Context</h2>
             <p style="background: #f9fafb; padding: 15px; border-radius: 6px; margin-top: 15px;">${context}</p>
           </div>
         ` : ''}
 
         <div style="margin-bottom: 30px;">
-          <h2 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Performance Overview</h2>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
-            ${reportData.steps.map((step, stepIndex) => `
-              <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
-                <h3 style="color: #374151; margin: 0 0 10px 0; font-size: 14px;">${stepIndex + 1}. ${step.title}</h3>
-                <div style="margin-bottom: 8px;">
-                  <div style="font-size: 12px; color: #6b7280;">Behaviors: ${step.checkedCount}/${step.totalCount}</div>
-                  <div style="background: #e5e7eb; height: 8px; border-radius: 4px; margin: 5px 0;">
-                    <div style="background: ${step.percentage >= 80 ? '#10b981' : step.percentage >= 60 ? '#f59e0b' : '#ef4444'}; height: 100%; border-radius: 4px; width: ${step.percentage}%;"></div>
+          <h2 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; font-size: 18px;">Performance Overview</h2>
+          <div style="margin-top: 20px;">
+            ${steps.map((step, stepIndex) => {
+              const manualLevel = stepScores[step.id];
+              const checkedCount = step.substeps.reduce((total, substep) => {
+                return total + substep.behaviors.reduce((substepTotal, behavior) => {
+                  if (checkedBehaviors.has(behavior.id)) {
+                    return substepTotal + 1;
+                  }
+                  return substepTotal;
+                }, 0);
+              }, 0);
+              const totalCount = step.substeps.reduce((total, substep) => {
+                return total + substep.behaviors.length;
+              }, 0);
+              const percentage = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
+              
+              return `
+                <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 15px;">
+                  <h3 style="color: #374151; margin: 0 0 15px 0; font-size: 16px;">${stepIndex + 1}. ${step.title}</h3>
+                  <div style="margin-bottom: 15px;">
+                    <div style="font-size: 14px; color: #6b7280; margin-bottom: 5px;">Behaviors: ${checkedCount}/${totalCount} (${percentage}%)</div>
+                    <div style="background: #e5e7eb; height: 12px; border-radius: 6px; margin: 8px 0;">
+                      <div style="background: ${percentage >= 80 ? '#10b981' : percentage >= 60 ? '#f59e0b' : '#ef4444'}; height: 100%; border-radius: 6px; width: ${percentage}%;"></div>
+                    </div>
+                    ${manualLevel ? `
+                      <div style="font-size: 14px; color: #6b7280; margin-top: 8px;">
+                        <strong>Manual Score: Level ${manualLevel}</strong>
+                      </div>
+                    ` : ''}
                   </div>
-                  <div style="font-size: 12px; font-weight: bold; color: #374151;">${step.percentage}% Complete</div>
+                  
+                  <div style="margin-top: 15px;">
+                    <h4 style="color: #4b5563; margin: 0 0 10px 0; font-size: 14px;">Demonstrated Behaviors:</h4>
+                    ${step.substeps.map(substep => {
+                      const checkedBehaviors_list = substep.behaviors.filter(behavior => checkedBehaviors.has(behavior.id));
+                      if (checkedBehaviors_list.length === 0) return '';
+                      return `
+                        <div style="margin-bottom: 10px;">
+                          <strong style="color: #374151; font-size: 13px;">${substep.title}:</strong>
+                          <ul style="margin: 5px 0 0 20px; padding: 0;">
+                            ${checkedBehaviors_list.map(behavior => `
+                              <li style="font-size: 12px; color: #6b7280; margin-bottom: 3px;">${behavior.description}</li>
+                            `).join('')}
+                          </ul>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
                 </div>
-                ${step.manualLevel ? `
-                  <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
-                    Manual Score: Level ${step.manualLevel}
-                  </div>
-                ` : ''}
-              </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </div>
 
         ${keyObservations ? `
           <div style="margin-bottom: 25px;">
-            <h3 style="color: #1f2937; margin-bottom: 10px;">Key Observations</h3>
-            <p style="background: #f9fafb; padding: 15px; border-radius: 6px; margin: 0;">${keyObservations}</p>
+            <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">Key Observations</h3>
+            <p style="background: #f9fafb; padding: 15px; border-radius: 6px; margin: 0; line-height: 1.5;">${keyObservations}</p>
           </div>
         ` : ''}
 
         ${whatWorkedWell ? `
           <div style="margin-bottom: 25px;">
-            <h3 style="color: #1f2937; margin-bottom: 10px;">What Worked Well</h3>
-            <p style="background: #f0fdf4; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #10b981;">${whatWorkedWell}</p>
+            <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">What Worked Well</h3>
+            <p style="background: #f0fdf4; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #10b981; line-height: 1.5;">${whatWorkedWell}</p>
           </div>
         ` : ''}
 
         ${whatCanBeImproved ? `
           <div style="margin-bottom: 25px;">
-            <h3 style="color: #1f2937; margin-bottom: 10px;">What Can Be Improved</h3>
-            <p style="background: #fef2f2; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #ef4444;">${whatCanBeImproved}</p>
+            <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">What Can Be Improved</h3>
+            <p style="background: #fef2f2; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #ef4444; line-height: 1.5;">${whatCanBeImproved}</p>
           </div>
         ` : ''}
 
         ${nextSteps ? `
           <div style="margin-bottom: 25px;">
-            <h3 style="color: #1f2937; margin-bottom: 10px;">Next Steps</h3>
-            <p style="background: #eff6ff; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #3b82f6;">${nextSteps}</p>
+            <h3 style="color: #1f2937; margin-bottom: 10px; font-size: 16px;">Next Steps</h3>
+            <p style="background: #eff6ff; padding: 15px; border-radius: 6px; margin: 0; border-left: 4px solid #3b82f6; line-height: 1.5;">${nextSteps}</p>
           </div>
         ` : ''}
 
@@ -291,7 +292,12 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
     document.body.appendChild(element);
     
     try {
-      const canvas = await html2canvas(element);
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
       const imgData = canvas.toDataURL('image/png');
       
       const pdf = new jsPDF();
