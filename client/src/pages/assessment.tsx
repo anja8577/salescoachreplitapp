@@ -494,12 +494,17 @@ export default function Assessment() {
               if (!currentAssessment) return;
               
               try {
+                const saveData = {
+                  ...coachingData,
+                  context: context // Include the context field
+                };
+                
                 const response = await fetch(`/api/assessments/${currentAssessment.id}`, {
                   method: 'PUT',
                   headers: {
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify(coachingData),
+                  body: JSON.stringify(saveData),
                 });
                 
                 if (response.ok) {

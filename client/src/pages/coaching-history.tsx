@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, User, Users, Eye, Download, Filter, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import AppHeader from "@/components/app-header";
 import AppFooter from "@/components/app-footer";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import type { Assessment, User as UserType } from "@shared/schema";
+import type { Assessment, User as UserType, AssessmentScore, StepScore } from "@shared/schema";
 
 export default function CoachingHistory() {
   const [, setLocation] = useLocation();
@@ -18,6 +18,8 @@ export default function CoachingHistory() {
   const [filterTeam, setFilterTeam] = useState<string>("all");
   const [filterCoachee, setFilterCoachee] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
+  const [assessmentScores, setAssessmentScores] = useState<{ [assessmentId: number]: AssessmentScore[] }>({});
+  const [stepScores, setStepScores] = useState<{ [assessmentId: number]: StepScore[] }>({});
 
   // Fetch all assessments
   const { data: assessments = [], isLoading } = useQuery<Assessment[]>({
@@ -28,6 +30,82 @@ export default function CoachingHistory() {
   const { data: users = [] } = useQuery<UserType[]>({
     queryKey: ["/api/users"],
   });
+
+  // Fetch all steps for calculating proficiency levels
+  const { data: steps = [] } = useQuery({
+    queryKey: ["/api/steps"],
+  });
+
+  // Load assessment scores when assessments change
+  useEffect(() => {
+    const loadAssessmentData = async () => {
+      for (const assessment of assessments) {
+        if (!assessmentScores[assessment.id]) {
+          try {
+            const scoresResponse = await fetch(`/api/assessments/${assessment.id}/scores`);
+            const stepScoresResponse = await fetch(`/api/assessments/${assessment.id}/step-scores`);
+            
+            if (scoresResponse.ok && stepScoresResponse.ok) {
+              const scores = await scoresResponse.json();
+              const stepScoreData = await stepScoresResponse.json();
+              
+              setAssessmentScores(prev => ({ ...prev, [assessment.id]: scores }));
+              setStepScores(prev => ({ ...prev, [assessment.id]: stepScoreData }));
+            }
+          } catch (error) {
+            console.error(`Error loading data for assessment ${assessment.id}:`, error);
+          }
+        }
+      }
+    };
+
+    if (assessments.length > 0) {
+      loadAssessmentData();
+    }
+  }, [assessments]);
+
+  // Calculate proficiency level for an assessment
+  const calculateProficiencyLevel = (assessmentId: number) => {
+    const stepScoreData = stepScores[assessmentId] || [];
+    if (stepScoreData.length === 0) return 'Not Evaluated';
+    
+    const avgLevel = stepScoreData.reduce((sum, score) => sum + score.level, 0) / stepScoreData.length;
+    if (avgLevel >= 3.5) return 'Master';
+    if (avgLevel >= 2.5) return 'Experienced';
+    if (avgLevel >= 1.5) return 'Qualified';
+    return 'Learner';
+  };
+
+  // Get proficiency badge classes
+  const getProficiencyBadgeClass = (level: string) => {
+    switch (level) {
+      case 'Master': return 'bg-purple-50 text-purple-700 border-purple-200';
+      case 'Experienced': return 'bg-green-50 text-green-700 border-green-200';
+      case 'Qualified': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Learner': return 'bg-orange-50 text-orange-700 border-orange-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  // Get step badge data
+  const getStepBadges = (assessmentId: number) => {
+    const stepScoreData = stepScores[assessmentId] || [];
+    const stepMap = stepScoreData.reduce((acc, score) => {
+      acc[score.stepId] = score.level;
+      return acc;
+    }, {} as { [stepId: number]: number });
+
+    return steps.map((step, index) => {
+      const level = stepMap[step.id] || 0;
+      const levelText = level === 4 ? 'M' : level === 3 ? 'E' : level === 2 ? 'Q' : level === 1 ? 'L' : '-';
+      const colorClass = level === 4 ? 'bg-purple-50 text-purple-700' : 
+                        level === 3 ? 'bg-green-50 text-green-700' : 
+                        level === 2 ? 'bg-blue-50 text-blue-700' : 
+                        level === 1 ? 'bg-orange-50 text-orange-700' : 'bg-gray-50 text-gray-500';
+      
+      return { stepNumber: index + 1, levelText, colorClass };
+    });
+  };
 
   // Get unique teams for filtering
   const teams = Array.from(new Set(users.map(user => user.team).filter(Boolean)));
@@ -262,20 +340,28 @@ ${reportData.nextSteps}`;
                         <div className="flex items-center space-x-4 text-sm">
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-600">Proficiency:</span>
-                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                              L - Learner
-                            </Badge>
+                            {(() => {
+                              const proficiencyLevel = calculateProficiencyLevel(assessment.id);
+                              const badgeClass = getProficiencyBadgeClass(proficiencyLevel);
+                              const shortLevel = proficiencyLevel === 'Master' ? 'M' : 
+                                               proficiencyLevel === 'Experienced' ? 'E' : 
+                                               proficiencyLevel === 'Qualified' ? 'Q' : 
+                                               proficiencyLevel === 'Learner' ? 'L' : '-';
+                              return (
+                                <Badge variant="outline" className={badgeClass}>
+                                  {shortLevel} - {proficiencyLevel}
+                                </Badge>
+                              );
+                            })()}
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-600">Steps:</span>
                             <div className="flex space-x-1">
-                              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">1: L</Badge>
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">2: Q</Badge>
-                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700">3: E</Badge>
-                              <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700">4: M</Badge>
-                              <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700">5: L</Badge>
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">6: Q</Badge>
-                              <Badge variant="outline" className="text-xs bg-green-50 text-green-700">7: E</Badge>
+                              {getStepBadges(assessment.id).map((badge, index) => (
+                                <Badge key={index} variant="outline" className={`text-xs ${badge.colorClass}`}>
+                                  {badge.stepNumber}: {badge.levelText}
+                                </Badge>
+                              ))}
                             </div>
                           </div>
                         </div>
