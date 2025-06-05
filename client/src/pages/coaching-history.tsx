@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calendar, User, Users, Eye, Download, Filter } from "lucide-react";
+import { Calendar, User, Users, Eye, Download, Filter, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -95,6 +95,34 @@ ${reportData.nextSteps}`;
     a.download = `assessment-${assessment.assesseeName}-${assessment.id}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPDF = async (assessment: Assessment) => {
+    try {
+      const response = await fetch(`/api/assessments/${assessment.id}/pdf`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          alert('PDF report not available for this session. PDFs are generated automatically when sessions are saved with coaching observations.');
+        } else {
+          alert('Error downloading PDF report');
+        }
+        return;
+      }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `coaching-report-${assessment.assesseeName}-${assessment.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert('Error downloading PDF report');
+    }
   };
 
   const formatDateTime = (dateString: string | null) => {
@@ -259,7 +287,7 @@ ${reportData.nextSteps}`;
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewAssessment(assessment.id)}
-                          className="min-w-[90px]"
+                          className="min-w-[100px]"
                         >
                           <Eye className="mr-1" size={14} />
                           View
@@ -267,11 +295,20 @@ ${reportData.nextSteps}`;
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => handleDownloadPDF(assessment)}
+                          className="min-w-[100px]"
+                        >
+                          <FileText className="mr-1" size={14} />
+                          PDF Report
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handleDownloadAssessment(assessment)}
-                          className="min-w-[90px]"
+                          className="min-w-[100px]"
                         >
                           <Download className="mr-1" size={14} />
-                          Download
+                          Text Report
                         </Button>
                       </div>
                     </div>

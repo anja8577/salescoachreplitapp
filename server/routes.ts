@@ -209,12 +209,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whatCanBeImproved,
         nextSteps
       });
-      
-      console.log("Assessment updated successfully:", updatedAssessment);
-      res.json(updatedAssessment);
+
+      // Generate PDF report automatically when session is saved
+      try {
+        console.log("Generating PDF report for assessment", assessmentId);
+        
+        // Get all necessary data for PDF generation
+        const steps = await storage.getAllSteps();
+        const assessmentScores = await storage.getAssessmentScores(assessmentId);
+        const stepScores = await storage.getStepScores(assessmentId);
+        const coach = await storage.getUserById(updatedAssessment.userId);
+        
+        if (coach) {
+          const pdfPath = await PDFGenerator.generateCoachingReport({
+            assessment: updatedAssessment,
+            coach,
+            steps,
+            assessmentScores,
+            stepScores
+          });
+          
+          // Update assessment with PDF file path
+          const finalAssessment = await storage.updateAssessment(assessmentId, {
+            pdfFilePath: pdfPath
+          });
+          
+          console.log("PDF report generated successfully:", pdfPath);
+          res.json(finalAssessment);
+        } else {
+          console.log("PDF generation complete without coach data");
+          res.json(updatedAssessment);
+        }
+      } catch (pdfError) {
+        console.error("Error generating PDF:", pdfError);
+        // Still return success for assessment update even if PDF fails
+        res.json(updatedAssessment);
+      }
     } catch (error) {
       console.error("Error updating assessment:", error);
       res.status(500).json({ message: "Failed to update assessment" });
+    }
+  });
+
+  // Serve PDF files
+  app.get("/api/assessments/:id/pdf", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const assessment = await storage.getAssessment(assessmentId);
+      
+      if (!assessment || !assessment.pdfFilePath) {
+        return res.status(404).json({ message: "PDF report not found" });
+      }
+      
+      const filePath = PDFGenerator.getFilePath(assessment.pdfFilePath);
+      
+      if (!PDFGenerator.fileExists(assessment.pdfFilePath)) {
+        return res.status(404).json({ message: "PDF file not found on disk" });
+      }
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="coaching-report-${assessment.assesseeName}-${assessmentId}.pdf"`);
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("Error serving PDF:", error);
+      res.status(500).json({ message: "Failed to serve PDF" });
     }
   });
 
