@@ -60,8 +60,18 @@ export const assessmentScores = pgTable("assessment_scores", {
   uniqueAssessmentBehavior: unique().on(table.assessmentId, table.behaviorId),
 }));
 
+export const stepScores = pgTable("step_scores", {
+  id: serial("id").primaryKey(),
+  assessmentId: integer("assessment_id").notNull().references(() => assessments.id),
+  stepId: integer("step_id").notNull().references(() => steps.id),
+  level: integer("level").notNull(), // 1=Learner, 2=Qualified, 3=Experienced, 4=Master
+}, (table) => ({
+  uniqueAssessmentStep: unique().on(table.assessmentId, table.stepId),
+}));
+
 export const stepsRelations = relations(steps, ({ many }) => ({
   substeps: many(substeps),
+  stepScores: many(stepScores),
 }));
 
 export const substepsRelations = relations(substeps, ({ one, many }) => ({
@@ -90,6 +100,7 @@ export const assessmentsRelations = relations(assessments, ({ one, many }) => ({
     references: [users.id],
   }),
   scores: many(assessmentScores),
+  stepScores: many(stepScores),
 }));
 
 export const assessmentScoresRelations = relations(assessmentScores, ({ one }) => ({
@@ -100,6 +111,17 @@ export const assessmentScoresRelations = relations(assessmentScores, ({ one }) =
   behavior: one(behaviors, {
     fields: [assessmentScores.behaviorId],
     references: [behaviors.id],
+  }),
+}));
+
+export const stepScoresRelations = relations(stepScores, ({ one }) => ({
+  assessment: one(assessments, {
+    fields: [stepScores.assessmentId],
+    references: [assessments.id],
+  }),
+  step: one(steps, {
+    fields: [stepScores.stepId],
+    references: [steps.id],
   }),
 }));
 
@@ -129,12 +151,17 @@ export const insertAssessmentScoreSchema = createInsertSchema(assessmentScores).
   id: true,
 });
 
+export const insertStepScoreSchema = createInsertSchema(stepScores).omit({
+  id: true,
+});
+
 export type Step = typeof steps.$inferSelect;
 export type Substep = typeof substeps.$inferSelect;
 export type Behavior = typeof behaviors.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Assessment = typeof assessments.$inferSelect;
 export type AssessmentScore = typeof assessmentScores.$inferSelect;
+export type StepScore = typeof stepScores.$inferSelect;
 
 export type InsertStep = z.infer<typeof insertStepSchema>;
 export type InsertSubstep = z.infer<typeof insertSubstepSchema>;
