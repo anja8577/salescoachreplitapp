@@ -55,6 +55,33 @@ export default function ExportResults({
     nextSteps?: string;
   }>({});
   
+  // Load current assessment's coaching notes when viewing existing assessment
+  useEffect(() => {
+    const loadCurrentAssessmentData = async () => {
+      if (assessmentId) {
+        try {
+          const response = await fetch(`/api/assessments/${assessmentId}`);
+          if (response.ok) {
+            const currentAssessment = await response.json();
+            
+            // Load the saved coaching notes
+            if (currentAssessment.keyObservations || currentAssessment.whatWorkedWell || 
+                currentAssessment.whatCanBeImproved || currentAssessment.nextSteps) {
+              setKeyObservations(currentAssessment.keyObservations || '');
+              setWhatWorkedWell(currentAssessment.whatWorkedWell || '');
+              setWhatCanBeImproved(currentAssessment.whatCanBeImproved || '');
+              setNextSteps(currentAssessment.nextSteps || '');
+            }
+          }
+        } catch (error) {
+          console.error('Error loading current assessment data:', error);
+        }
+      }
+    };
+
+    loadCurrentAssessmentData();
+  }, [assessmentId]);
+
   useEffect(() => {
     const loadPreviousCoachingData = async () => {
       if (!user?.fullName || !assessmentId) return;

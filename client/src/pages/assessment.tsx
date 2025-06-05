@@ -95,6 +95,33 @@ export default function Assessment() {
         queryClient.invalidateQueries({ queryKey: ["/api/assessments", newAssessmentId, "scores"] });
       }
       
+      // Duplicate step scores from previous assessment
+      const stepScoresResponse = await fetch(`/api/assessments/${previousAssessment.id}/step-scores`);
+      if (stepScoresResponse.ok) {
+        const previousStepScores = await stepScoresResponse.json();
+        console.log("Found", previousStepScores.length, "previous step scores to duplicate");
+        
+        // Duplicate each step score to the new assessment
+        const newStepScores: { [stepId: number]: number } = {};
+        for (const stepScore of previousStepScores) {
+          newStepScores[stepScore.stepId] = stepScore.level;
+          
+          // Save step score to new assessment
+          await fetch(`/api/assessments/${newAssessmentId}/step-scores/${stepScore.stepId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ level: stepScore.level }),
+          });
+        }
+        
+        // Update UI with duplicated step scores
+        setStepScores(newStepScores);
+        console.log("Step score duplication completed - duplicated", Object.keys(newStepScores).length, "step evaluations");
+        
+        // Invalidate queries to refresh step scores
+        queryClient.invalidateQueries({ queryKey: ["/api/assessments", newAssessmentId, "step-scores"] });
+      }
+      
     } catch (error) {
       console.log("Could not duplicate previous session as baseline:", error);
     }
@@ -225,6 +252,11 @@ export default function Assessment() {
         
         setAssesseeName(assessment.assesseeName);
         setContext(assessment.context || '');
+        
+        // Load coaching observations if they exist
+        if (assessment.keyObservations || assessment.whatWorkedWell || assessment.whatCanBeImproved || assessment.nextSteps) {
+          // The coaching observations will be loaded by the ExportResults component
+        }
         
         // Manually load scores for this assessment
         await loadScoresForAssessment(assessmentId);
