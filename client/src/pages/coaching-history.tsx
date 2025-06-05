@@ -10,7 +10,8 @@ import AppHeader from "@/components/app-header";
 import AppFooter from "@/components/app-footer";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import type { Assessment, User as UserType, AssessmentScore, StepScore } from "@shared/schema";
+import { StepLevelCalculator } from "@shared/stepLevelCalculator";
+import type { Assessment, User as UserType, AssessmentScore, StepScore, Step, Substep, Behavior } from "@shared/schema";
 
 export default function CoachingHistory() {
   const [, setLocation] = useLocation();
@@ -32,7 +33,7 @@ export default function CoachingHistory() {
   });
 
   // Fetch all steps for calculating proficiency levels
-  const { data: steps = [] } = useQuery({
+  const { data: steps = [] } = useQuery<(Step & { substeps: (Substep & { behaviors: Behavior[] })[] })[]>({
     queryKey: ["/api/steps"],
   });
 
@@ -64,46 +65,33 @@ export default function CoachingHistory() {
     }
   }, [assessments]);
 
+  // Get unified step levels using the calculator
+  const getUnifiedStepLevels = (assessmentId: number) => {
+    const stepScoreData = stepScores[assessmentId] || [];
+    const assessmentScoreData = assessmentScores[assessmentId] || [];
+    
+    return StepLevelCalculator.getUnifiedStepLevels(steps, assessmentScoreData, stepScoreData);
+  };
+
   // Calculate proficiency level for an assessment
   const calculateProficiencyLevel = (assessmentId: number) => {
-    const stepScoreData = stepScores[assessmentId] || [];
-    if (stepScoreData.length === 0) return 'Not Evaluated';
-    
-    const avgLevel = stepScoreData.reduce((sum, score) => sum + score.level, 0) / stepScoreData.length;
-    if (avgLevel >= 3.5) return 'Master';
-    if (avgLevel >= 2.5) return 'Experienced';
-    if (avgLevel >= 1.5) return 'Qualified';
-    return 'Learner';
+    const unifiedLevels = getUnifiedStepLevels(assessmentId);
+    const proficiency = StepLevelCalculator.getOverallProficiencyLevel(unifiedLevels);
+    return proficiency.text;
   };
 
-  // Get proficiency badge classes
-  const getProficiencyBadgeClass = (level: string) => {
-    switch (level) {
-      case 'Master': return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 'Experienced': return 'bg-green-50 text-green-700 border-green-200';
-      case 'Qualified': return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Learner': return 'bg-orange-50 text-orange-700 border-orange-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
-
-  // Get step badge data
+  // Get step badge data using unified levels
   const getStepBadges = (assessmentId: number) => {
-    const stepScoreData = stepScores[assessmentId] || [];
-    const stepMap = stepScoreData.reduce((acc, score) => {
-      acc[score.stepId] = score.level;
-      return acc;
-    }, {} as { [stepId: number]: number });
-
-    return steps.map((step, index) => {
-      const level = stepMap[step.id] || 0;
-      const levelText = level === 4 ? 'M' : level === 3 ? 'E' : level === 2 ? 'Q' : level === 1 ? 'L' : '-';
-      const colorClass = level === 4 ? 'bg-purple-50 text-purple-700' : 
-                        level === 3 ? 'bg-green-50 text-green-700' : 
-                        level === 2 ? 'bg-blue-50 text-blue-700' : 
-                        level === 1 ? 'bg-orange-50 text-orange-700' : 'bg-gray-50 text-gray-500';
+    const unifiedLevels = getUnifiedStepLevels(assessmentId);
+    
+    return unifiedLevels.map((stepLevel, index) => {
+      const levelText = StepLevelCalculator.getLevelShortCode(stepLevel.level);
+      const colorClass = StepLevelCalculator.getLevelBadgeClass(stepLevel.level);
+      const displayText = stepLevel.source === 'calculated' && stepLevel.percentage !== undefined 
+        ? `${index + 1}: ${levelText}(${stepLevel.percentage}%)`
+        : `${index + 1}: ${levelText}`;
       
-      return { stepNumber: index + 1, levelText, colorClass };
+      return { stepNumber: index + 1, levelText: displayText, colorClass };
     });
   };
 
@@ -342,11 +330,11 @@ ${reportData.nextSteps}`;
                             <span className="text-gray-600">Proficiency:</span>
                             {(() => {
                               const proficiencyLevel = calculateProficiencyLevel(assessment.id);
-                              const badgeClass = getProficiencyBadgeClass(proficiencyLevel);
-                              const shortLevel = proficiencyLevel === 'Master' ? 'M' : 
-                                               proficiencyLevel === 'Experienced' ? 'E' : 
-                                               proficiencyLevel === 'Qualified' ? 'Q' : 
-                                               proficiencyLevel === 'Learner' ? 'L' : '-';
+                              const unifiedLevels = getUnifiedStepLevels(assessment.id);
+                              const proficiency = StepLevelCalculator.getOverallProficiencyLevel(unifiedLevels);
+                              const badgeClass = StepLevelCalculator.getLevelBadgeClass(proficiency.level);
+                              const shortLevel = StepLevelCalculator.getLevelShortCode(proficiency.level);
+                              
                               return (
                                 <Badge variant="outline" className={badgeClass}>
                                   {shortLevel} - {proficiencyLevel}
