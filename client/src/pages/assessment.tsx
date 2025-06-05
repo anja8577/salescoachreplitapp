@@ -49,7 +49,7 @@ export default function Assessment() {
       console.log("Attempting to duplicate baseline for:", coacheeName);
       
       // Get previous assessment for this coachee (excluding current one)
-      const response = await fetch(`/api/coachees/${encodeURIComponent(coacheeName)}/latest-assessment`);
+      const response = await fetch(`/api/coachees/${encodeURIComponent(coacheeName)}/previous-assessment/${newAssessmentId}`);
       
       if (!response.ok) {
         console.log("No previous coaching session found for", coacheeName);
@@ -57,12 +57,6 @@ export default function Assessment() {
       }
       
       const previousAssessment = await response.json();
-      
-      // Skip if this is the same assessment
-      if (previousAssessment.id === newAssessmentId) {
-        console.log("Previous assessment is the same as current, skipping duplication");
-        return;
-      }
       
       console.log("Found previous assessment:", previousAssessment.id);
       

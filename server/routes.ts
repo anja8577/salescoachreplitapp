@@ -341,6 +341,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get previous assessment for a coachee (excluding specified assessment ID)
+  app.get("/api/coachees/:coacheeName/previous-assessment/:excludeId", async (req, res) => {
+    try {
+      const coacheeName = decodeURIComponent(req.params.coacheeName);
+      const excludeId = parseInt(req.params.excludeId);
+      const previousAssessment = await storage.getPreviousAssessmentForCoachee(coacheeName, excludeId);
+      
+      if (!previousAssessment) {
+        return res.status(404).json({ message: "No previous assessment found for this coachee" });
+      }
+      
+      res.json(previousAssessment);
+    } catch (error) {
+      console.error("Error fetching previous assessment for coachee:", error);
+      res.status(500).json({ message: "Failed to fetch previous assessment" });
+    }
+  });
+
   // Get assessment scores
   app.get("/api/assessments/:id/scores", async (req, res) => {
     try {

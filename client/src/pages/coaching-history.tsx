@@ -87,9 +87,7 @@ export default function CoachingHistory() {
     return unifiedLevels.map((stepLevel, index) => {
       const levelText = StepLevelCalculator.getLevelShortCode(stepLevel.level);
       const colorClass = StepLevelCalculator.getLevelBadgeClass(stepLevel.level);
-      const displayText = stepLevel.source === 'calculated' && stepLevel.percentage !== undefined 
-        ? `${index + 1}: ${levelText}(${stepLevel.percentage}%)`
-        : `${index + 1}: ${levelText}`;
+      const displayText = `${index + 1}: ${levelText}`;
       
       return { stepNumber: index + 1, levelText: displayText, colorClass };
     });
