@@ -9,7 +9,7 @@ import AuthModal from "@/components/auth-modal";
 import SalesCoachHeader from "@/components/sales-coach-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import type { Step, Substep, Behavior, User, Assessment as AssessmentType, AssessmentScore } from "@shared/schema";
+import type { Step, Substep, Behavior, User, Assessment as AssessmentType, AssessmentScore, StepScore } from "@shared/schema";
 
 type StepWithSubsteps = Step & {
   substeps: (Substep & {
@@ -139,6 +139,27 @@ export default function Assessment() {
     },
   });
 
+  const updateStepScoreMutation = useMutation({
+    mutationFn: async ({ stepId, level }: { stepId: number; level: number }) => {
+      if (!currentAssessment) throw new Error("No current assessment");
+      
+      const res = await apiRequest("PUT", `/api/assessments/${currentAssessment.id}/step-scores/${stepId}`, { level });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assessments", currentAssessment?.id, "step-scores"] });
+    },
+    onError: (error) => {
+      console.error("Error updating step score:", error);
+    },
+  });
+
+  // Convert step scores data to object format for compatibility
+  const stepScoresMap = stepScoresData.reduce((acc, score) => {
+    acc[score.stepId] = score.level;
+    return acc;
+  }, {} as { [stepId: number]: number });
+
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -207,6 +228,9 @@ export default function Assessment() {
         
         // Manually load scores for this assessment
         await loadScoresForAssessment(assessmentId);
+        
+        // Load step scores too
+        await loadStepScoresForAssessment(assessmentId);
       }
     } catch (error) {
       console.error("Error loading existing assessment:", error);
@@ -295,6 +319,9 @@ export default function Assessment() {
 
   const handleStepScoreChange = (stepId: number, level: number) => {
     setStepScores(prev => ({ ...prev, [stepId]: level }));
+    
+    // Save to database
+    updateStepScoreMutation.mutate({ stepId, level });
   };
 
   const totalScore = steps.reduce((stepTotal, step) => {
