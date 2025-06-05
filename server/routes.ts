@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertAssessmentSchema, insertAssessmentScoreSchema } from "@shared/schema";
 import { AuthService } from "./auth";
+import { PDFGenerator } from "./pdfGenerator";
+import path from "path";
 import type { User, Assessment, AssessmentScore, UserRegistration, UserLogin } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {

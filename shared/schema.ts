@@ -48,6 +48,7 @@ export const assessments = pgTable("assessments", {
   whatWorkedWell: text("what_worked_well"),
   whatCanBeImproved: text("what_can_be_improved"),
   nextSteps: text("next_steps"),
+  pdfFilePath: text("pdf_file_path"), // Path to generated PDF report
   createdAt: timestamp("created_at").defaultNow(),
 });
 
