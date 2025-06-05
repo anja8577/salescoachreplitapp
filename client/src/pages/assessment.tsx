@@ -199,29 +199,45 @@ export default function Assessment() {
         
         setAssesseeName(assessment.assesseeName);
         setContext(assessment.context || '');
+        
+        // Manually load scores for this assessment
+        await loadScoresForAssessment(assessmentId);
       }
     } catch (error) {
       console.error("Error loading existing assessment:", error);
     }
   };
 
+  const loadScoresForAssessment = async (assessmentId: number) => {
+    try {
+      const scoresResponse = await fetch(`/api/assessments/${assessmentId}/scores`);
+      if (scoresResponse.ok) {
+        const scoresData = await scoresResponse.json();
+        const checkedIds = scoresData.filter((score: any) => score.checked).map((score: any) => score.behaviorId);
+        console.log("Manually loading scores:", checkedIds.length, "behaviors checked");
+        setCheckedBehaviors(new Set(checkedIds));
+        
+        // Invalidate query cache to ensure fresh data
+        queryClient.invalidateQueries({ queryKey: ["/api/assessments", assessmentId, "scores"] });
+      }
+    } catch (error) {
+      console.error("Error loading scores:", error);
+    }
+  };
 
 
-  // Update checked behaviors when scores change - fixed to prevent infinite loops
+
+  // Simple state watcher - only update when assessment changes, like context text
   useEffect(() => {
-    if (scores.length > 0) {
+    if (currentAssessment && scores.length > 0) {
       const checkedIds = scores.filter(score => score.checked).map(score => score.behaviorId);
       console.log("Loading saved scores:", checkedIds.length, "behaviors checked");
       setCheckedBehaviors(new Set(checkedIds));
-    }
-  }, [scores.map(s => `${s.behaviorId}-${s.checked}`).join(',')]);
-
-  // Clear behaviors when switching assessments
-  useEffect(() => {
-    if (currentAssessment && scores.length === 0) {
+    } else if (currentAssessment) {
+      // Clear behaviors for new assessments
       setCheckedBehaviors(new Set());
     }
-  }, [currentAssessment?.id, scores.length]);
+  }, [currentAssessment?.id]);
 
   const handleUserSelected = async (userId: number) => {
     console.log("User selected:", userId);
