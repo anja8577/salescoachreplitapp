@@ -169,6 +169,7 @@ export type InsertBehavior = z.infer<typeof insertBehaviorSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type InsertAssessmentScore = z.infer<typeof insertAssessmentScoreSchema>;
+export type InsertStepScore = z.infer<typeof insertStepScoreSchema>;
 
 export interface UserRegistration {
   fullName: string;

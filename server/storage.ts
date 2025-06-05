@@ -1,7 +1,7 @@
 import { 
-  type Step, type Substep, type Behavior, type User, type Assessment, type AssessmentScore,
-  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertUser, type InsertAssessment, type InsertAssessmentScore,
-  steps, substeps, behaviors, users, assessments, assessmentScores
+  type Step, type Substep, type Behavior, type User, type Assessment, type AssessmentScore, type StepScore,
+  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertUser, type InsertAssessment, type InsertAssessmentScore, type InsertStepScore,
+  steps, substeps, behaviors, users, assessments, assessmentScores, stepScores
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ne } from "drizzle-orm";
@@ -40,6 +40,10 @@ export interface IStorage {
   getAssessmentScores(assessmentId: number): Promise<AssessmentScore[]>;
   updateAssessmentScore(assessmentId: number, behaviorId: number, checked: boolean): Promise<AssessmentScore>;
 
+  // Step Scores
+  getStepScores(assessmentId: number): Promise<StepScore[]>;
+  updateStepScore(assessmentId: number, stepId: number, level: number): Promise<StepScore>;
+
   // Initialize default data
   initializeDefaultData(): Promise<void>;
 }
@@ -51,6 +55,7 @@ export class MemStorage implements IStorage {
   private users: Map<number, User> = new Map();
   private assessments: Map<number, Assessment> = new Map();
   private assessmentScores: Map<string, AssessmentScore> = new Map();
+  private stepScores: Map<string, StepScore> = new Map();
   private nextId = 1;
 
   async getAllSteps(): Promise<(Step & { substeps: (Substep & { behaviors: Behavior[] })[] })[]> {
@@ -235,6 +240,29 @@ export class MemStorage implements IStorage {
         checked
       };
       this.assessmentScores.set(key, newScore);
+      return newScore;
+    }
+  }
+
+  async getStepScores(assessmentId: number): Promise<StepScore[]> {
+    return Array.from(this.stepScores.values()).filter(score => score.assessmentId === assessmentId);
+  }
+
+  async updateStepScore(assessmentId: number, stepId: number, level: number): Promise<StepScore> {
+    const key = `${assessmentId}-${stepId}`;
+    const existingScore = this.stepScores.get(key);
+    
+    if (existingScore) {
+      existingScore.level = level;
+      return existingScore;
+    } else {
+      const newScore: StepScore = {
+        id: this.nextId++,
+        assessmentId,
+        stepId,
+        level,
+      };
+      this.stepScores.set(key, newScore);
       return newScore;
     }
   }
