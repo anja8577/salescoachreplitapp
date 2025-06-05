@@ -127,29 +127,68 @@ export default function CoachingHistory() {
 
   const handleDownloadPDF = async (assessment: Assessment) => {
     try {
-      const response = await fetch(`/api/assessments/${assessment.id}/pdf`);
+      const element = document.createElement('div');
+      element.innerHTML = `
+        <div style="padding: 20px; font-family: Arial, sans-serif;">
+          <h1>Sales Coaching Assessment Report</h1>
+          <p><strong>Coachee:</strong> ${assessment.assesseeName || 'Unknown'}</p>
+          <p><strong>Date:</strong> ${assessment.createdAt ? new Date(assessment.createdAt).toLocaleDateString() : 'N/A'}</p>
+          <p><strong>Title:</strong> ${assessment.title || 'Assessment Session'}</p>
+          
+          ${assessment.keyObservations ? `
+            <h3>Key Observations:</h3>
+            <p>${assessment.keyObservations}</p>
+          ` : ''}
+          
+          ${assessment.whatWorkedWell ? `
+            <h3>What Worked Well:</h3>
+            <p>${assessment.whatWorkedWell}</p>
+          ` : ''}
+          
+          ${assessment.whatCanBeImproved ? `
+            <h3>What Can Be Improved:</h3>
+            <p>${assessment.whatCanBeImproved}</p>
+          ` : ''}
+          
+          ${assessment.nextSteps ? `
+            <h3>Next Steps:</h3>
+            <p>${assessment.nextSteps}</p>
+          ` : ''}
+        </div>
+      `;
       
-      if (!response.ok) {
-        if (response.status === 404) {
-          alert('PDF report not available for this session. PDFs are generated automatically when sessions are saved with coaching observations.');
-        } else {
-          alert('Error downloading PDF report');
-        }
-        return;
+      document.body.appendChild(element);
+      
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = await import('html2canvas');
+      
+      const canvas = await html2canvas.default(element);
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdf = new jsPDF();
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
       
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `coaching-report-${assessment.assesseeName}-${assessment.id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      pdf.save(`coaching-report-${assessment.assesseeName || 'assessment'}-${assessment.id}.pdf`);
+      document.body.removeChild(element);
+      
     } catch (error) {
-      console.error('Error downloading PDF:', error);
-      alert('Error downloading PDF report');
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF report.');
     }
   };
 
