@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import fs from 'fs';
 import path from 'path';
 import { Assessment, User, Step, Substep, Behavior, AssessmentScore, StepScore } from '@shared/schema';
