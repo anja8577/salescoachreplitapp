@@ -131,43 +131,88 @@ export class PDFGenerator {
       doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
     }
     
-    // Spider graph (right column) - much larger and more visible
-    const graphRadius = Math.min(columnWidth * 0.8, contextHeight * 0.8) / 2; // Much larger radius
+    // Professional Spider Graph (right column) - matching reference image
+    const graphRadius = Math.min(columnWidth * 0.35, contextHeight * 0.35); // Appropriate size
     const centerX = rightColumnX + columnWidth / 2;
     const centerY = yPosition + 5 + contextHeight / 2;
     
-    // Draw spider graph background circles for proficiency levels
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.5);
-    
-    // Draw concentric circles for levels (1-4)
-    for (let level = 1; level <= 4; level++) {
-      const levelRadius = (graphRadius * level) / 4;
-      doc.circle(centerX, centerY, levelRadius, 'S');
-    }
-    
-    // Draw axes for each step with labels
     const stepCount = Math.min(steps.length, 7);
-    doc.setDrawColor(180, 180, 180);
+    const stepLabels = ['Preparation', 'Opening', 'Need Dialog', 'Solution Dialog', 'Objection Resolution', 'Asking for Commitment', 'Follow up'];
+    
+    // Draw background web structure with very light grey
+    doc.setDrawColor(230, 230, 230);
     doc.setLineWidth(0.3);
     
+    // Draw concentric polygons for levels (1-4)
+    for (let level = 1; level <= 4; level++) {
+      const levelRadius = (graphRadius * level) / 4;
+      const levelPoints = [];
+      
+      for (let i = 0; i < stepCount; i++) {
+        const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
+        const x = centerX + Math.cos(angle) * levelRadius;
+        const y = centerY + Math.sin(angle) * levelRadius;
+        levelPoints.push([x, y]);
+      }
+      
+      // Draw the polygon outline
+      for (let i = 0; i < levelPoints.length; i++) {
+        const nextIndex = (i + 1) % levelPoints.length;
+        doc.line(levelPoints[i][0], levelPoints[i][1], levelPoints[nextIndex][0], levelPoints[nextIndex][1]);
+      }
+    }
+    
+    // Draw axes from center to vertices with light grey
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
       const endX = centerX + Math.cos(angle) * graphRadius;
       const endY = centerY + Math.sin(angle) * graphRadius;
       doc.line(centerX, centerY, endX, endY);
-      
-      // Add step number labels at the end of each axis
-      const labelX = centerX + Math.cos(angle) * (graphRadius + 8);
-      const labelY = centerY + Math.sin(angle) * (graphRadius + 8);
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 100, 100);
-      doc.text(`${i + 1}`, labelX - 2, labelY + 2);
     }
     
-    // Plot actual proficiency levels as filled polygon
-    const plotPoints = [];
+    // Draw benchmark line (Level 3) in light blue/cyan - dashed style
+    const benchmarkPoints = [];
+    const benchmarkLevel = 3;
+    const benchmarkRadius = (graphRadius * benchmarkLevel) / 4;
+    
+    for (let i = 0; i < stepCount; i++) {
+      const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
+      const x = centerX + Math.cos(angle) * benchmarkRadius;
+      const y = centerY + Math.sin(angle) * benchmarkRadius;
+      benchmarkPoints.push([x, y]);
+    }
+    
+    // Draw benchmark polygon with light blue dashed stroke
+    doc.setDrawColor(125, 211, 252); // Light blue
+    doc.setLineWidth(1.5);
+    
+    for (let i = 0; i < benchmarkPoints.length; i++) {
+      const nextIndex = (i + 1) % benchmarkPoints.length;
+      const startX = benchmarkPoints[i][0];
+      const startY = benchmarkPoints[i][1];
+      const endX = benchmarkPoints[nextIndex][0];
+      const endY = benchmarkPoints[nextIndex][1];
+      
+      // Create dashed line effect
+      const distance = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+      const dashLength = 3;
+      const numDashes = Math.floor(distance / (dashLength * 2));
+      
+      for (let d = 0; d < numDashes; d++) {
+        const t1 = (d * 2 * dashLength) / distance;
+        const t2 = ((d * 2 + 1) * dashLength) / distance;
+        const x1 = startX + t1 * (endX - startX);
+        const y1 = startY + t1 * (endY - startY);
+        const x2 = startX + t2 * (endX - startX);
+        const y2 = startY + t2 * (endY - startY);
+        doc.line(x1, y1, x2, y2);
+      }
+    }
+    
+    // Plot actual performance polygon
+    const performancePoints = [];
     for (let i = 0; i < stepCount; i++) {
       const step = steps[i];
       const stepLevel = unifiedStepLevels.find(ul => ul.stepId === step.id);
@@ -176,35 +221,84 @@ export class PDFGenerator {
       const plotRadius = (graphRadius * level) / 4;
       const x = centerX + Math.cos(angle) * plotRadius;
       const y = centerY + Math.sin(angle) * plotRadius;
-      plotPoints.push([x, y]);
+      performancePoints.push([x, y]);
     }
     
-    // Draw the proficiency polygon with fill and stroke
-    if (plotPoints.length > 0) {
-      doc.setFillColor(59, 130, 246, 0.3); // Semi-transparent blue fill
-      doc.setDrawColor(59, 130, 246);
-      doc.setLineWidth(2);
-      
-      // Create the polygon path
-      let pathString = `M ${plotPoints[0][0]} ${plotPoints[0][1]}`;
-      for (let i = 1; i < plotPoints.length; i++) {
-        pathString += ` L ${plotPoints[i][0]} ${plotPoints[i][1]}`;
-      }
-      pathString += ' Z'; // Close the path
-      
-      // Draw filled polygon manually using multiple line segments
-      doc.setFillColor(59, 130, 246, 0.2);
-      for (let i = 0; i < plotPoints.length; i++) {
-        const nextIndex = (i + 1) % plotPoints.length;
-        doc.line(plotPoints[i][0], plotPoints[i][1], plotPoints[nextIndex][0], plotPoints[nextIndex][1]);
-      }
-      
-      // Add dots at each proficiency point
+    // Fill the performance area with semi-transparent blue
+    if (performancePoints.length > 0) {
+      // Create semi-transparent fill effect using overlapping circles
       doc.setFillColor(59, 130, 246);
-      for (const point of plotPoints) {
-        doc.circle(point[0], point[1], 1.5, 'F');
+      
+      // Fill polygon by drawing many small circles
+      for (let i = 0; i < performancePoints.length; i++) {
+        const nextIndex = (i + 1) % performancePoints.length;
+        
+        // Draw triangular section from center to two adjacent vertices
+        const steps = 15;
+        for (let s = 0; s <= steps; s++) {
+          for (let t = 0; t <= steps - s; t++) {
+            const u = s / steps;
+            const v = t / steps;
+            const w = 1 - u - v;
+            
+            if (w >= 0) {
+              const x = centerX * w + performancePoints[i][0] * u + performancePoints[nextIndex][0] * v;
+              const y = centerY * w + performancePoints[i][1] * u + performancePoints[nextIndex][1] * v;
+              doc.setFillColor(59, 130, 246, 0.15);
+              doc.circle(x, y, 0.3, 'F');
+            }
+          }
+        }
+      }
+      
+      // Draw performance polygon outline in dark blue
+      doc.setDrawColor(37, 99, 235); // Dark blue
+      doc.setLineWidth(2.5);
+      for (let i = 0; i < performancePoints.length; i++) {
+        const nextIndex = (i + 1) % performancePoints.length;
+        doc.line(performancePoints[i][0], performancePoints[i][1], performancePoints[nextIndex][0], performancePoints[nextIndex][1]);
       }
     }
+    
+    // Add step labels outside the graph
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(128, 128, 128);
+    
+    for (let i = 0; i < stepCount; i++) {
+      const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
+      const labelRadius = graphRadius + 15;
+      const labelX = centerX + Math.cos(angle) * labelRadius;
+      const labelY = centerY + Math.sin(angle) * labelRadius;
+      
+      // Adjust text alignment based on position
+      const textWidth = doc.getTextWidth(stepLabels[i]);
+      let adjustedX = labelX - textWidth / 2;
+      
+      doc.text(stepLabels[i], adjustedX, labelY);
+    }
+    
+    // Add legend below the graph
+    const legendY = centerY + graphRadius + 35;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    
+    // Benchmark legend with dashed line
+    doc.setDrawColor(125, 211, 252);
+    doc.setLineWidth(1.5);
+    // Draw dashed line for legend
+    for (let d = 0; d < 3; d++) {
+      doc.line(centerX - 25 + d * 6, legendY, centerX - 23 + d * 6, legendY);
+    }
+    doc.setTextColor(125, 211, 252);
+    doc.text('Benchmark (Level 3)', centerX - 10, legendY + 2);
+    
+    // Actual performance legend with solid line
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(2.5);
+    doc.line(centerX - 25, legendY + 8, centerX - 15, legendY + 8);
+    doc.setTextColor(37, 99, 235);
+    doc.text('Actual Performance', centerX - 10, legendY + 10);
     
     // Reset colors
     doc.setTextColor(0, 0, 0);
@@ -215,6 +309,14 @@ export class PDFGenerator {
     for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
       const step = steps[stepIndex];
       const unifiedLevel = unifiedStepLevels.find(ul => ul.stepId === step.id);
+      
+      // Force new page before "Asking for Commitment" (step 6, index 5)
+      if (stepIndex === 5) {
+        doc.addPage();
+        currentPage++;
+        this.addPageNumber(doc, currentPage);
+        yPosition = 20;
+      }
       
       // Check if we need a new page
       if (yPosition > pageHeight - 60) {
@@ -360,10 +462,10 @@ export class PDFGenerator {
       doc.text(`${section.title}:`, 20, yPosition);
       yPosition += 8; // Space between title and box
 
-      // Recalculate content height without title space
-      contentHeight = 20; // Minimum height for content only
+      // Recalculate content height without title space - increased by 25%
+      contentHeight = 25; // Minimum height for content only (increased from 20)
       if (lines.length > 0) {
-        contentHeight = lines.length * 5 + 15; // Content + padding
+        contentHeight = (lines.length * 5 + 15) * 1.25; // Content + padding, increased by 25%
       }
 
       // Draw light colored background rectangle
@@ -394,51 +496,47 @@ export class PDFGenerator {
       yPosition = 20;
     }
 
-    yPosition += 15; // Reduced spacing
+    yPosition += 10; // Minimal spacing
 
-    // Electronic Signatures header with reduced grey background (40% smaller)
+    // Electronic Signatures section - condensed to 15% of page height max
+    const maxSignatureHeight = pageHeight * 0.15; // 15% of page height
+    const signatureStartY = yPosition;
+
+    // Electronic Signatures header - very compact
     doc.setFillColor(245, 245, 245); // Light grey background
-    doc.rect(20, yPosition - 2, pageWidth - 40, 12, 'F'); // Reduced from 20 to 12 height
+    doc.rect(20, yPosition - 1, pageWidth - 40, 8, 'F'); // Much smaller header
     
-    doc.setFontSize(14);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text('Electronic Signatures', 20, yPosition + 6); // Adjusted vertical centering
-    yPosition += 20; // Reduced from 30
+    doc.text('Electronic Signatures', 22, yPosition + 4);
+    yPosition += 12;
 
-    // Coach signature line
-    doc.setFontSize(10);
+    // Compact signature lines in two columns
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('Coach Signature:', 20, yPosition);
-    doc.text('Date:', pageWidth - 80, yPosition);
-    yPosition += 15;
     
-    // Signature line for coach
-    doc.line(20, yPosition, 120, yPosition);
-    doc.line(pageWidth - 80, yPosition, pageWidth - 20, yPosition);
+    // Left column - Coach
+    doc.text('Coach:', 20, yPosition);
+    doc.line(20, yPosition + 8, 90, yPosition + 8);
+    doc.text(coach.fullName, 20, yPosition + 14);
     
-    // Coach name below signature line
-    doc.text(coach.fullName, 50, yPosition + 10);
-    yPosition += 35;
+    // Right column - Coachee  
+    doc.text('Coachee:', 100, yPosition);
+    doc.line(100, yPosition + 8, 170, yPosition + 8);
+    doc.text(assessment.assesseeName || '', 100, yPosition + 14);
+    
+    yPosition += 20;
 
-    // Coachee signature line
-    doc.text('Coachee Signature:', 20, yPosition);
-    doc.text('Date:', pageWidth - 80, yPosition);
-    yPosition += 15;
-    
-    // Signature line for coachee
-    doc.line(20, yPosition, 120, yPosition);
-    doc.line(pageWidth - 80, yPosition, pageWidth - 20, yPosition);
-    
-    // Coachee name below signature line
-    doc.text(assessment.assesseeName || '', 50, yPosition + 10);
-    yPosition += 25;
+    // Date fields in compact format
+    doc.text('Date: _______________', 20, yPosition);
+    doc.text('Date: _______________', 100, yPosition);
+    yPosition += 8;
 
-    // Electronic signature note in medium grey and smaller font
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(128, 128, 128); // Medium grey
-    doc.text('Note: This document supports electronic signatures for digital approval.', 20, yPosition);
+    // Compact electronic signature note
+    doc.setFontSize(7);
+    doc.setTextColor(128, 128, 128);
+    doc.text('Electronic signatures accepted for digital approval.', 20, yPosition);
 
     // Save PDF to file
     const uploadsDir = this.ensureUploadsDirectory();

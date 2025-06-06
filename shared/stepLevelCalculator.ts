@@ -139,11 +139,11 @@ export class StepLevelCalculator {
    */
   static getLevelBadgeClass(level: number): string {
     switch (level) {
-      case 4: return 'bg-purple-50 text-purple-700 border-purple-200';
-      case 3: return 'bg-green-50 text-green-700 border-green-200';
-      case 2: return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 1: return 'bg-orange-50 text-orange-700 border-orange-200';
-      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 4: return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 3: return 'bg-green-100 text-green-800 border-green-300';
+      case 2: return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 1: return 'bg-orange-100 text-orange-800 border-orange-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   }
 }
