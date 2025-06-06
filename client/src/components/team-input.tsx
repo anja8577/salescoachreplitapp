@@ -22,10 +22,15 @@ export default function TeamInput({ value, onChange, placeholder = "Enter team n
     setInputValue(value);
   }, [value]);
 
-  const filteredTeams = teams.filter(team => 
-    team.toLowerCase().includes(inputValue.toLowerCase()) && 
-    team.toLowerCase() !== inputValue.toLowerCase()
-  );
+  const filteredTeams = showSuggestions 
+    ? (inputValue.length > 0 
+        ? teams.filter(team => 
+            team.toLowerCase().includes(inputValue.toLowerCase()) && 
+            team.toLowerCase() !== inputValue.toLowerCase()
+          )
+        : teams.filter(team => team.toLowerCase() !== inputValue.toLowerCase())
+      )
+    : [];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -41,9 +46,8 @@ export default function TeamInput({ value, onChange, placeholder = "Enter team n
   };
 
   const handleFocus = () => {
-    if (inputValue.length > 0 && filteredTeams.length > 0) {
-      setShowSuggestions(true);
-    }
+    // Always show all teams when focused, regardless of input value
+    setShowSuggestions(teams.length > 0);
   };
 
   const handleBlur = () => {

@@ -132,7 +132,22 @@ export default function CoachingHistory() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `coaching-report-${assessment.assesseeName || 'assessment'}-${assessment.id}.pdf`;
+        
+        // Use consistent filename format: SalesCoach_Report_CoacheeName_Date_Time
+        const date = new Date(assessment.createdAt);
+        const dateStr = date.toLocaleDateString('en-US', { 
+          month: '2-digit', 
+          day: '2-digit', 
+          year: 'numeric' 
+        }).replace(/\//g, '_');
+        const timeStr = date.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        }).replace(/:/g, '_');
+        
+        const coacheeName = (assessment.assesseeName || 'Unknown').replace(/\s+/g, '_');
+        a.download = `SalesCoach_Report_${coacheeName}_${dateStr}_${timeStr}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
       } else {

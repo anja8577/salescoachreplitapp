@@ -629,8 +629,58 @@ export default function Profile() {
                               <div className="font-medium text-sm">{user.fullName}</div>
                               <div className="text-xs text-gray-600">{user.email}</div>
                             </div>
+                            {teamName !== "No Team" && user.id !== currentUser?.id && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Remove ${user.fullName} from team "${teamName}"?`)) {
+                                    updateUserMutation.mutate({
+                                      id: user.id,
+                                      data: { team: null }
+                                    });
+                                  }
+                                }}
+                                disabled={updateUserMutation.isPending}
+                              >
+                                <Trash2 size={12} />
+                              </Button>
+                            )}
                           </div>
                         ))}
+                        
+                        {/* Add member section */}
+                        {teamName !== "No Team" && (
+                          <div className="border-t pt-3 mt-3">
+                            <div className="text-sm font-medium mb-2">Add Member</div>
+                            <div className="flex space-x-2">
+                              <select
+                                className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                                onChange={(e) => {
+                                  const userId = parseInt(e.target.value);
+                                  if (userId && confirm(`Add user to team "${teamName}"?`)) {
+                                    updateUserMutation.mutate({
+                                      id: userId,
+                                      data: { team: teamName }
+                                    });
+                                    e.target.value = "";
+                                  }
+                                }}
+                                defaultValue=""
+                              >
+                                <option value="">Select user to add...</option>
+                                {users.filter(user => 
+                                  user.team !== teamName && 
+                                  user.id !== currentUser?.id
+                                ).map(user => (
+                                  <option key={user.id} value={user.id}>
+                                    {user.fullName} ({user.email})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
