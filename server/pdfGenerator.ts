@@ -95,6 +95,9 @@ export class PDFGenerator {
     doc.text(rightInfo, pageWidth - 20 - doc.getTextWidth(rightInfo), 25);
     
     yPosition = 40; // Reduced from 55
+    
+    // Add page number to first page
+    this.addPageNumber(doc, currentPage);
 
     // Two-column layout: Context box (left) and Spider graph (right)
     const columnWidth = (pageWidth - 60) / 2; // Split into two columns with spacing
@@ -216,6 +219,8 @@ export class PDFGenerator {
       // Check if we need a new page
       if (yPosition > pageHeight - 60) {
         doc.addPage();
+        currentPage++;
+        this.addPageNumber(doc, currentPage);
         yPosition = 20;
       }
 
@@ -256,6 +261,8 @@ export class PDFGenerator {
         // Check if we need a new page
         if (yPosition > pageHeight - 40) {
           doc.addPage();
+          currentPage++;
+          this.addPageNumber(doc, currentPage);
           yPosition = 20;
         }
 
@@ -270,6 +277,8 @@ export class PDFGenerator {
           // Check if we need a new page
           if (yPosition > pageHeight - 30) {
             doc.addPage();
+            currentPage++;
+            this.addPageNumber(doc, currentPage);
             yPosition = 20;
           }
 
@@ -339,7 +348,22 @@ export class PDFGenerator {
       // Check if section would span two pages - if so, move to next page
       if (yPosition + contentHeight > pageHeight - 20) {
         doc.addPage();
+        currentPage++;
+        this.addPageNumber(doc, currentPage);
         yPosition = 20;
+      }
+
+      // Section title above the box
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0); // Black title
+      doc.text(`${section.title}:`, 20, yPosition);
+      yPosition += 8; // Space between title and box
+
+      // Recalculate content height without title space
+      contentHeight = 20; // Minimum height for content only
+      if (lines.length > 0) {
+        contentHeight = lines.length * 5 + 15; // Content + padding
       }
 
       // Draw light colored background rectangle
@@ -351,26 +375,22 @@ export class PDFGenerator {
       doc.setLineWidth(0.5);
       doc.rect(20, yPosition, pageWidth - 40, contentHeight);
 
-      // Section title
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0); // Black title
-      doc.text(`${section.title}:`, 25, yPosition + 12);
-
       // Section content if available
       if (section.content && lines.length > 0) {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0); // Black text
-        doc.text(lines, 25, yPosition + 22);
+        doc.text(lines, 25, yPosition + 12);
       }
 
-      yPosition += contentHeight;
+      yPosition += contentHeight + 5; // Add small gap after box
     });
 
     // Electronic Signatures section
     if (yPosition > pageHeight - 100) {
       doc.addPage();
+      currentPage++;
+      this.addPageNumber(doc, currentPage);
       yPosition = 20;
     }
 

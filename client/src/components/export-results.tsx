@@ -292,8 +292,8 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+      {/* Action Buttons - Horizontally aligned */}
+      <div className="flex gap-3 pt-4 border-t border-gray-200">
         <Button
           onClick={handleSaveAndContinue}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
@@ -342,16 +342,6 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
         >
           <Download className="mr-2 h-4 w-4" />
           Download PDF Report
-        </Button>
-
-        <Button
-          onClick={shareAssessment}
-          variant="outline"
-          disabled={isSharing}
-          className="px-6 py-2"
-        >
-          <Share2 className="mr-2 h-4 w-4" />
-          {isSharing ? 'Sharing...' : 'Share Assessment'}
         </Button>
       </div>
 
