@@ -46,29 +46,49 @@ export default function ExportResults({
   const [whatCanBeImproved, setWhatCanBeImproved] = useState('');
   const [nextSteps, setNextSteps] = useState('');
 
-  // Load current assessment data only (no automatic text population for new sessions)
+  // Load current assessment data and prepopulate from previous session if available
   useEffect(() => {
-    const loadCurrentAssessmentData = async () => {
+    const loadAssessmentData = async () => {
       if (!assessmentId) return;
       
       try {
+        // First load current assessment data
         const response = await fetch(`/api/assessments/${assessmentId}`);
         if (response.ok) {
           const currentAssessment = await response.json();
           
-          // Load existing text if available
-          if (currentAssessment.keyObservations) setKeyObservations(currentAssessment.keyObservations);
-          if (currentAssessment.whatWorkedWell) setWhatWorkedWell(currentAssessment.whatWorkedWell);
-          if (currentAssessment.whatCanBeImproved) setWhatCanBeImproved(currentAssessment.whatCanBeImproved);
-          if (currentAssessment.nextSteps) setNextSteps(currentAssessment.nextSteps);
+          // If current assessment has text, use it
+          if (currentAssessment.keyObservations || currentAssessment.whatWorkedWell || 
+              currentAssessment.whatCanBeImproved || currentAssessment.nextSteps) {
+            if (currentAssessment.keyObservations) setKeyObservations(currentAssessment.keyObservations);
+            if (currentAssessment.whatWorkedWell) setWhatWorkedWell(currentAssessment.whatWorkedWell);
+            if (currentAssessment.whatCanBeImproved) setWhatCanBeImproved(currentAssessment.whatCanBeImproved);
+            if (currentAssessment.nextSteps) setNextSteps(currentAssessment.nextSteps);
+          } else {
+            // If no text in current assessment, try to load from previous session
+            try {
+              const prevResponse = await fetch(`/api/coachees/${encodeURIComponent(user.fullName)}/previous-assessment/${assessmentId}`);
+              if (prevResponse.ok) {
+                const previousAssessment = await prevResponse.json();
+                console.log("Loading previous assessment text for prepopulation:", previousAssessment);
+                
+                if (previousAssessment.keyObservations) setKeyObservations(previousAssessment.keyObservations);
+                if (previousAssessment.whatWorkedWell) setWhatWorkedWell(previousAssessment.whatWorkedWell);
+                if (previousAssessment.whatCanBeImproved) setWhatCanBeImproved(previousAssessment.whatCanBeImproved);
+                if (previousAssessment.nextSteps) setNextSteps(previousAssessment.nextSteps);
+              }
+            } catch (prevError) {
+              console.log("No previous assessment text found for prepopulation");
+            }
+          }
         }
       } catch (error) {
-        console.log("Error loading current assessment data:", error);
+        console.log("Error loading assessment data:", error);
       }
     };
 
-    loadCurrentAssessmentData();
-  }, [assessmentId]);
+    loadAssessmentData();
+  }, [assessmentId, user.fullName]);
 
   const generateResultsText = () => {
     const stepResults = steps.map(step => {
