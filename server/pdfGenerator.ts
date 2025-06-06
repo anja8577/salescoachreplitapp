@@ -47,8 +47,8 @@ export class PDFGenerator {
     // Get unified step levels
     const unifiedStepLevels = StepLevelCalculator.getUnifiedStepLevels(
       steps,
-      checkedBehaviorIds,
-      stepScoresMap
+      assessmentScores,
+      stepScores
     );
 
     // Calculate overall proficiency
