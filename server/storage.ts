@@ -4,7 +4,7 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores, stepScores
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ne } from "drizzle-orm";
+import { eq, desc, and, ne, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -1153,6 +1153,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    console.log(`DatabaseStorage: Updating user ${id} with data:`, userData);
+    const startTime = Date.now();
+    
     const [updatedUser] = await db.update(users)
       .set({
         ...userData,
@@ -1160,14 +1163,22 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(users.id, id))
       .returning();
+    
+    console.log(`DatabaseStorage: User ${id} updated in ${Date.now() - startTime}ms`);
     return updatedUser;
   }
 
   async getUniqueTeams(): Promise<string[]> {
+    console.log("DatabaseStorage: Getting unique teams - start");
+    const startTime = Date.now();
+    
     const result = await db.selectDistinct({ team: users.team })
       .from(users)
-      .where(eq(users.team, users.team)); // Only get non-null teams
-    return result.map(r => r.team).filter(Boolean) as string[];
+      .where(isNotNull(users.team));
+    
+    const teams = result.map(r => r.team).filter(Boolean) as string[];
+    console.log(`DatabaseStorage: Got ${teams.length} unique teams in ${Date.now() - startTime}ms`);
+    return teams;
   }
 
   async deleteUser(id: number): Promise<void> {
@@ -1180,10 +1191,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssessment(id: number, assessmentUpdate: Partial<Assessment>): Promise<Assessment> {
+    console.log(`DatabaseStorage: Updating assessment ${id} with data:`, assessmentUpdate);
+    const startTime = Date.now();
+    
     const [updatedAssessment] = await db.update(assessments)
       .set(assessmentUpdate)
       .where(eq(assessments.id, id))
       .returning();
+    
+    console.log(`DatabaseStorage: Assessment ${id} updated in ${Date.now() - startTime}ms`);
     return updatedAssessment;
   }
 

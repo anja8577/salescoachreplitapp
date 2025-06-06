@@ -144,6 +144,7 @@ export default function Profile() {
       });
       setNewTeamName("");
       queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
     },
     onError: (error: any) => {
       toast({
