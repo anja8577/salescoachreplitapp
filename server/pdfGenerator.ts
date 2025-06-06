@@ -224,38 +224,50 @@ export class PDFGenerator {
       performancePoints.push([x, y]);
     }
     
-    // Draw clean performance polygon
+    // Draw performance polygon with proper fill like the coaching session
     if (performancePoints.length > 0) {
-      // Simple fill effect using radiating lines from center
-      doc.setDrawColor(59, 130, 246, 0.2);
-      doc.setLineWidth(0.3);
+      // Fill the polygon with semi-transparent blue using proper scanline filling
+      doc.setFillColor(59, 130, 246, 0.4); // Semi-transparent blue
       
-      // Create fill effect by drawing lines from center to polygon outline
-      for (let i = 0; i < performancePoints.length; i++) {
-        const steps = 20;
-        for (let s = 0; s <= steps; s++) {
-          const t = s / steps;
-          const fillX = centerX + t * (performancePoints[i][0] - centerX);
-          const fillY = centerY + t * (performancePoints[i][1] - centerY);
+      // Create proper polygon fill by drawing horizontal lines
+      const minY = Math.min(...performancePoints.map(p => p[1]));
+      const maxY = Math.max(...performancePoints.map(p => p[1]));
+      
+      for (let y = minY; y <= maxY; y += 0.8) {
+        const intersections = [];
+        
+        // Find all intersections with polygon edges at this y level
+        for (let i = 0; i < performancePoints.length; i++) {
+          const p1 = performancePoints[i];
+          const p2 = performancePoints[(i + 1) % performancePoints.length];
           
-          if (s % 3 === 0) { // Only draw every 3rd line for lighter fill
-            doc.line(centerX, centerY, fillX, fillY);
+          if ((p1[1] <= y && p2[1] >= y) || (p1[1] >= y && p2[1] <= y)) {
+            if (p1[1] !== p2[1]) {
+              const x = p1[0] + (y - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]);
+              intersections.push(x);
+            }
+          }
+        }
+        
+        // Sort intersections and draw fill lines
+        if (intersections.length >= 2) {
+          intersections.sort((a, b) => a - b);
+          for (let i = 0; i < intersections.length; i += 2) {
+            if (i + 1 < intersections.length) {
+              doc.setDrawColor(59, 130, 246, 0.4);
+              doc.setLineWidth(0.8);
+              doc.line(intersections[i], y, intersections[i + 1], y);
+            }
           }
         }
       }
       
-      // Draw performance polygon outline in dark blue
+      // Draw performance polygon outline in dark blue (solid line)
       doc.setDrawColor(37, 99, 235);
       doc.setLineWidth(2.5);
       for (let i = 0; i < performancePoints.length; i++) {
         const nextIndex = (i + 1) % performancePoints.length;
         doc.line(performancePoints[i][0], performancePoints[i][1], performancePoints[nextIndex][0], performancePoints[nextIndex][1]);
-      }
-      
-      // Add clear vertex dots
-      doc.setFillColor(37, 99, 235);
-      for (const point of performancePoints) {
-        doc.circle(point[0], point[1], 2, 'F');
       }
     }
     

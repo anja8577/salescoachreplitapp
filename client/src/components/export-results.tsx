@@ -292,15 +292,15 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
         </div>
       </div>
 
-      {/* Action Buttons - Horizontally aligned */}
-      <div className="flex gap-3 pt-4 border-t border-gray-200">
+      {/* Action Buttons - Centered */}
+      <div className="flex gap-3 pt-4 border-t border-gray-200 justify-center">
         <Button
           onClick={handleSaveAndContinue}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
           disabled={!assessor}
         >
           <Home className="mr-2 h-4 w-4" />
-          Save Assessment
+          Save Coaching Session
         </Button>
 
         <Button
@@ -313,7 +313,12 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `coaching-report-${user.fullName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
+                // Use the same filename format as the server
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                const coacheeName = user.fullName.replace(/[^a-zA-Z0-9]/g, '_');
+                a.download = `SalesCoach_Report_${coacheeName}_${dateStr}_${timeStr}.pdf`;
                 a.click();
                 URL.revokeObjectURL(url);
                 
