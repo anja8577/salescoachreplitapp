@@ -13,6 +13,7 @@ import { insertUserSchema } from "@shared/schema";
 import type { User } from "@shared/schema";
 import { z } from "zod";
 import TeamInput from "@/components/team-input";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserSelectionModalProps {
   open: boolean;
@@ -30,6 +31,7 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
   const [mode, setMode] = useState<"select" | "create">("select");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
@@ -53,6 +55,13 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
   const createUserMutation = useMutation<User, Error, CreateUserForm>({
     mutationFn: async (userData: CreateUserForm) => {
       const res = await apiRequest("POST", "/api/users", userData);
+      if (!res.ok) {
+        const errorData = await res.json();
+        if (res.status === 409) {
+          throw new Error("Email address is already registered in the system");
+        }
+        throw new Error(errorData.message || errorData.error || "Failed to create user");
+      }
       return await res.json();
     },
     onSuccess: (newUser: User) => {
@@ -63,6 +72,13 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
         onUserSelected(newUser.id);
         onClose();
       }, 100);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "User Creation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
