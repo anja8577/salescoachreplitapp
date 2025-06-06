@@ -306,6 +306,17 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
         <Button
           onClick={async () => {
             if (!assessmentId) return;
+            
+            // Check if session has been saved
+            if (!keyObservations && !whatWorkedWell && !whatCanBeImproved && !nextSteps) {
+              toast({
+                title: "Session Not Saved",
+                description: "Please save the coaching session first before downloading the PDF report.",
+                variant: "destructive",
+              });
+              return;
+            }
+            
             try {
               const response = await fetch(`/api/assessments/${assessmentId}/pdf`);
               if (response.ok) {
@@ -327,11 +338,20 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
                   description: "Your assessment report has been downloaded successfully.",
                 });
               } else {
-                toast({
-                  title: "PDF Generation Failed",
-                  description: "Failed to generate PDF report. Please try again.",
-                  variant: "destructive",
-                });
+                const errorData = await response.json();
+                if (errorData.requiresSave) {
+                  toast({
+                    title: "Session Not Saved",
+                    description: "Please save the coaching session first before downloading the PDF report.",
+                    variant: "destructive",
+                  });
+                } else {
+                  toast({
+                    title: "PDF Generation Failed",
+                    description: "Failed to generate PDF report. Please try again.",
+                    variant: "destructive",
+                  });
+                }
               }
             } catch (error) {
               console.error('PDF download error:', error);

@@ -131,121 +131,115 @@ export class PDFGenerator {
       doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
     }
     
-    // Performance Overview Table (right column)
+    // Spider Graph - Professional Rendering (right column)
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text('Performance Overview', rightColumnX, yPosition);
+    doc.text('Performance vs Benchmark', rightColumnX, yPosition);
     
-    // Create performance summary table
-    const tableStartY = yPosition + 10;
-    let tableY = tableStartY;
+    // Create a simplified but readable spider graph
+    const graphCenterX = rightColumnX + columnWidth / 2;
+    const graphCenterY = yPosition + 5 + contextHeight / 2;
+    const graphRadius = Math.min(columnWidth * 0.35, contextHeight * 0.35);
     
-    // Table headers
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Sales Step', rightColumnX, tableY);
-    doc.text('Level', rightColumnX + 60, tableY);
-    doc.text('Proficiency', rightColumnX + 85, tableY);
-    tableY += 5;
+    const stepCount = 7;
+    const stepLabels = ['Prep', 'Opening', 'Need', 'Solution', 'Objection', 'Commitment', 'Follow-up'];
     
-    // Header underline
-    doc.setDrawColor(200, 200, 200);
+    // Draw concentric circles for levels
+    doc.setDrawColor(240, 240, 240);
     doc.setLineWidth(0.5);
-    doc.line(rightColumnX, tableY, rightColumnX + columnWidth - 10, tableY);
-    tableY += 8;
+    for (let level = 1; level <= 4; level++) {
+      const radius = (graphRadius * level) / 4;
+      doc.circle(graphCenterX, graphCenterY, radius);
+    }
     
-    // Table rows
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    // Draw axis lines
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    for (let i = 0; i < stepCount; i++) {
+      const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
+      const endX = graphCenterX + Math.cos(angle) * graphRadius;
+      const endY = graphCenterY + Math.sin(angle) * graphRadius;
+      doc.line(graphCenterX, graphCenterY, endX, endY);
+    }
     
-    const stepLabels = ['Preparation', 'Opening', 'Need Dialog', 'Solution Dialog', 'Objection Resolution', 'Asking for Commitment', 'Follow up'];
+    // Draw benchmark (Level 3) polygon
+    doc.setDrawColor(135, 206, 235);
+    doc.setLineWidth(1);
+    const benchmarkPoints = [];
+    for (let i = 0; i < stepCount; i++) {
+      const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
+      const radius = (graphRadius * 3) / 4;
+      benchmarkPoints.push([
+        graphCenterX + Math.cos(angle) * radius,
+        graphCenterY + Math.sin(angle) * radius
+      ]);
+    }
     
-    for (let i = 0; i < Math.min(steps.length, stepLabels.length); i++) {
+    // Draw benchmark polygon
+    for (let i = 0; i < benchmarkPoints.length; i++) {
+      const next = (i + 1) % benchmarkPoints.length;
+      doc.line(benchmarkPoints[i][0], benchmarkPoints[i][1], benchmarkPoints[next][0], benchmarkPoints[next][1]);
+    }
+    
+    // Draw actual performance polygon
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(2);
+    const performancePoints = [];
+    for (let i = 0; i < stepCount && i < steps.length; i++) {
       const step = steps[i];
       const stepLevel = unifiedStepLevels.find(ul => ul.stepId === step.id);
       const level = stepLevel ? stepLevel.level : 1;
-      const levelText = StepLevelCalculator.getLevelText(level);
-      const levelCode = StepLevelCalculator.getLevelShortCode(level);
-      
-      // Step name
-      doc.setTextColor(0, 0, 0);
-      doc.text(stepLabels[i], rightColumnX, tableY);
-      
-      // Level badge with color
-      let bgColor = [229, 231, 235]; // gray-200 default
-      let textColor = [75, 85, 99]; // gray-600 default
-      
-      if (levelCode === 'EXP') {
-        bgColor = [34, 197, 94]; // green-500
-        textColor = [255, 255, 255]; // white
-      } else if (levelCode === 'ADV') {
-        bgColor = [59, 130, 246]; // blue-500
-        textColor = [255, 255, 255]; // white
-      } else if (levelCode === 'INT') {
-        bgColor = [251, 191, 36]; // amber-400
-        textColor = [0, 0, 0]; // black
-      } else if (levelCode === 'BEG') {
-        bgColor = [239, 68, 68]; // red-500
-        textColor = [255, 255, 255]; // white
-      }
-      
-      // Draw level badge background
-      doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
-      doc.roundedRect(rightColumnX + 58, tableY - 3, 16, 5, 1, 1, 'F');
-      
-      // Level code text
-      doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-      const codeWidth = doc.getTextWidth(levelCode);
-      doc.text(levelCode, rightColumnX + 66 - codeWidth/2, tableY);
-      
-      // Proficiency text
-      doc.setTextColor(0, 0, 0);
-      doc.text(levelText, rightColumnX + 85, tableY);
-      
-      tableY += 7;
+      const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
+      const radius = (graphRadius * level) / 4;
+      performancePoints.push([
+        graphCenterX + Math.cos(angle) * radius,
+        graphCenterY + Math.sin(angle) * radius
+      ]);
     }
     
-    // Overall proficiency summary
-    const overallLevel = StepLevelCalculator.getOverallProficiencyLevel(unifiedStepLevels);
-    tableY += 5;
-    
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('Overall Proficiency:', rightColumnX, tableY);
-    
-    // Overall level badge
-    const overallCode = StepLevelCalculator.getLevelShortCode(overallLevel.level);
-    const overallText = StepLevelCalculator.getLevelText(overallLevel.level);
-    
-    let overallBgColor = [229, 231, 235];
-    let overallTextColor = [75, 85, 99];
-    
-    if (overallCode === 'EXP') {
-      overallBgColor = [34, 197, 94];
-      overallTextColor = [255, 255, 255];
-    } else if (overallCode === 'ADV') {
-      overallBgColor = [59, 130, 246];
-      overallTextColor = [255, 255, 255];
-    } else if (overallCode === 'INT') {
-      overallBgColor = [251, 191, 36];
-      overallTextColor = [0, 0, 0];
-    } else if (overallCode === 'BEG') {
-      overallBgColor = [239, 68, 68];
-      overallTextColor = [255, 255, 255];
+    // Draw performance polygon
+    for (let i = 0; i < performancePoints.length; i++) {
+      const next = (i + 1) % performancePoints.length;
+      doc.line(performancePoints[i][0], performancePoints[i][1], performancePoints[next][0], performancePoints[next][1]);
     }
     
-    doc.setFillColor(overallBgColor[0], overallBgColor[1], overallBgColor[2]);
-    doc.roundedRect(rightColumnX + 58, tableY - 3, 16, 5, 1, 1, 'F');
+    // Add step labels
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
     
-    doc.setTextColor(overallTextColor[0], overallTextColor[1], overallTextColor[2]);
-    const overallCodeWidth = doc.getTextWidth(overallCode);
-    doc.text(overallCode, rightColumnX + 66 - overallCodeWidth/2, tableY);
+    for (let i = 0; i < stepCount; i++) {
+      const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
+      const labelRadius = graphRadius + 8;
+      const labelX = graphCenterX + Math.cos(angle) * labelRadius;
+      const labelY = graphCenterY + Math.sin(angle) * labelRadius;
+      
+      const textWidth = doc.getTextWidth(stepLabels[i]);
+      doc.text(stepLabels[i], labelX - textWidth / 2, labelY);
+    }
+    
+    // Add legend
+    const legendY = graphCenterY + graphRadius + 15;
+    doc.setFontSize(7);
+    
+    // Benchmark legend
+    doc.setDrawColor(135, 206, 235);
+    doc.setLineWidth(1);
+    doc.line(rightColumnX + 5, legendY, rightColumnX + 15, legendY);
+    doc.setTextColor(135, 206, 235);
+    doc.text('Benchmark', rightColumnX + 20, legendY + 1);
+    
+    // Performance legend
+    doc.setDrawColor(37, 99, 235);
+    doc.setLineWidth(2);
+    doc.line(rightColumnX + 5, legendY + 8, rightColumnX + 15, legendY + 8);
+    doc.setTextColor(37, 99, 235);
+    doc.text('Performance', rightColumnX + 20, legendY + 9);
     
     doc.setTextColor(0, 0, 0);
-    doc.text(overallText, rightColumnX + 85, tableY);
     
-    yPosition += Math.max(contextHeight, tableY - tableStartY + 10) + 15;
+    yPosition += contextHeight + 15;
 
     // Steps with behaviors - Professional formatting
     for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {

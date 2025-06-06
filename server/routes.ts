@@ -248,6 +248,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Assessment not found" });
       }
 
+      // Check if assessment has been saved (has coaching notes)
+      if (!assessment.keyObservations && !assessment.whatWorkedWell && 
+          !assessment.whatCanBeImproved && !assessment.nextSteps) {
+        return res.status(400).json({ 
+          message: "Assessment must be saved before generating PDF report",
+          requiresSave: true 
+        });
+      }
+
       // Get coachee data (the person being assessed)
       const coachee = await storage.getUserById(assessment.userId);
       if (!coachee) {
