@@ -318,7 +318,16 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             }
             
             try {
-              const response = await fetch(`/api/assessments/${assessmentId}/pdf`);
+              // Include coach information in the request
+              const authToken = localStorage.getItem('auth_token');
+              const headers: HeadersInit = {};
+              if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+              }
+              
+              const response = await fetch(`/api/assessments/${assessmentId}/pdf`, {
+                headers
+              });
               if (response.ok) {
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);

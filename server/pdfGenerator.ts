@@ -137,10 +137,10 @@ export class PDFGenerator {
     doc.setTextColor(0, 0, 0);
     doc.text('Performance vs Benchmark', rightColumnX, yPosition);
     
-    // Create larger, more detailed spider graph
+    // Create much larger, more detailed spider graph (30% bigger)
     const graphCenterX = rightColumnX + columnWidth / 2;
-    const graphCenterY = yPosition + 10 + contextHeight / 2;
-    const graphRadius = Math.min(columnWidth * 0.45, contextHeight * 0.45); // Increased size
+    const graphCenterY = yPosition + 8 + contextHeight / 2;
+    const graphRadius = Math.min(columnWidth * 0.6, contextHeight * 0.6); // Increased by 30%
     
     const stepCount = 7;
     const stepLabels = ['Preparation', 'Opening', 'Need Dialog', 'Solution', 'Objection', 'Commitment', 'Follow-up'];
@@ -170,9 +170,9 @@ export class PDFGenerator {
       doc.line(graphCenterX, graphCenterY, endX, endY);
     }
     
-    // 3. Draw benchmark polygon (Level 3) with dashed line
+    // 3. Draw benchmark polygon (Level 3) with thin dashed line
     doc.setDrawColor(135, 206, 235);
-    doc.setLineWidth(1.5);
+    doc.setLineWidth(0.8);
     const benchmarkPoints = [];
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
@@ -204,9 +204,9 @@ export class PDFGenerator {
       }
     }
     
-    // 4. Draw actual performance polygon with solid line and fill
+    // 4. Draw actual performance polygon with thin solid line
     doc.setDrawColor(37, 99, 235);
-    doc.setLineWidth(2);
+    doc.setLineWidth(0.8);
     doc.setFillColor(37, 99, 235, 0.2); // Semi-transparent fill
     
     const performancePoints = [];
@@ -234,14 +234,14 @@ export class PDFGenerator {
       doc.circle(point[0], point[1], 1, 'F');
     }
     
-    // 6. Add step labels outside the graph
+    // 6. Add step labels closer to the graph
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
     
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const labelRadius = graphRadius + 12;
+      const labelRadius = graphRadius + 6; // Moved much closer
       const labelX = graphCenterX + Math.cos(angle) * labelRadius;
       const labelY = graphCenterY + Math.sin(angle) * labelRadius;
       
@@ -249,8 +249,8 @@ export class PDFGenerator {
       doc.text(stepLabels[i], labelX - textWidth / 2, labelY);
     }
     
-    // 7. Enhanced legend with proper styling
-    const legendY = graphCenterY + graphRadius + 20;
+    // 7. Enhanced legend closer underneath
+    const legendY = graphCenterY + graphRadius + 12; // Moved closer
     doc.setFontSize(8);
     doc.setTextColor(0, 0, 0);
     

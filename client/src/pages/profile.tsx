@@ -72,7 +72,13 @@ export default function Profile() {
   const createUserMutation = useMutation({
     mutationFn: async (userData: { fullName: string; email: string; team?: string }) => {
       const response = await apiRequest("POST", "/api/users", userData);
-      if (!response.ok) throw new Error("Failed to create user");
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 409) {
+          throw new Error("Email address is already registered in the system");
+        }
+        throw new Error(errorData.message || errorData.error || "Failed to create user");
+      }
       return response.json();
     },
     onSuccess: () => {
