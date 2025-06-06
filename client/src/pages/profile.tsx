@@ -28,6 +28,8 @@ export default function Profile() {
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserTeam, setNewUserTeam] = useState("");
   const [newTeamName, setNewTeamName] = useState("");
+  const [editingTeam, setEditingTeam] = useState<string | null>(null);
+  const [editTeamName, setEditTeamName] = useState("");
 
   // Fetch all users
   const { data: users = [] } = useQuery<User[]>({
@@ -173,7 +175,7 @@ export default function Profile() {
         <Tabs defaultValue="account" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="account">My Account</TabsTrigger>
-            <TabsTrigger value="users">Manage Users</TabsTrigger>
+            <TabsTrigger value="users">Manage my Coachees</TabsTrigger>
             <TabsTrigger value="teams">Manage Teams</TabsTrigger>
           </TabsList>
 
@@ -260,7 +262,7 @@ export default function Profile() {
               {/* Add New User */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Add New User</CardTitle>
+                  <CardTitle>Add New Coachee</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleCreateUser} className="space-y-4">
@@ -285,14 +287,20 @@ export default function Profile() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="user-team">Team (Optional)</Label>
+                      <Label htmlFor="user-team">Team (optional)</Label>
                       <Input
                         id="user-team"
                         type="text"
                         value={newUserTeam}
                         onChange={(e) => setNewUserTeam(e.target.value)}
+                        list="existing-teams"
                         placeholder="Enter team name"
                       />
+                      <datalist id="existing-teams">
+                        {teams.map((team) => (
+                          <option key={team} value={team} />
+                        ))}
+                      </datalist>
                     </div>
                     <Button 
                       type="submit" 
@@ -300,7 +308,7 @@ export default function Profile() {
                       className="w-full"
                     >
                       <Plus className="mr-2" size={16} />
-                      {createUserMutation.isPending ? "Creating..." : "Add User"}
+                      {createUserMutation.isPending ? "Creating..." : "Add Coachee"}
                     </Button>
                   </form>
                 </CardContent>

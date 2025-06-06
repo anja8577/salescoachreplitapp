@@ -489,6 +489,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Team management endpoints
+  app.post("/api/teams", async (req, res) => {
+    try {
+      const { name } = req.body;
+      if (!name) {
+        return res.status(400).json({ message: "Team name is required" });
+      }
+      
+      // For now, just return success since teams are created implicitly when users are assigned
+      res.json({ message: "Team created successfully", name });
+    } catch (error) {
+      console.error("Error creating team:", error);
+      res.status(500).json({ message: "Failed to create team" });
+    }
+  });
+
+  app.put("/api/teams/:name", async (req, res) => {
+    try {
+      const oldName = req.params.name;
+      const { newName } = req.body;
+      
+      if (!newName) {
+        return res.status(400).json({ message: "New team name is required" });
+      }
+      
+      // Update all users with this team name
+      const users = await storage.getAllUsers();
+      const usersToUpdate = users.filter(user => user.team === oldName);
+      
+      for (const user of usersToUpdate) {
+        await storage.updateUser(user.id, { team: newName });
+      }
+      
+      res.json({ message: "Team renamed successfully", oldName, newName });
+    } catch (error) {
+      console.error("Error renaming team:", error);
+      res.status(500).json({ message: "Failed to rename team" });
+    }
+  });
+
+  app.delete("/api/teams/:name", async (req, res) => {
+    try {
+      const teamName = req.params.name;
+      
+      // Remove team assignment from all users
+      const users = await storage.getAllUsers();
+      const usersToUpdate = users.filter(user => user.team === teamName);
+      
+      for (const user of usersToUpdate) {
+        await storage.updateUser(user.id, { team: null });
+      }
+      
+      res.json({ message: "Team deleted successfully", teamName });
+    } catch (error) {
+      console.error("Error deleting team:", error);
+      res.status(500).json({ message: "Failed to delete team" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
