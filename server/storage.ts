@@ -1264,25 +1264,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssessmentScore(assessmentId: number, behaviorId: number, checked: boolean): Promise<AssessmentScore> {
-    // Check if score exists
-    const [existingScore] = await db.select()
-      .from(assessmentScores)
-      .where(and(eq(assessmentScores.assessmentId, assessmentId), eq(assessmentScores.behaviorId, behaviorId)));
-
-    if (existingScore) {
-      // Update existing score
-      const [score] = await db.update(assessmentScores)
-        .set({ checked })
-        .where(and(eq(assessmentScores.assessmentId, assessmentId), eq(assessmentScores.behaviorId, behaviorId)))
-        .returning();
-      return score;
-    } else {
-      // Insert new score
-      const [score] = await db.insert(assessmentScores)
-        .values({ assessmentId, behaviorId, checked })
-        .returning();
-      return score;
-    }
+    console.log(`DatabaseStorage: Updating assessment score - assessment ${assessmentId}, behavior ${behaviorId}, checked: ${checked}`);
+    const startTime = Date.now();
+    
+    // Use upsert for better performance - no need to check first
+    const [score] = await db
+      .insert(assessmentScores)
+      .values({ assessmentId, behaviorId, checked })
+      .onConflictDoUpdate({
+        target: [assessmentScores.assessmentId, assessmentScores.behaviorId],
+        set: { checked }
+      })
+      .returning();
+    
+    console.log(`DatabaseStorage: Assessment score updated in ${Date.now() - startTime}ms`);
+    return score;
   }
 
   async getStepScores(assessmentId: number): Promise<StepScore[]> {

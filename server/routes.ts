@@ -77,7 +77,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get unique teams for dropdown suggestions
   app.get("/api/teams", async (req, res) => {
     try {
+      console.log("Teams GET request received");
+      const startTime = Date.now();
+      
       const teams = await storage.getUniqueTeams();
+      
+      console.log(`Teams fetched in ${Date.now() - startTime}ms:`, teams);
       res.json(teams);
     } catch (error) {
       console.error("Failed to fetch teams:", error);
@@ -539,12 +544,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Team management endpoints
   app.post("/api/teams", async (req, res) => {
     try {
+      console.log("Team creation request received:", req.body);
+      const startTime = Date.now();
+      
       const { name } = req.body;
       if (!name) {
         return res.status(400).json({ message: "Team name is required" });
       }
       
-      // For now, just return success since teams are created implicitly when users are assigned
+      // Check if team already exists
+      const existingTeams = await storage.getUniqueTeams();
+      if (existingTeams.includes(name)) {
+        return res.status(400).json({ message: "Team already exists" });
+      }
+      
+      // Create a placeholder user to establish the team (will be removed when first real user joins)
+      const placeholderUser = await storage.createUser({
+        fullName: `${name} Team Placeholder`,
+        email: `placeholder-${name.toLowerCase().replace(/\s+/g, '-')}@temp.com`,
+        team: name
+      });
+      
+      console.log(`Team "${name}" created in ${Date.now() - startTime}ms with placeholder user ${placeholderUser.id}`);
       res.json({ message: "Team created successfully", name });
     } catch (error) {
       console.error("Error creating team:", error);
@@ -554,6 +575,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/teams/:name", async (req, res) => {
     try {
+      console.log("Team rename request received:", { oldName: req.params.name, newName: req.body.newName });
+      const startTime = Date.now();
+      
       const oldName = req.params.name;
       const { newName } = req.body;
       
@@ -565,10 +589,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const users = await storage.getAllUsers();
       const usersToUpdate = users.filter(user => user.team === oldName);
       
-      for (const user of usersToUpdate) {
-        await storage.updateUser(user.id, { team: newName });
-      }
+      console.log(`Found ${usersToUpdate.length} users to update for team rename`);
       
+      // Use Promise.all for parallel updates instead of sequential
+      await Promise.all(usersToUpdate.map(user => 
+        storage.updateUser(user.id, { team: newName })
+      ));
+      
+      console.log(`Team renamed from "${oldName}" to "${newName}" in ${Date.now() - startTime}ms`);
       res.json({ message: "Team renamed successfully", oldName, newName });
     } catch (error) {
       console.error("Error renaming team:", error);
