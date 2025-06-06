@@ -54,36 +54,36 @@ export class PDFGenerator {
     // Calculate overall proficiency
     const overallProficiency = StepLevelCalculator.getOverallProficiencyLevel(unifiedStepLevels);
 
-    // Blue header box with coach/coachee info inside
+    // Blue header box with reduced height (30% smaller)
     doc.setFillColor(59, 130, 246); // Blue color
-    doc.rect(0, 0, pageWidth, 40, 'F');
+    doc.rect(0, 0, pageWidth, 28, 'F'); // Reduced from 40 to 28
     
     // SalesCoach Report title in white on blue background, left aligned
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255); // White text
-    doc.text('SalesCoach Report', 20, 17);
+    doc.text('SalesCoach Report', 20, 15);
     
-    // Coach and Coachee info in white text within blue header
+    // Coach and Coachee info right below title with minimal spacing
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(255, 255, 255); // White text
     
-    // Left aligned info with vertical separators
+    // Left aligned info with vertical separators - positioned very close to title
     const coachText = `Coach: ${coach.fullName}`;
     const coacheeText = `Coachee: ${assessment.assesseeName}`;
     const proficiencyText = `Proficiency Level: ${overallProficiency.text}`;
     const leftInfo = `${coachText} | ${coacheeText} | ${proficiencyText}`;
-    doc.text(leftInfo, 20, 32);
+    doc.text(leftInfo, 20, 25); // Much closer to title
     
     // Right aligned date/time with vertical separator
     const createdDate = assessment.createdAt ? new Date(assessment.createdAt) : new Date();
     const dateText = createdDate.toLocaleDateString('de-DE');
     const timeText = createdDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     const rightInfo = `${dateText} | ${timeText}`;
-    doc.text(rightInfo, pageWidth - 20 - doc.getTextWidth(rightInfo), 32);
+    doc.text(rightInfo, pageWidth - 20 - doc.getTextWidth(rightInfo), 25);
     
-    yPosition = 55;
+    yPosition = 40; // Reduced from 55
 
     // Two-column layout: Context box (left) and Spider graph (right)
     const columnWidth = (pageWidth - 60) / 2; // Split into two columns with spacing
@@ -117,60 +117,83 @@ export class PDFGenerator {
       doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
     }
     
-    // Spider graph (right column) - actual implementation from coaching session
-    const spiderGraphSize = Math.min(columnWidth - 20, contextHeight - 10);
+    // Spider graph (right column) - much larger and more visible
+    const graphRadius = Math.min(columnWidth * 0.8, contextHeight * 0.8) / 2; // Much larger radius
     const centerX = rightColumnX + columnWidth / 2;
     const centerY = yPosition + 5 + contextHeight / 2;
-    const radius = spiderGraphSize / 2 - 10;
     
-    // Draw spider graph axes and levels
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.3);
+    // Draw spider graph background circles for proficiency levels
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.5);
     
-    // Draw concentric circles for levels
+    // Draw concentric circles for levels (1-4)
     for (let level = 1; level <= 4; level++) {
-      const levelRadius = (radius * level) / 4;
+      const levelRadius = (graphRadius * level) / 4;
       doc.circle(centerX, centerY, levelRadius, 'S');
     }
     
-    // Draw axes for each step
+    // Draw axes for each step with labels
     const stepCount = Math.min(steps.length, 7);
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.3);
+    
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const endX = centerX + Math.cos(angle) * radius;
-      const endY = centerY + Math.sin(angle) * radius;
+      const endX = centerX + Math.cos(angle) * graphRadius;
+      const endY = centerY + Math.sin(angle) * graphRadius;
       doc.line(centerX, centerY, endX, endY);
+      
+      // Add step number labels at the end of each axis
+      const labelX = centerX + Math.cos(angle) * (graphRadius + 8);
+      const labelY = centerY + Math.sin(angle) * (graphRadius + 8);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 100, 100);
+      doc.text(`${i + 1}`, labelX - 2, labelY + 2);
     }
     
-    // Plot actual proficiency levels
-    doc.setDrawColor(59, 130, 246);
-    doc.setLineWidth(1);
-    doc.setFillColor(59, 130, 246, 0.3);
-    
+    // Plot actual proficiency levels as filled polygon
     const plotPoints = [];
     for (let i = 0; i < stepCount; i++) {
-      const stepLevel = unifiedStepLevels.find(ul => ul.stepId === steps[i].id);
+      const step = steps[i];
+      const stepLevel = unifiedStepLevels.find(ul => ul.stepId === step.id);
       const level = stepLevel ? stepLevel.level : 1;
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const plotRadius = (radius * level) / 4;
+      const plotRadius = (graphRadius * level) / 4;
       const x = centerX + Math.cos(angle) * plotRadius;
       const y = centerY + Math.sin(angle) * plotRadius;
       plotPoints.push([x, y]);
     }
     
-    // Draw the proficiency polygon
+    // Draw the proficiency polygon with fill and stroke
     if (plotPoints.length > 0) {
+      doc.setFillColor(59, 130, 246, 0.3); // Semi-transparent blue fill
       doc.setDrawColor(59, 130, 246);
-      doc.setFillColor(59, 130, 246, 0.2);
+      doc.setLineWidth(2);
       
-      // Start path
-      doc.moveTo(plotPoints[0][0], plotPoints[0][1]);
+      // Create the polygon path
+      let pathString = `M ${plotPoints[0][0]} ${plotPoints[0][1]}`;
       for (let i = 1; i < plotPoints.length; i++) {
-        doc.lineTo(plotPoints[i][0], plotPoints[i][1]);
+        pathString += ` L ${plotPoints[i][0]} ${plotPoints[i][1]}`;
       }
-      doc.lineTo(plotPoints[0][0], plotPoints[0][1]); // Close polygon
-      doc.fillStroke();
+      pathString += ' Z'; // Close the path
+      
+      // Draw filled polygon manually using multiple line segments
+      doc.setFillColor(59, 130, 246, 0.2);
+      for (let i = 0; i < plotPoints.length; i++) {
+        const nextIndex = (i + 1) % plotPoints.length;
+        doc.line(plotPoints[i][0], plotPoints[i][1], plotPoints[nextIndex][0], plotPoints[nextIndex][1]);
+      }
+      
+      // Add dots at each proficiency point
+      doc.setFillColor(59, 130, 246);
+      for (const point of plotPoints) {
+        doc.circle(point[0], point[1], 1.5, 'F');
+      }
     }
+    
+    // Reset colors
+    doc.setTextColor(0, 0, 0);
     
     yPosition += contextHeight + 15;
 
@@ -197,25 +220,25 @@ export class PDFGenerator {
       ];
       const stepColor = stepColors[stepIndex % stepColors.length];
       
-      // Draw colored step header box (reduced height by 20%)
+      // Draw colored step header box (reduced height by 35% total)
       doc.setFillColor(stepColor[0], stepColor[1], stepColor[2]);
-      doc.rect(20, yPosition - 3, pageWidth - 40, 16, 'F');
+      doc.rect(20, yPosition - 2, pageWidth - 40, 13, 'F'); // Further reduced from 16 to 13
       
       // Step number and title in white text
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(255, 255, 255);
       const stepTitle = `${stepIndex + 1}. ${step.title}`;
-      doc.text(stepTitle, 25, yPosition + 7);
+      doc.text(stepTitle, 25, yPosition + 6); // Adjusted centering
       
       // Level text on the right side of the colored box
       const levelText = unifiedLevel ? StepLevelCalculator.getLevelText(unifiedLevel.level) : '';
       if (levelText) {
-        doc.text(levelText, pageWidth - 25 - doc.getTextWidth(levelText), yPosition + 7);
+        doc.text(levelText, pageWidth - 25 - doc.getTextWidth(levelText), yPosition + 6);
       }
       
       doc.setTextColor(0, 0, 0); // Reset to black
-      yPosition += 20;
+      yPosition += 18; // Reduced from 20
 
       // Substeps and behaviors with proper indentation
       step.substeps.forEach(substep => {
