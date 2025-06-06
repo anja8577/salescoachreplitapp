@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, Edit, LogOut } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Edit, Edit2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
+import TeamInput from "@/components/team-input";
 
 export default function Profile() {
   const [, setLocation] = useLocation();

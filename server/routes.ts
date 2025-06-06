@@ -569,6 +569,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user
+  app.put("/api/users/:id", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const userData = req.body;
+      
+      const updatedUser = await storage.updateUser(userId, userData);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
