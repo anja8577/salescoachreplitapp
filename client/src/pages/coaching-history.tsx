@@ -87,9 +87,8 @@ export default function CoachingHistory() {
     return unifiedLevels.map((stepLevel, index) => {
       const levelText = StepLevelCalculator.getLevelShortCode(stepLevel.level);
       const colorClass = StepLevelCalculator.getLevelBadgeClass(stepLevel.level);
-      const displayText = `${index + 1}: ${levelText}`;
       
-      return { stepNumber: index + 1, levelText: displayText, colorClass };
+      return { stepNumber: index + 1, levelText, colorClass };
     });
   };
 
@@ -231,6 +230,7 @@ export default function CoachingHistory() {
               <SelectItem value="today">Today</SelectItem>
               <SelectItem value="week">This Week</SelectItem>
               <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -255,11 +255,11 @@ export default function CoachingHistory() {
               
               return (
                 <Card key={assessment.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
+                  <CardContent className="p-5">
+                    <div className="flex justify-between items-center">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                          {assessment.title || 'Assessment Session'}
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {assessment.title?.replace('Assessment for', 'Coaching session for') || 'Coaching Session'}
                         </h3>
                         <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
                           <div className="flex items-center space-x-1">
@@ -278,7 +278,7 @@ export default function CoachingHistory() {
                           </div>
                         </div>
                         
-                        {/* Third row: Proficiency Level and Step Levels */}
+                        {/* Proficiency and Step Levels in single row */}
                         <div className="flex items-center space-x-4 text-sm">
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-600">Proficiency:</span>
@@ -287,11 +287,10 @@ export default function CoachingHistory() {
                               const unifiedLevels = getUnifiedStepLevels(assessment.id);
                               const proficiency = StepLevelCalculator.getOverallProficiencyLevel(unifiedLevels);
                               const badgeClass = StepLevelCalculator.getLevelBadgeClass(proficiency.level);
-                              const shortLevel = StepLevelCalculator.getLevelShortCode(proficiency.level);
                               
                               return (
                                 <Badge variant="outline" className={badgeClass}>
-                                  {shortLevel} - {proficiencyLevel}
+                                  {proficiencyLevel}
                                 </Badge>
                               );
                             })()}
@@ -309,8 +308,8 @@ export default function CoachingHistory() {
                         </div>
                       </div>
                       
-                      {/* Action buttons */}
-                      <div className="flex flex-col space-y-2 ml-4">
+                      {/* Action buttons - vertically centered */}
+                      <div className="flex flex-col space-y-2 ml-4 justify-center">
                         <Button
                           variant="outline"
                           size="sm"
@@ -329,7 +328,6 @@ export default function CoachingHistory() {
                           <FileText className="mr-1" size={14} />
                           PDF Report
                         </Button>
-
                       </div>
                     </div>
                   </CardContent>

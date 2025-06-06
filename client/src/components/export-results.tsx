@@ -215,7 +215,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             <UserIcon className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Assessment Summary</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Coaching Session Summary</h2>
             <p className="text-sm text-gray-600">Coaching notes for {user.fullName}</p>
           </div>
         </div>
