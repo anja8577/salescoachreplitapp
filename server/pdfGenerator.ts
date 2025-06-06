@@ -220,9 +220,9 @@ export class PDFGenerator {
       ];
       const stepColor = stepColors[stepIndex % stepColors.length];
       
-      // Draw colored step header box (reduced height by 35% total)
+      // Draw colored step header box (reduced height by 10% more)
       doc.setFillColor(stepColor[0], stepColor[1], stepColor[2]);
-      doc.rect(20, yPosition - 2, pageWidth - 40, 13, 'F'); // Further reduced from 16 to 13
+      doc.rect(20, yPosition - 2, pageWidth - 40, 12, 'F'); // Reduced from 13 to 12 (10% reduction)
       
       // Step number and title in white text
       doc.setFontSize(12);
@@ -248,13 +248,13 @@ export class PDFGenerator {
           yPosition = 20;
         }
 
-        // Substep title with proper indentation
+        // Substep title aligned with step number (position 25)
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(substep.title, 30, yPosition);
+        doc.text(substep.title, 25, yPosition);
         yPosition += 8; // Reduced from 12
 
-        // Behaviors with checkboxes and level formatting (moved left, closer to substep)
+        // Behaviors with checkboxes aligned with first letter of step title
         substep.behaviors.forEach(behavior => {
           // Check if we need a new page
           if (yPosition > pageHeight - 30) {
@@ -265,38 +265,38 @@ export class PDFGenerator {
           doc.setFontSize(9);
           const isChecked = checkedBehaviorIds.has(behavior.id);
           
-          // Draw checkbox (square) - moved more to the left
+          // Draw checkbox aligned with first letter of step title (around position 28)
           doc.setDrawColor(0, 0, 0);
           doc.setLineWidth(0.5);
-          doc.rect(35, yPosition - 3, 3, 3); // Moved from 45 to 35
+          doc.rect(28, yPosition - 3, 3, 3); // Aligned with step title first letter
           
           // Fill checkbox if behavior is checked (grey fill)
           if (isChecked) {
             doc.setFillColor(128, 128, 128); // Grey fill for checked
-            doc.rect(35, yPosition - 3, 3, 3, 'F');
+            doc.rect(28, yPosition - 3, 3, 3, 'F');
           }
           
           // Format behavior text with level prefix
           const levelPrefix = `L${behavior.proficiencyLevel || 1}: `;
           const behaviorDescription = behavior.description;
           
-          // Draw level prefix - moved left to align closer to checkbox
+          // Draw level prefix aligned with checkbox
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(0, 0, 0);
-          doc.text(levelPrefix, 42, yPosition); // Moved from 52 to 42
+          doc.text(levelPrefix, 35, yPosition); // Start text after checkbox
           
           // Draw behavior description with proper wrapping
           const prefixWidth = doc.getTextWidth(levelPrefix);
-          const maxWidth = pageWidth - 80; // Adjusted for new positioning
+          const maxWidth = pageWidth - 75; // Adjusted for new positioning
           const lines = doc.splitTextToSize(behaviorDescription, maxWidth);
           
           // First line starts after the level prefix
-          doc.text(lines[0], 42 + prefixWidth, yPosition);
+          doc.text(lines[0], 35 + prefixWidth, yPosition);
           
           // Additional lines are properly indented
           for (let i = 1; i < lines.length; i++) {
             yPosition += 4;
-            doc.text(lines[i], 42 + prefixWidth, yPosition);
+            doc.text(lines[i], 35 + prefixWidth, yPosition);
           }
           
           yPosition += 4; // Reduced space between behaviors from 5 to 4
