@@ -80,7 +80,16 @@ export default function AuthModal({ onAuthSuccess, onClose }: AuthModalProps) {
       onAuthSuccess(user, token);
       toast({ title: "Registration successful", description: `Welcome, ${user.fullName}!` });
     } catch (error: any) {
-      toast({ title: "Registration failed", description: error.message, variant: "destructive" });
+      // Check for duplicate email error
+      if (error.message === 'User already exists') {
+        toast({ 
+          title: "Email Already Registered", 
+          description: "This email address is already registered in the system. Please use a different email or try logging in.", 
+          variant: "destructive" 
+        });
+      } else {
+        toast({ title: "Registration failed", description: error.message, variant: "destructive" });
+      }
     } finally {
       setIsLoading(false);
     }
