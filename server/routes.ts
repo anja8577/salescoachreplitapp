@@ -267,15 +267,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const authHeader = req.headers.authorization;
       let coach = null;
       
+      console.log("PDF Generation - Auth header:", authHeader ? "Present" : "Missing");
+      
       if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
         try {
           const decoded = AuthService.verifyToken(token);
+          console.log("PDF Generation - Token decoded:", decoded ? "Success" : "Failed");
           if (decoded) {
             coach = await AuthService.getUserById(decoded.userId);
+            console.log("PDF Generation - Coach found:", coach ? coach.fullName : "Not found");
           }
         } catch (error) {
-          console.log('Token verification failed:', error);
+          console.log('PDF Generation - Token verification failed:', error);
         }
       }
       
@@ -283,6 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!coach) {
         const users = await storage.getAllUsers();
         coach = users.length > 0 ? users[0] : coachee;
+        console.log("PDF Generation - Using fallback coach:", coach.fullName);
       }
 
       console.log("Generating PDF for assessment", assessmentId);
