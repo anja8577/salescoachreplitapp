@@ -27,6 +27,16 @@ export class PDFGenerator {
     return uploadsDir;
   }
 
+  private static addPageNumber(doc: any, pageNumber: number) {
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(128, 128, 128); // Grey color
+    doc.text(`${pageNumber}`, pageWidth - 20, pageHeight - 10);
+  }
+
   static async generateCoachingReport(data: CoachingReportData): Promise<string> {
     const { assessment, coach, steps, assessmentScores, stepScores } = data;
     
@@ -34,6 +44,7 @@ export class PDFGenerator {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPosition = 20;
+    let currentPage = 1;
 
     // Create checked behaviors set
     const checkedBehaviorIds = new Set(assessmentScores.filter(score => score.checked).map(score => score.behaviorId));
@@ -216,7 +227,7 @@ export class PDFGenerator {
         [251, 191, 36],   // Bold yellow
         [239, 68, 68],    // Red
         [91, 33, 182],    // Dark purple
-        [168, 85, 247]    // Light purple
+        [196, 165, 255]   // Lighter purple for Step 7
       ];
       const stepColor = stepColors[stepIndex % stepColors.length];
       
@@ -252,7 +263,7 @@ export class PDFGenerator {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text(substep.title, 25, yPosition);
-        yPosition += 8; // Reduced from 12
+        yPosition += 5; // Further reduced to move behaviors closer
 
         // Behaviors with checkboxes aligned with first letter of step title
         substep.behaviors.forEach(behavior => {

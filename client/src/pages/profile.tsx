@@ -114,6 +114,78 @@ export default function Profile() {
     },
   });
 
+  // Team management mutations
+  const createTeamMutation = useMutation({
+    mutationFn: async (teamName: string) => {
+      const response = await apiRequest("POST", "/api/teams", { name: teamName });
+      if (!response.ok) throw new Error("Failed to create team");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Team created",
+        description: "Team has been created successfully.",
+      });
+      setNewTeamName("");
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Team creation failed",
+        description: error.message || "Unable to create team",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const renameTeamMutation = useMutation({
+    mutationFn: async ({ oldName, newName }: { oldName: string; newName: string }) => {
+      const response = await apiRequest("PUT", `/api/teams/${encodeURIComponent(oldName)}`, { newName });
+      if (!response.ok) throw new Error("Failed to rename team");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Team renamed",
+        description: "Team has been renamed successfully.",
+      });
+      setEditingTeam(null);
+      setEditTeamName("");
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Team rename failed",
+        description: error.message || "Unable to rename team",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTeamMutation = useMutation({
+    mutationFn: async (teamName: string) => {
+      const response = await apiRequest("DELETE", `/api/teams/${encodeURIComponent(teamName)}`);
+      if (!response.ok) throw new Error("Failed to delete team");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Team deleted",
+        description: "Team has been deleted successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Team deletion failed",
+        description: error.message || "Unable to delete team",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleBack = () => {
     window.history.back();
   };
@@ -358,16 +430,18 @@ export default function Profile() {
                   <CardTitle>Create New Team</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex space-x-2">
+                  <form onSubmit={(e) => { e.preventDefault(); if (newTeamName.trim()) createTeamMutation.mutate(newTeamName.trim()); }} className="flex space-x-2">
                     <Input
                       placeholder="Team name"
                       value={newTeamName}
                       onChange={(e) => setNewTeamName(e.target.value)}
+                      required
                     />
-                    <Button onClick={() => setNewTeamName("")}>
+                    <Button type="submit" disabled={createTeamMutation.isPending || !newTeamName.trim()}>
                       <Plus size={16} />
+                      {createTeamMutation.isPending ? "Creating..." : "Create"}
                     </Button>
-                  </div>
+                  </form>
                 </CardContent>
               </Card>
 
@@ -377,10 +451,70 @@ export default function Profile() {
                   <Card key={teamName}>
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
-                        <span>{teamName} ({teamUsers.length} members)</span>
-                        <Button variant="outline" size="sm">
-                          <Edit size={14} />
-                        </Button>
+                        {editingTeam === teamName ? (
+                          <div className="flex items-center space-x-2 flex-1">
+                            <Input
+                              value={editTeamName}
+                              onChange={(e) => setEditTeamName(e.target.value)}
+                              className="flex-1"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  renameTeamMutation.mutate({ oldName: teamName, newName: editTeamName });
+                                } else if (e.key === 'Escape') {
+                                  setEditingTeam(null);
+                                  setEditTeamName("");
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => renameTeamMutation.mutate({ oldName: teamName, newName: editTeamName })}
+                              disabled={!editTeamName.trim() || renameTeamMutation.isPending}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingTeam(null);
+                                setEditTeamName("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <span>{teamName} ({teamUsers.length} members)</span>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingTeam(teamName);
+                                  setEditTeamName(teamName);
+                                }}
+                              >
+                                <Edit size={14} />
+                              </Button>
+                              {teamName !== "No Team" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (confirm(`Are you sure you want to delete team "${teamName}"? This will remove team assignments from all members.`)) {
+                                      deleteTeamMutation.mutate(teamName);
+                                    }
+                                  }}
+                                  disabled={deleteTeamMutation.isPending}
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              )}
+                            </div>
+                          </>
+                        )}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
