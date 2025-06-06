@@ -54,42 +54,85 @@ export class PDFGenerator {
     // Calculate overall proficiency
     const overallProficiency = StepLevelCalculator.getOverallProficiencyLevel(unifiedStepLevels);
 
-    // Header with proper spacing
+    // Blue header box
+    doc.setFillColor(59, 130, 246); // Blue color
+    doc.rect(0, 0, pageWidth, 25, 'F');
+    
+    // SalesCoach Report title in white on blue background, left aligned
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('SalesCoach Report', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 20;
+    doc.setTextColor(255, 255, 255); // White text
+    doc.text('SalesCoach Report', 20, 17);
+    
+    yPosition = 35;
 
-    // Coach and Coachee info line with better formatting
+    // Coach and Coachee info with proper formatting
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const infoLine = `Coach: ${coach.fullName} |     Coachee: ${assessment.assesseeName} |            Proficiency Level: ${overallProficiency.text}               ${new Date().toLocaleDateString('de-DE')} | ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
-    doc.text(infoLine, pageWidth / 2, yPosition, { align: 'center' });
+    doc.setTextColor(0, 0, 0); // Black text
+    
+    // Left aligned info with vertical separators
+    const coachText = `Coach: ${coach.fullName}`;
+    const coacheeText = `Coachee: ${assessment.assesseeName}`;
+    const proficiencyText = `Proficiency Level: ${overallProficiency.text}`;
+    const leftInfo = `${coachText} | ${coacheeText} | ${proficiencyText}`;
+    doc.text(leftInfo, 20, yPosition);
+    
+    // Right aligned date/time with vertical separator
+    const createdDate = assessment.createdAt ? new Date(assessment.createdAt) : new Date();
+    const dateText = createdDate.toLocaleDateString('de-DE');
+    const timeText = createdDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const rightInfo = `${dateText} | ${timeText}`;
+    doc.text(rightInfo, pageWidth - 20 - doc.getTextWidth(rightInfo), yPosition);
     yPosition += 25;
 
-    // Add horizontal line separator
-    doc.setLineWidth(0.5);
-    doc.line(20, yPosition, pageWidth - 20, yPosition);
-    yPosition += 15;
-
-    // Context section with proper formatting
+    // Two-column layout: Context box (left) and Spider graph (right)
+    const columnWidth = (pageWidth - 60) / 2; // Split into two columns with spacing
+    const leftColumnX = 20;
+    const rightColumnX = leftColumnX + columnWidth + 20;
+    
+    // Context section (left column)
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Context:', leftColumnX, yPosition);
+    
+    let contextHeight = 40; // Default height
     if (assessment.context) {
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Context:', 20, yPosition);
-      yPosition += 10;
-      
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      const contextLines = doc.splitTextToSize(assessment.context, pageWidth - 40);
-      doc.text(contextLines, 25, yPosition);
-      yPosition += contextLines.length * 5 + 20;
+      const contextLines = doc.splitTextToSize(assessment.context, columnWidth - 20);
+      contextHeight = Math.max(40, contextLines.length * 5 + 20);
       
-      // Add spacing line after context
-      doc.setLineWidth(0.2);
-      doc.line(20, yPosition, pageWidth - 20, yPosition);
-      yPosition += 15;
+      // Draw light grey outlined box for context
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
+      
+      // Add context text inside box
+      doc.text(contextLines, leftColumnX + 5, yPosition + 15);
+    } else {
+      // Empty context box
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
     }
+    
+    // Spider graph placeholder (right column)
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Proficiency Overview:', rightColumnX, yPosition);
+    
+    // Draw spider graph placeholder box
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
+    doc.rect(rightColumnX, yPosition + 5, columnWidth, contextHeight);
+    
+    // Spider graph placeholder text
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Spider Graph', rightColumnX + columnWidth/2, yPosition + contextHeight/2, { align: 'center' });
+    
+    yPosition += contextHeight + 20;
 
     // Steps with behaviors - Professional formatting
     for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
@@ -102,29 +145,37 @@ export class PDFGenerator {
         yPosition = 20;
       }
 
-      // Step header with colored level indicator
+      // Colored step box with step number and title
+      const stepColors = [
+        [236, 72, 153],   // Pink
+        [59, 130, 246],   // Blue
+        [34, 197, 94],    // Green
+        [251, 191, 36],   // Bold yellow
+        [239, 68, 68],    // Red
+        [91, 33, 182],    // Dark purple
+        [168, 85, 247]    // Light purple
+      ];
+      const stepColor = stepColors[stepIndex % stepColors.length];
+      
+      // Draw colored step header box
+      doc.setFillColor(stepColor[0], stepColor[1], stepColor[2]);
+      doc.rect(20, yPosition - 5, pageWidth - 40, 20, 'F');
+      
+      // Step number and title in white text
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
       const stepTitle = `${stepIndex + 1}. ${step.title}`;
+      doc.text(stepTitle, 25, yPosition + 8);
+      
+      // Level text on the right side of the colored box
       const levelText = unifiedLevel ? StepLevelCalculator.getLevelText(unifiedLevel.level) : '';
-      
-      doc.setTextColor(0, 0, 0); // Black for step title
-      doc.text(stepTitle, 20, yPosition);
-      
-      if (levelText && unifiedLevel) {
-        // Color-code the proficiency level
-        const levelColors = {
-          1: [239, 68, 68],   // Red for Learner
-          2: [245, 158, 11],  // Orange for Qualified
-          3: [59, 130, 246],  // Blue for Experienced
-          4: [34, 197, 94]    // Green for Master
-        };
-        const color = levelColors[unifiedLevel.level as keyof typeof levelColors] || [107, 114, 128];
-        doc.setTextColor(color[0], color[1], color[2]);
-        doc.text(levelText, pageWidth - 20 - doc.getTextWidth(levelText), yPosition);
-        doc.setTextColor(0, 0, 0); // Reset to black
+      if (levelText) {
+        doc.text(levelText, pageWidth - 25 - doc.getTextWidth(levelText), yPosition + 8);
       }
-      yPosition += 20;
+      
+      doc.setTextColor(0, 0, 0); // Reset to black
+      yPosition += 25;
 
       // Substeps and behaviors with proper indentation
       step.substeps.forEach(substep => {
@@ -140,7 +191,7 @@ export class PDFGenerator {
         doc.text(substep.title, 30, yPosition);
         yPosition += 12;
 
-        // Behaviors with level-based formatting and color indicators
+        // Behaviors with checkboxes and level formatting
         substep.behaviors.forEach(behavior => {
           // Check if we need a new page
           if (yPosition > pageHeight - 30) {
@@ -151,48 +202,40 @@ export class PDFGenerator {
           doc.setFontSize(9);
           const isChecked = checkedBehaviorIds.has(behavior.id);
           
-          // Format with level prefix (L1:, L2:, etc.) and behavior description
+          // Draw checkbox (square)
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.5);
+          doc.rect(45, yPosition - 3, 3, 3); // Small square checkbox
+          
+          // Fill checkbox if behavior is checked (grey fill)
+          if (isChecked) {
+            doc.setFillColor(128, 128, 128); // Grey fill for checked
+            doc.rect(45, yPosition - 3, 3, 3, 'F');
+          }
+          
+          // Format behavior text with level prefix
           const levelPrefix = `L${behavior.proficiencyLevel || 1}: `;
           const behaviorDescription = behavior.description;
           
-          // Color-code level prefix based on proficiency level
-          const levelColors = {
-            1: [239, 68, 68],   // Red for L1
-            2: [245, 158, 11],  // Orange for L2
-            3: [59, 130, 246],  // Blue for L3
-            4: [34, 197, 94]    // Green for L4
-          };
-          const levelColor = levelColors[behavior.proficiencyLevel as keyof typeof levelColors] || [107, 114, 128];
-          
-          // Draw colored circle indicator for checked behaviors
-          if (isChecked) {
-            doc.setFillColor(34, 197, 94); // Green for checked
-            doc.circle(40, yPosition - 1, 1.5, 'F');
-          }
-          
-          // Draw level prefix with color
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(levelColor[0], levelColor[1], levelColor[2]);
-          doc.text(levelPrefix, 45, yPosition);
+          // Draw level prefix (no color coding as per original design)
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(0, 0, 0);
+          doc.text(levelPrefix, 52, yPosition);
           
           // Draw behavior description with proper wrapping
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(isChecked ? 0 : 100, isChecked ? 0 : 100, isChecked ? 0 : 100); // Darker for checked behaviors
           const prefixWidth = doc.getTextWidth(levelPrefix);
-          const maxWidth = pageWidth - 100;
+          const maxWidth = pageWidth - 90;
           const lines = doc.splitTextToSize(behaviorDescription, maxWidth);
           
           // First line starts after the level prefix
-          doc.text(lines[0], 45 + prefixWidth, yPosition);
+          doc.text(lines[0], 52 + prefixWidth, yPosition);
           
           // Additional lines are properly indented
           for (let i = 1; i < lines.length; i++) {
             yPosition += 4;
-            doc.text(lines[i], 45 + prefixWidth, yPosition);
+            doc.text(lines[i], 52 + prefixWidth, yPosition);
           }
           
-          // Reset text color
-          doc.setTextColor(0, 0, 0);
           yPosition += 5; // Space between behaviors
         });
         yPosition += 8; // Space between substeps
@@ -200,7 +243,7 @@ export class PDFGenerator {
       yPosition += 15; // Space between steps
     }
 
-    // Coaching notes sections with color-coded backgrounds
+    // Coaching notes sections with light colored backgrounds and grey outlines
     const sections = [
       { title: 'Key Observations', content: assessment.keyObservations, color: [249, 250, 251] }, // Light gray
       { title: 'What Worked Well', content: assessment.whatWorkedWell, color: [240, 253, 244] }, // Light green
@@ -208,47 +251,47 @@ export class PDFGenerator {
       { title: 'Next Steps', content: assessment.nextSteps, color: [239, 246, 255] } // Light blue
     ];
 
-    sections.forEach(section => {
-      if (section.content) {
-        // Check if we need a new page
-        if (yPosition > pageHeight - 60) {
-          doc.addPage();
-          yPosition = 20;
-        }
+    sections.forEach((section, index) => {
+      // Add minimal spacing between sections (reduced from 15 to 8)
+      if (index > 0) yPosition += 8;
 
-        // Add extra spacing before coaching sections
-        yPosition += 15;
+      // Calculate content height for proper box sizing
+      let contentHeight = 30; // Minimum height for title
+      const lines = section.content ? doc.splitTextToSize(section.content, pageWidth - 50) : [];
+      if (lines.length > 0) {
+        contentHeight = lines.length * 5 + 30; // 30 for title + padding
+      }
 
-        // Calculate content height for background rectangle
-        const lines = doc.splitTextToSize(section.content, pageWidth - 50);
-        const contentHeight = lines.length * 5 + 25;
+      // Check if section would span two pages - if so, move to next page
+      if (yPosition + contentHeight > pageHeight - 20) {
+        doc.addPage();
+        yPosition = 20;
+      }
 
-        // Draw colored background rectangle
-        doc.setFillColor(section.color[0], section.color[1], section.color[2]);
-        doc.rect(20, yPosition - 5, pageWidth - 40, contentHeight, 'F');
+      // Draw light colored background rectangle
+      doc.setFillColor(section.color[0], section.color[1], section.color[2]);
+      doc.rect(20, yPosition, pageWidth - 40, contentHeight, 'F');
 
-        // Draw border around the section
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.5);
-        doc.rect(20, yPosition - 5, pageWidth - 40, contentHeight);
+      // Draw light grey border around the section
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.rect(20, yPosition, pageWidth - 40, contentHeight);
 
-        // Section title
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(31, 41, 55); // Dark gray
-        doc.text(`${section.title}:`, 25, yPosition + 8);
-        yPosition += 15;
+      // Section title
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0); // Black title
+      doc.text(`${section.title}:`, 25, yPosition + 12);
 
-        // Section content
+      // Section content if available
+      if (section.content && lines.length > 0) {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.setTextColor(75, 85, 99); // Medium gray
-        doc.text(lines, 25, yPosition);
-        yPosition += lines.length * 5 + 15;
-
-        // Reset text color to black
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(0, 0, 0); // Black text
+        doc.text(lines, 25, yPosition + 22);
       }
+
+      yPosition += contentHeight;
     });
 
     // Electronic Signatures section
