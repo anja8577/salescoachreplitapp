@@ -131,31 +131,38 @@ export class PDFGenerator {
       doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
     }
     
-    // Spider Graph - Professional Rendering (right column)
+    // Spider Graph - Enhanced Professional Rendering (right column)
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
     doc.text('Performance vs Benchmark', rightColumnX, yPosition);
     
-    // Create a simplified but readable spider graph
+    // Create larger, more detailed spider graph
     const graphCenterX = rightColumnX + columnWidth / 2;
-    const graphCenterY = yPosition + 5 + contextHeight / 2;
-    const graphRadius = Math.min(columnWidth * 0.35, contextHeight * 0.35);
+    const graphCenterY = yPosition + 10 + contextHeight / 2;
+    const graphRadius = Math.min(columnWidth * 0.45, contextHeight * 0.45); // Increased size
     
     const stepCount = 7;
-    const stepLabels = ['Prep', 'Opening', 'Need', 'Solution', 'Objection', 'Commitment', 'Follow-up'];
+    const stepLabels = ['Preparation', 'Opening', 'Need Dialog', 'Solution', 'Objection', 'Commitment', 'Follow-up'];
     
-    // Draw concentric circles for levels
-    doc.setDrawColor(240, 240, 240);
-    doc.setLineWidth(0.5);
+    // Draw proper grid/net structure
+    // 1. Draw concentric circles with level labels
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.3);
+    doc.setFontSize(6);
+    doc.setTextColor(120, 120, 120);
+    
     for (let level = 1; level <= 4; level++) {
       const radius = (graphRadius * level) / 4;
       doc.circle(graphCenterX, graphCenterY, radius);
+      
+      // Add level number at top
+      doc.text(level.toString(), graphCenterX - 2, graphCenterY - radius + 2);
     }
     
-    // Draw axis lines
-    doc.setDrawColor(220, 220, 220);
-    doc.setLineWidth(0.3);
+    // 2. Draw radial axis lines (spokes)
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
       const endX = graphCenterX + Math.cos(angle) * graphRadius;
@@ -163,9 +170,9 @@ export class PDFGenerator {
       doc.line(graphCenterX, graphCenterY, endX, endY);
     }
     
-    // Draw benchmark (Level 3) polygon
+    // 3. Draw benchmark polygon (Level 3) with dashed line
     doc.setDrawColor(135, 206, 235);
-    doc.setLineWidth(1);
+    doc.setLineWidth(1.5);
     const benchmarkPoints = [];
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
@@ -176,15 +183,32 @@ export class PDFGenerator {
       ]);
     }
     
-    // Draw benchmark polygon
+    // Draw dashed benchmark polygon
     for (let i = 0; i < benchmarkPoints.length; i++) {
       const next = (i + 1) % benchmarkPoints.length;
-      doc.line(benchmarkPoints[i][0], benchmarkPoints[i][1], benchmarkPoints[next][0], benchmarkPoints[next][1]);
+      const x1 = benchmarkPoints[i][0];
+      const y1 = benchmarkPoints[i][1];
+      const x2 = benchmarkPoints[next][0];
+      const y2 = benchmarkPoints[next][1];
+      
+      // Create dashed line effect
+      const segments = 8;
+      for (let s = 0; s < segments; s += 2) {
+        const startRatio = s / segments;
+        const endRatio = Math.min((s + 1) / segments, 1);
+        const startX = x1 + (x2 - x1) * startRatio;
+        const startY = y1 + (y2 - y1) * startRatio;
+        const endX = x1 + (x2 - x1) * endRatio;
+        const endY = y1 + (y2 - y1) * endRatio;
+        doc.line(startX, startY, endX, endY);
+      }
     }
     
-    // Draw actual performance polygon
+    // 4. Draw actual performance polygon with solid line and fill
     doc.setDrawColor(37, 99, 235);
     doc.setLineWidth(2);
+    doc.setFillColor(37, 99, 235, 0.2); // Semi-transparent fill
+    
     const performancePoints = [];
     for (let i = 0; i < stepCount && i < steps.length; i++) {
       const step = steps[i];
@@ -198,20 +222,26 @@ export class PDFGenerator {
       ]);
     }
     
-    // Draw performance polygon
+    // Draw solid performance polygon
     for (let i = 0; i < performancePoints.length; i++) {
       const next = (i + 1) % performancePoints.length;
       doc.line(performancePoints[i][0], performancePoints[i][1], performancePoints[next][0], performancePoints[next][1]);
     }
     
-    // Add step labels
-    doc.setFontSize(7);
+    // 5. Add data points as small circles
+    doc.setFillColor(37, 99, 235);
+    for (const point of performancePoints) {
+      doc.circle(point[0], point[1], 1, 'F');
+    }
+    
+    // 6. Add step labels outside the graph
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
+    doc.setTextColor(60, 60, 60);
     
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const labelRadius = graphRadius + 8;
+      const labelRadius = graphRadius + 12;
       const labelX = graphCenterX + Math.cos(angle) * labelRadius;
       const labelY = graphCenterY + Math.sin(angle) * labelRadius;
       
@@ -219,23 +249,27 @@ export class PDFGenerator {
       doc.text(stepLabels[i], labelX - textWidth / 2, labelY);
     }
     
-    // Add legend
-    const legendY = graphCenterY + graphRadius + 15;
-    doc.setFontSize(7);
+    // 7. Enhanced legend with proper styling
+    const legendY = graphCenterY + graphRadius + 20;
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
     
-    // Benchmark legend
+    // Benchmark legend with dashed line
     doc.setDrawColor(135, 206, 235);
-    doc.setLineWidth(1);
-    doc.line(rightColumnX + 5, legendY, rightColumnX + 15, legendY);
+    doc.setLineWidth(1.5);
+    const dashLength = 2;
+    for (let x = rightColumnX + 5; x < rightColumnX + 20; x += dashLength * 2) {
+      doc.line(x, legendY, Math.min(x + dashLength, rightColumnX + 20), legendY);
+    }
     doc.setTextColor(135, 206, 235);
-    doc.text('Benchmark', rightColumnX + 20, legendY + 1);
+    doc.text('Benchmark (Level 3)', rightColumnX + 25, legendY + 2);
     
-    // Performance legend
+    // Performance legend with solid line
     doc.setDrawColor(37, 99, 235);
     doc.setLineWidth(2);
-    doc.line(rightColumnX + 5, legendY + 8, rightColumnX + 15, legendY + 8);
+    doc.line(rightColumnX + 5, legendY + 10, rightColumnX + 20, legendY + 10);
     doc.setTextColor(37, 99, 235);
-    doc.text('Performance', rightColumnX + 20, legendY + 9);
+    doc.text('Actual Performance', rightColumnX + 25, legendY + 12);
     
     doc.setTextColor(0, 0, 0);
     

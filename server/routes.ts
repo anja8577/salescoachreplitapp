@@ -279,9 +279,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // If no authenticated coach found, use the coachee as default (self-assessment)
+      // If no authenticated coach found, get default user (first user in system)
       if (!coach) {
-        coach = coachee;
+        const users = await storage.getAllUsers();
+        coach = users.length > 0 ? users[0] : coachee;
       }
 
       console.log("Generating PDF for assessment", assessmentId);
