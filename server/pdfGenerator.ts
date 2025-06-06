@@ -224,63 +224,38 @@ export class PDFGenerator {
       performancePoints.push([x, y]);
     }
     
-    // Fill the performance area with proper polygon fill
+    // Draw clean performance polygon
     if (performancePoints.length > 0) {
-      // Create a proper filled polygon using triangulation from center
-      doc.setFillColor(59, 130, 246, 0.3); // Semi-transparent blue
+      // Simple fill effect using radiating lines from center
+      doc.setDrawColor(59, 130, 246, 0.2);
+      doc.setLineWidth(0.3);
       
-      // Fill each triangular section from center to adjacent vertices
+      // Create fill effect by drawing lines from center to polygon outline
       for (let i = 0; i < performancePoints.length; i++) {
-        const nextIndex = (i + 1) % performancePoints.length;
-        
-        // Draw filled triangle
-        const triangle = [
-          [centerX, centerY],
-          [performancePoints[i][0], performancePoints[i][1]], 
-          [performancePoints[nextIndex][0], performancePoints[nextIndex][1]]
-        ];
-        
-        // Simple triangle fill using lines
-        const minY = Math.min(triangle[0][1], triangle[1][1], triangle[2][1]);
-        const maxY = Math.max(triangle[0][1], triangle[1][1], triangle[2][1]);
-        
-        for (let y = minY; y <= maxY; y += 0.5) {
-          const intersections = [];
+        const steps = 20;
+        for (let s = 0; s <= steps; s++) {
+          const t = s / steps;
+          const fillX = centerX + t * (performancePoints[i][0] - centerX);
+          const fillY = centerY + t * (performancePoints[i][1] - centerY);
           
-          // Find intersections with triangle edges
-          for (let e = 0; e < 3; e++) {
-            const p1 = triangle[e];
-            const p2 = triangle[(e + 1) % 3];
-            
-            if ((p1[1] <= y && p2[1] >= y) || (p1[1] >= y && p2[1] <= y)) {
-              if (p2[1] !== p1[1]) {
-                const x = p1[0] + (y - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]);
-                intersections.push(x);
-              }
-            }
-          }
-          
-          if (intersections.length >= 2) {
-            intersections.sort((a, b) => a - b);
-            doc.setLineWidth(0.5);
-            doc.setDrawColor(59, 130, 246, 0.3);
-            doc.line(intersections[0], y, intersections[intersections.length - 1], y);
+          if (s % 3 === 0) { // Only draw every 3rd line for lighter fill
+            doc.line(centerX, centerY, fillX, fillY);
           }
         }
       }
       
       // Draw performance polygon outline in dark blue
-      doc.setDrawColor(37, 99, 235); // Dark blue
-      doc.setLineWidth(2);
+      doc.setDrawColor(37, 99, 235);
+      doc.setLineWidth(2.5);
       for (let i = 0; i < performancePoints.length; i++) {
         const nextIndex = (i + 1) % performancePoints.length;
         doc.line(performancePoints[i][0], performancePoints[i][1], performancePoints[nextIndex][0], performancePoints[nextIndex][1]);
       }
       
-      // Add vertex dots
+      // Add clear vertex dots
       doc.setFillColor(37, 99, 235);
       for (const point of performancePoints) {
-        doc.circle(point[0], point[1], 1.5, 'F');
+        doc.circle(point[0], point[1], 2, 'F');
       }
     }
     
