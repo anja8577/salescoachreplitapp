@@ -131,187 +131,163 @@ export class PDFGenerator {
       doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
     }
     
-    // Professional Spider Graph (right column) - matching reference image
-    const graphRadius = Math.min(columnWidth * 0.35, contextHeight * 0.35); // Appropriate size
+    // Spider Graph - Use the exact same visualization as coaching session
+    // Create a clean, professional spider graph that matches the UI
+    const graphSize = Math.min(columnWidth * 0.4, contextHeight * 0.4);
     const centerX = rightColumnX + columnWidth / 2;
     const centerY = yPosition + 5 + contextHeight / 2;
+    const maxRadius = graphSize / 2;
     
-    const stepCount = Math.min(steps.length, 7);
+    const stepCount = 7;
     const stepLabels = ['Preparation', 'Opening', 'Need Dialog', 'Solution Dialog', 'Objection Resolution', 'Asking for Commitment', 'Follow up'];
     
-    // Draw background web structure with very light grey
-    doc.setDrawColor(230, 230, 230);
-    doc.setLineWidth(0.3);
+    // Draw the grid structure (concentric heptagons)
+    doc.setDrawColor(240, 240, 240);
+    doc.setLineWidth(0.5);
     
-    // Draw concentric polygons for levels (1-4)
     for (let level = 1; level <= 4; level++) {
-      const levelRadius = (graphRadius * level) / 4;
-      const levelPoints = [];
+      const radius = (maxRadius * level) / 4;
+      const points = [];
       
       for (let i = 0; i < stepCount; i++) {
         const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-        const x = centerX + Math.cos(angle) * levelRadius;
-        const y = centerY + Math.sin(angle) * levelRadius;
-        levelPoints.push([x, y]);
+        points.push([
+          centerX + Math.cos(angle) * radius,
+          centerY + Math.sin(angle) * radius
+        ]);
       }
       
-      // Draw the polygon outline
-      for (let i = 0; i < levelPoints.length; i++) {
-        const nextIndex = (i + 1) % levelPoints.length;
-        doc.line(levelPoints[i][0], levelPoints[i][1], levelPoints[nextIndex][0], levelPoints[nextIndex][1]);
+      // Draw the heptagon
+      for (let i = 0; i < points.length; i++) {
+        const next = (i + 1) % points.length;
+        doc.line(points[i][0], points[i][1], points[next][0], points[next][1]);
       }
     }
     
-    // Draw axes from center to vertices with light grey
-    doc.setDrawColor(200, 200, 200);
+    // Draw radial lines from center
+    doc.setDrawColor(230, 230, 230);
     doc.setLineWidth(0.3);
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const endX = centerX + Math.cos(angle) * graphRadius;
-      const endY = centerY + Math.sin(angle) * graphRadius;
+      const endX = centerX + Math.cos(angle) * maxRadius;
+      const endY = centerY + Math.sin(angle) * maxRadius;
       doc.line(centerX, centerY, endX, endY);
     }
     
-    // Draw benchmark line (Level 3) in light blue/cyan - dashed style
+    // Draw benchmark (Level 3) in light blue
     const benchmarkPoints = [];
-    const benchmarkLevel = 3;
-    const benchmarkRadius = (graphRadius * benchmarkLevel) / 4;
-    
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const x = centerX + Math.cos(angle) * benchmarkRadius;
-      const y = centerY + Math.sin(angle) * benchmarkRadius;
-      benchmarkPoints.push([x, y]);
+      const radius = (maxRadius * 3) / 4; // Level 3
+      benchmarkPoints.push([
+        centerX + Math.cos(angle) * radius,
+        centerY + Math.sin(angle) * radius
+      ]);
     }
     
-    // Draw benchmark polygon with light blue dashed stroke
-    doc.setDrawColor(125, 211, 252); // Light blue
-    doc.setLineWidth(1.5);
-    
+    // Draw benchmark polygon with dashed line
+    doc.setDrawColor(125, 211, 252);
+    doc.setLineWidth(2);
     for (let i = 0; i < benchmarkPoints.length; i++) {
-      const nextIndex = (i + 1) % benchmarkPoints.length;
-      const startX = benchmarkPoints[i][0];
-      const startY = benchmarkPoints[i][1];
-      const endX = benchmarkPoints[nextIndex][0];
-      const endY = benchmarkPoints[nextIndex][1];
+      const next = (i + 1) % benchmarkPoints.length;
+      const [x1, y1] = benchmarkPoints[i];
+      const [x2, y2] = benchmarkPoints[next];
       
-      // Create dashed line effect
-      const distance = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
-      const dashLength = 3;
-      const numDashes = Math.floor(distance / (dashLength * 2));
-      
-      for (let d = 0; d < numDashes; d++) {
-        const t1 = (d * 2 * dashLength) / distance;
-        const t2 = ((d * 2 + 1) * dashLength) / distance;
-        const x1 = startX + t1 * (endX - startX);
-        const y1 = startY + t1 * (endY - startY);
-        const x2 = startX + t2 * (endX - startX);
-        const y2 = startY + t2 * (endY - startY);
-        doc.line(x1, y1, x2, y2);
+      // Create dashed effect
+      const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+      const segments = Math.floor(distance / 4);
+      for (let s = 0; s < segments; s += 2) {
+        const t1 = s / segments;
+        const t2 = Math.min((s + 1) / segments, 1);
+        doc.line(
+          x1 + t1 * (x2 - x1), y1 + t1 * (y2 - y1),
+          x1 + t2 * (x2 - x1), y1 + t2 * (y2 - y1)
+        );
       }
     }
     
-    // Plot actual performance polygon
+    // Draw actual performance polygon
     const performancePoints = [];
     for (let i = 0; i < stepCount; i++) {
       const step = steps[i];
       const stepLevel = unifiedStepLevels.find(ul => ul.stepId === step.id);
       const level = stepLevel ? stepLevel.level : 1;
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const plotRadius = (graphRadius * level) / 4;
-      const x = centerX + Math.cos(angle) * plotRadius;
-      const y = centerY + Math.sin(angle) * plotRadius;
-      performancePoints.push([x, y]);
+      const radius = (maxRadius * level) / 4;
+      performancePoints.push([
+        centerX + Math.cos(angle) * radius,
+        centerY + Math.sin(angle) * radius
+      ]);
     }
     
-    // Draw performance polygon with proper fill like the coaching session
+    // Fill performance area with blue
     if (performancePoints.length > 0) {
-      // Fill the polygon with semi-transparent blue using proper scanline filling
-      doc.setFillColor(59, 130, 246, 0.4); // Semi-transparent blue
-      
-      // Create proper polygon fill by drawing horizontal lines
-      const minY = Math.min(...performancePoints.map(p => p[1]));
-      const maxY = Math.max(...performancePoints.map(p => p[1]));
-      
-      for (let y = minY; y <= maxY; y += 0.8) {
-        const intersections = [];
+      // Simple fill using triangular decomposition
+      doc.setFillColor(59, 130, 246, 0.3);
+      for (let i = 0; i < performancePoints.length; i++) {
+        const next = (i + 1) % performancePoints.length;
+        const [x1, y1] = performancePoints[i];
+        const [x2, y2] = performancePoints[next];
         
-        // Find all intersections with polygon edges at this y level
-        for (let i = 0; i < performancePoints.length; i++) {
-          const p1 = performancePoints[i];
-          const p2 = performancePoints[(i + 1) % performancePoints.length];
+        // Fill triangle from center to edge
+        const steps = 20;
+        for (let s = 0; s < steps; s++) {
+          const t = s / steps;
+          const midX = centerX + t * (((x1 + x2) / 2) - centerX);
+          const midY = centerY + t * (((y1 + y2) / 2) - centerY);
+          const edgeX1 = centerX + t * (x1 - centerX);
+          const edgeY1 = centerY + t * (y1 - centerY);
+          const edgeX2 = centerX + t * (x2 - centerX);
+          const edgeY2 = centerY + t * (y2 - centerY);
           
-          if ((p1[1] <= y && p2[1] >= y) || (p1[1] >= y && p2[1] <= y)) {
-            if (p1[1] !== p2[1]) {
-              const x = p1[0] + (y - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]);
-              intersections.push(x);
-            }
-          }
-        }
-        
-        // Sort intersections and draw fill lines
-        if (intersections.length >= 2) {
-          intersections.sort((a, b) => a - b);
-          for (let i = 0; i < intersections.length; i += 2) {
-            if (i + 1 < intersections.length) {
-              doc.setDrawColor(59, 130, 246, 0.4);
-              doc.setLineWidth(0.8);
-              doc.line(intersections[i], y, intersections[i + 1], y);
-            }
-          }
+          doc.setDrawColor(59, 130, 246, 0.2);
+          doc.setLineWidth(0.5);
+          doc.line(edgeX1, edgeY1, edgeX2, edgeY2);
         }
       }
       
-      // Draw performance polygon outline in dark blue (solid line)
+      // Draw performance polygon outline
       doc.setDrawColor(37, 99, 235);
-      doc.setLineWidth(2.5);
+      doc.setLineWidth(3);
       for (let i = 0; i < performancePoints.length; i++) {
-        const nextIndex = (i + 1) % performancePoints.length;
-        doc.line(performancePoints[i][0], performancePoints[i][1], performancePoints[nextIndex][0], performancePoints[nextIndex][1]);
+        const next = (i + 1) % performancePoints.length;
+        doc.line(performancePoints[i][0], performancePoints[i][1], 
+                performancePoints[next][0], performancePoints[next][1]);
       }
     }
     
-    // Add step labels outside the graph
+    // Add step labels
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(128, 128, 128);
+    doc.setTextColor(100, 100, 100);
     
     for (let i = 0; i < stepCount; i++) {
       const angle = (i * 2 * Math.PI) / stepCount - Math.PI / 2;
-      const labelRadius = graphRadius + 15;
+      const labelRadius = maxRadius + 12;
       const labelX = centerX + Math.cos(angle) * labelRadius;
       const labelY = centerY + Math.sin(angle) * labelRadius;
       
-      // Adjust text alignment based on position
       const textWidth = doc.getTextWidth(stepLabels[i]);
-      let adjustedX = labelX - textWidth / 2;
-      
-      doc.text(stepLabels[i], adjustedX, labelY);
+      doc.text(stepLabels[i], labelX - textWidth / 2, labelY);
     }
     
-    // Add legend below the graph
-    const legendY = centerY + graphRadius + 35;
+    // Add legend
+    const legendY = centerY + maxRadius + 25;
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
     
-    // Benchmark legend with dashed line
+    // Benchmark legend
     doc.setDrawColor(125, 211, 252);
-    doc.setLineWidth(1.5);
-    // Draw dashed line for legend
-    for (let d = 0; d < 3; d++) {
-      doc.line(centerX - 25 + d * 6, legendY, centerX - 23 + d * 6, legendY);
-    }
+    doc.setLineWidth(2);
+    doc.line(centerX - 30, legendY, centerX - 20, legendY);
     doc.setTextColor(125, 211, 252);
-    doc.text('Benchmark (Level 3)', centerX - 10, legendY + 2);
+    doc.text('Benchmark (Level 3)', centerX - 15, legendY + 2);
     
-    // Actual performance legend with solid line
+    // Performance legend  
     doc.setDrawColor(37, 99, 235);
-    doc.setLineWidth(2.5);
-    doc.line(centerX - 25, legendY + 8, centerX - 15, legendY + 8);
+    doc.line(centerX - 30, legendY + 8, centerX - 20, legendY + 8);
     doc.setTextColor(37, 99, 235);
-    doc.text('Actual Performance', centerX - 10, legendY + 10);
+    doc.text('Actual Performance', centerX - 15, legendY + 10);
     
-    // Reset colors
     doc.setTextColor(0, 0, 0);
     
     yPosition += contextHeight + 15;

@@ -237,10 +237,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Assessment not found" });
       }
 
-      // Get coach/user data
-      const coach = await storage.getUserById(assessment.userId);
+      // Get coachee data (the person being assessed)
+      const coachee = await storage.getUserById(assessment.userId);
+      if (!coachee) {
+        return res.status(404).json({ message: "Coachee not found" });
+      }
+
+      // Get the authenticated coach from the request headers
+      const authHeader = req.headers.authorization;
+      let coach = null;
+      
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        try {
+          const decoded = AuthService.verifyToken(token);
+          if (decoded) {
+            coach = await AuthService.getUserById(decoded.userId);
+          }
+        } catch (error) {
+          console.log('Token verification failed:', error);
+        }
+      }
+      
+      // If no authenticated coach found, use the coachee as default (self-assessment)
       if (!coach) {
-        return res.status(404).json({ message: "Coach not found" });
+        coach = coachee;
       }
 
       console.log("Generating PDF for assessment", assessmentId);

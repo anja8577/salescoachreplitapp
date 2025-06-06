@@ -39,7 +39,8 @@ export default function TeamInput({ value, onChange, placeholder = "Enter team n
   const handleInputChange = (newValue: string) => {
     setInputValue(newValue);
     onChange(newValue);
-    setOpen(newValue.length > 0 && filteredTeams.length > 0);
+    // Always show dropdown when typing if there are teams available
+    setOpen(newValue.length > 0 && teams.length > 0);
   };
 
   return (
