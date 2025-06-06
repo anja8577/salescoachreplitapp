@@ -636,8 +636,8 @@ export default function Profile() {
                                 onClick={() => {
                                   if (confirm(`Remove ${user.fullName} from team "${teamName}"?`)) {
                                     updateUserMutation.mutate({
-                                      id: user.id,
-                                      data: { team: null }
+                                      userId: user.id,
+                                      userData: { team: null }
                                     });
                                   }
                                 }}
@@ -660,8 +660,8 @@ export default function Profile() {
                                   const userId = parseInt(e.target.value);
                                   if (userId && confirm(`Add user to team "${teamName}"?`)) {
                                     updateUserMutation.mutate({
-                                      id: userId,
-                                      data: { team: teamName }
+                                      userId: userId,
+                                      userData: { team: teamName }
                                     });
                                     e.target.value = "";
                                   }

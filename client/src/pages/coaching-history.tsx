@@ -134,7 +134,7 @@ export default function CoachingHistory() {
         a.href = url;
         
         // Use consistent filename format: SalesCoach_Report_CoacheeName_Date_Time
-        const date = new Date(assessment.createdAt);
+        const date = new Date(assessment.createdAt || Date.now());
         const dateStr = date.toLocaleDateString('en-US', { 
           month: '2-digit', 
           day: '2-digit', 
