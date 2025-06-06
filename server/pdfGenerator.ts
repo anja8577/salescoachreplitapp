@@ -54,34 +54,44 @@ export class PDFGenerator {
     // Calculate overall proficiency
     const overallProficiency = StepLevelCalculator.getOverallProficiencyLevel(unifiedStepLevels);
 
-    // Header
-    doc.setFontSize(20);
+    // Header with proper spacing
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('SalesCoach Report', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
+    yPosition += 20;
 
-    // Coach and Coachee info line
-    doc.setFontSize(11);
+    // Coach and Coachee info line with better formatting
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const infoLine = `Coach: ${coach.fullName} |     Coachee: ${assessment.assesseeName} |            Proficiency Level: ${overallProficiency.text}               ${new Date().toLocaleDateString('de-DE')}`;
+    const infoLine = `Coach: ${coach.fullName} |     Coachee: ${assessment.assesseeName} |            Proficiency Level: ${overallProficiency.text}               ${new Date().toLocaleDateString('de-DE')} | ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}`;
     doc.text(infoLine, pageWidth / 2, yPosition, { align: 'center' });
     yPosition += 25;
 
-    // Context section
+    // Add horizontal line separator
+    doc.setLineWidth(0.5);
+    doc.line(20, yPosition, pageWidth - 20, yPosition);
+    yPosition += 15;
+
+    // Context section with proper formatting
     if (assessment.context) {
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text('Context:', 20, yPosition);
-      yPosition += 8;
+      yPosition += 10;
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       const contextLines = doc.splitTextToSize(assessment.context, pageWidth - 40);
-      doc.text(contextLines, 20, yPosition);
-      yPosition += contextLines.length * 5 + 15;
+      doc.text(contextLines, 25, yPosition);
+      yPosition += contextLines.length * 5 + 20;
+      
+      // Add spacing line after context
+      doc.setLineWidth(0.2);
+      doc.line(20, yPosition, pageWidth - 20, yPosition);
+      yPosition += 15;
     }
 
-    // Steps with behaviors
+    // Steps with behaviors - Professional formatting
     for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
       const step = steps[stepIndex];
       const unifiedLevel = unifiedStepLevels.find(ul => ul.stepId === step.id);
@@ -92,7 +102,7 @@ export class PDFGenerator {
         yPosition = 20;
       }
 
-      // Step header with level
+      // Step header with level - proper spacing and alignment
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       const stepTitle = `${stepIndex + 1}. ${step.title}`;
@@ -100,12 +110,11 @@ export class PDFGenerator {
       
       doc.text(stepTitle, 20, yPosition);
       if (levelText) {
-        const titleWidth = doc.getTextWidth(stepTitle);
         doc.text(levelText, pageWidth - 20 - doc.getTextWidth(levelText), yPosition);
       }
-      yPosition += 15;
+      yPosition += 20; // Increased spacing
 
-      // Substeps and behaviors
+      // Substeps and behaviors with proper indentation
       step.substeps.forEach(substep => {
         // Check if we need a new page
         if (yPosition > pageHeight - 40) {
@@ -113,13 +122,13 @@ export class PDFGenerator {
           yPosition = 20;
         }
 
-        // Substep title
+        // Substep title with proper indentation
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(substep.title, 25, yPosition);
-        yPosition += 10;
+        doc.text(substep.title, 30, yPosition);
+        yPosition += 12;
 
-        // Behaviors
+        // Behaviors with level-based formatting
         substep.behaviors.forEach(behavior => {
           // Check if we need a new page
           if (yPosition > pageHeight - 30) {
@@ -127,22 +136,41 @@ export class PDFGenerator {
             yPosition = 20;
           }
 
+          doc.setFontSize(9);
           doc.setFont('helvetica', 'normal');
           const isChecked = checkedBehaviorIds.has(behavior.id);
-          const prefix = isChecked ? '✓' : '';
-          const behaviorText = `${prefix} ${behavior.description}`;
           
-          // Split long behavior descriptions
-          const lines = doc.splitTextToSize(behaviorText, pageWidth - 80);
-          doc.text(lines, 35, yPosition);
-          yPosition += lines.length * 4 + 2;
+          // Format with level prefix (L1:, L2:, etc.) and behavior description
+          const levelPrefix = `L${behavior.proficiencyLevel || 1}: `;
+          const behaviorDescription = behavior.description;
+          
+          // Draw level prefix
+          doc.setFont('helvetica', 'bold');
+          doc.text(levelPrefix, 45, yPosition);
+          
+          // Draw behavior description with proper wrapping
+          doc.setFont('helvetica', 'normal');
+          const prefixWidth = doc.getTextWidth(levelPrefix);
+          const maxWidth = pageWidth - 100;
+          const lines = doc.splitTextToSize(behaviorDescription, maxWidth);
+          
+          // First line starts after the level prefix
+          doc.text(lines[0], 45 + prefixWidth, yPosition);
+          
+          // Additional lines are properly indented
+          for (let i = 1; i < lines.length; i++) {
+            yPosition += 4;
+            doc.text(lines[i], 45 + prefixWidth, yPosition);
+          }
+          
+          yPosition += 5; // Space between behaviors
         });
-        yPosition += 5;
+        yPosition += 8; // Space between substeps
       });
-      yPosition += 10;
+      yPosition += 15; // Space between steps
     }
 
-    // Coaching notes sections
+    // Coaching notes sections with proper spacing and formatting
     const sections = [
       { title: 'Key Observations', content: assessment.keyObservations },
       { title: 'What Worked Well', content: assessment.whatWorkedWell },
@@ -153,21 +181,24 @@ export class PDFGenerator {
     sections.forEach(section => {
       if (section.content) {
         // Check if we need a new page
-        if (yPosition > pageHeight - 40) {
+        if (yPosition > pageHeight - 50) {
           doc.addPage();
           yPosition = 20;
         }
 
+        // Add extra spacing before coaching sections
+        yPosition += 10;
+
         doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
         doc.text(`${section.title}:`, 20, yPosition);
-        yPosition += 10;
+        yPosition += 12;
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         const lines = doc.splitTextToSize(section.content, pageWidth - 40);
-        doc.text(lines, 20, yPosition);
-        yPosition += lines.length * 5 + 15;
+        doc.text(lines, 25, yPosition); // Slightly indented
+        yPosition += lines.length * 5 + 20; // More spacing after each section
       }
     });
 
