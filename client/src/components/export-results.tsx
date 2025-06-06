@@ -228,7 +228,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
       {/* Context Section */}
       {context && (
         <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-medium text-gray-900 mb-2">Assessment Context</h3>
+          <h3 className="font-medium text-gray-900 mb-2">Session Context</h3>
           <p className="text-gray-700 text-sm">{context}</p>
         </div>
       )}
@@ -243,7 +243,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             id="keyObservations"
             value={keyObservations}
             onChange={(e) => setKeyObservations(e.target.value)}
-            placeholder="What did you observe during this assessment?"
+            placeholder="What did you observe during this engagement?"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             rows={3}
           />
@@ -257,7 +257,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             id="whatWorkedWell"
             value={whatWorkedWell}
             onChange={(e) => setWhatWorkedWell(e.target.value)}
-            placeholder="Highlight the strengths and positive behaviors demonstrated..."
+            placeholder="Which strengths and positive behaviors were demonstrated?"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             rows={3}
           />
@@ -271,7 +271,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             id="whatCanBeImproved"
             value={whatCanBeImproved}
             onChange={(e) => setWhatCanBeImproved(e.target.value)}
-            placeholder="Areas for development and improvement opportunities..."
+            placeholder="Which 1-2 behaviors could be improved and how?"
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             rows={3}
           />

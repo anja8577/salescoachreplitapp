@@ -86,9 +86,16 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
     },
     onError: (error: any) => {
+      let errorMessage = "Unable to create user";
+      if (error.message?.includes("Email address is already registered")) {
+        errorMessage = "This email address is already registered in the system";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "User creation failed",
-        description: error.message || "Unable to create user",
+        description: errorMessage,
         variant: "destructive",
       });
     },

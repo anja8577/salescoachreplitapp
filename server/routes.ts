@@ -88,10 +88,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", async (req, res) => {
     try {
       const validatedData = insertUserSchema.parse(req.body);
+      
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      if (existingUser) {
+        return res.status(409).json({ 
+          message: "Email address is already registered in the system",
+          field: "email"
+        });
+      }
+      
       const user = await storage.createUser(validatedData);
       res.json(user);
-    } catch (error) {
-      res.status(400).json({ message: "Invalid user data" });
+    } catch (error: any) {
+      console.error("User creation error:", error);
+      res.status(400).json({ message: "Invalid user data", error: error.message });
     }
   });
 
