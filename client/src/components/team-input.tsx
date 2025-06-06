@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TeamInputProps {
@@ -15,8 +11,8 @@ interface TeamInputProps {
 }
 
 export default function TeamInput({ value, onChange, placeholder = "Enter team name", className }: TeamInputProps) {
-  const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { data: teams = [] } = useQuery<string[]>({
     queryKey: ['/api/teams'],
@@ -27,64 +23,59 @@ export default function TeamInput({ value, onChange, placeholder = "Enter team n
   }, [value]);
 
   const filteredTeams = teams.filter(team => 
-    team.toLowerCase().includes(inputValue.toLowerCase())
+    team.toLowerCase().includes(inputValue.toLowerCase()) && 
+    team.toLowerCase() !== inputValue.toLowerCase()
   );
 
-  const handleSelect = (team: string) => {
-    setInputValue(team);
-    onChange(team);
-    setOpen(false);
-  };
-
-  const handleInputChange = (newValue: string) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
     setInputValue(newValue);
     onChange(newValue);
-    // Always show dropdown when typing if there are teams available
-    setOpen(newValue.length > 0 && teams.length > 0);
+    setShowSuggestions(newValue.length > 0 && filteredTeams.length > 0);
+  };
+
+  const handleSuggestionClick = (team: string) => {
+    setInputValue(team);
+    onChange(team);
+    setShowSuggestions(false);
+  };
+
+  const handleFocus = () => {
+    if (inputValue.length > 0 && filteredTeams.length > 0) {
+      setShowSuggestions(true);
+    }
+  };
+
+  const handleBlur = () => {
+    // Delay hiding suggestions to allow clicks
+    setTimeout(() => setShowSuggestions(false), 200);
   };
 
   return (
     <div className={cn("relative", className)}>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <div className="relative">
-            <Input
-              value={inputValue}
-              onChange={(e) => handleInputChange(e.target.value)}
-              placeholder={placeholder}
-              onFocus={() => setOpen(inputValue.length > 0 && filteredTeams.length > 0)}
-              className="pr-8"
-            />
-            {filteredTeams.length > 0 && (
-              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50" />
-            )}
-          </div>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
-          <Command>
-            <CommandList>
-              <CommandGroup>
-                {filteredTeams.map((team) => (
-                  <CommandItem
-                    key={team}
-                    value={team}
-                    onSelect={() => handleSelect(team)}
-                    className="cursor-pointer"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        inputValue === team ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {team}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <Input
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={placeholder}
+        className="w-full"
+      />
+      
+      {showSuggestions && filteredTeams.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {filteredTeams.map((team) => (
+            <div
+              key={team}
+              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+              onMouseDown={(e) => e.preventDefault()} // Prevent blur on click
+              onClick={() => handleSuggestionClick(team)}
+            >
+              {team}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

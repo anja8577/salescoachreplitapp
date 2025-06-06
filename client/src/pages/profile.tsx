@@ -30,6 +30,8 @@ export default function Profile() {
   const [newTeamName, setNewTeamName] = useState("");
   const [editingTeam, setEditingTeam] = useState<string | null>(null);
   const [editTeamName, setEditTeamName] = useState("");
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editUserForm, setEditUserForm] = useState({ fullName: "", email: "", team: "" });
 
   // Fetch all users
   const { data: users = [] } = useQuery<User[]>({
@@ -186,6 +188,31 @@ export default function Profile() {
     },
   });
 
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ userId, userData }: { userId: number; userData: any }) => {
+      const response = await apiRequest("PUT", `/api/users/${userId}`, userData);
+      if (!response.ok) throw new Error("Failed to update user");
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "User updated",
+        description: "User has been updated successfully.",
+      });
+      setEditingUser(null);
+      setEditUserForm({ fullName: "", email: "", team: "" });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "User update failed",
+        description: error.message || "Unable to update user",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleBack = () => {
     window.history.back();
   };
@@ -225,6 +252,34 @@ export default function Profile() {
     if (confirm("Are you sure you want to delete this user?")) {
       deleteUserMutation.mutate(userId);
     }
+  };
+
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditUserForm({
+      fullName: user.fullName,
+      email: user.email,
+      team: user.team || ""
+    });
+  };
+
+  const handleUpdateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingUser) {
+      updateUserMutation.mutate({
+        userId: editingUser.id,
+        userData: {
+          fullName: editUserForm.fullName,
+          email: editUserForm.email,
+          team: editUserForm.team || null
+        }
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+    setEditUserForm({ fullName: "", email: "", team: "" });
   };
 
   // Group users by team
@@ -398,21 +453,66 @@ export default function Profile() {
                         key={user.id}
                         className="flex items-center justify-between p-3 border rounded-lg"
                       >
-                        <div>
-                          <div className="font-medium">{user.fullName}</div>
-                          <div className="text-sm text-gray-600">{user.email}</div>
-                          {user.team && (
-                            <div className="text-xs text-blue-600">{user.team}</div>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteUser(user.id)}
-                          disabled={user.id === currentUser.id}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
+                        {editingUser?.id === user.id ? (
+                          // Edit form
+                          <form onSubmit={handleUpdateUser} className="flex-1 space-y-2">
+                            <Input
+                              value={editUserForm.fullName}
+                              onChange={(e) => setEditUserForm({...editUserForm, fullName: e.target.value})}
+                              placeholder="Full name"
+                              required
+                            />
+                            <Input
+                              value={editUserForm.email}
+                              onChange={(e) => setEditUserForm({...editUserForm, email: e.target.value})}
+                              placeholder="Email"
+                              type="email"
+                              required
+                            />
+                            <TeamInput
+                              value={editUserForm.team}
+                              onChange={(team) => setEditUserForm({...editUserForm, team})}
+                              placeholder="Team (optional)"
+                            />
+                            <div className="flex gap-2">
+                              <Button type="submit" size="sm" disabled={updateUserMutation.isPending}>
+                                Save
+                              </Button>
+                              <Button type="button" variant="outline" size="sm" onClick={handleCancelEdit}>
+                                Cancel
+                              </Button>
+                            </div>
+                          </form>
+                        ) : (
+                          // Display mode
+                          <>
+                            <div>
+                              <div className="font-medium">{user.fullName}</div>
+                              <div className="text-sm text-gray-600">{user.email}</div>
+                              {user.team && (
+                                <div className="text-xs text-blue-600">{user.team}</div>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                                disabled={user.id === currentUser?.id}
+                              >
+                                <Edit2 size={14} />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteUser(user.id)}
+                                disabled={user.id === currentUser?.id}
+                              >
+                                <Trash2 size={14} />
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
