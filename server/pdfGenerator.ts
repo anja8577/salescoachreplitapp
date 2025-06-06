@@ -132,9 +132,9 @@ export class PDFGenerator {
     }
     
     // Spider Graph - Enhanced Professional Rendering (right column)
-    // Remove header and move graph up
+    // Position graph lower to avoid touching header
     const graphCenterX = rightColumnX + columnWidth / 2;
-    const graphCenterY = yPosition + contextHeight / 2;
+    const graphCenterY = yPosition + 10 + contextHeight / 2;
     const graphRadius = Math.min(columnWidth * 0.6, contextHeight * 0.6); // Increased by 30%
     
     const stepCount = 7;
@@ -244,14 +244,21 @@ export class PDFGenerator {
       doc.text(stepLabels[i], labelX - textWidth / 2, labelY);
     }
     
-    yPosition += contextHeight + 15;
-
-    // Compact legend in single row above step sections
+    // Position legend directly under spider graph, centered
+    const legendY = graphCenterY + graphRadius + 15;
+    const legendCenterX = graphCenterX;
+    
     doc.setFontSize(7);
     doc.setTextColor(0, 0, 0);
     
-    const legendY = yPosition;
-    const legendStartX = leftColumnX;
+    // Calculate total legend width for centering
+    const benchmarkText = 'Benchmark (Level 3)';
+    const performanceText = 'Actual Performance';
+    const benchmarkWidth = doc.getTextWidth(benchmarkText);
+    const performanceWidth = doc.getTextWidth(performanceText);
+    const totalLegendWidth = 12 + 3 + benchmarkWidth + 15 + 12 + 3 + performanceWidth;
+    
+    const legendStartX = legendCenterX - totalLegendWidth / 2;
     
     // Benchmark legend with thin dashed line
     doc.setDrawColor(135, 206, 235);
@@ -261,18 +268,18 @@ export class PDFGenerator {
       doc.line(x, legendY, Math.min(x + dashLength, legendStartX + 12), legendY);
     }
     doc.setTextColor(135, 206, 235);
-    doc.text('Benchmark (Level 3)', legendStartX + 15, legendY + 1);
+    doc.text(benchmarkText, legendStartX + 15, legendY + 1);
     
-    // Performance legend with thin solid line
-    const performanceLegendX = legendStartX + 90;
+    // Performance legend with thin solid line (next to benchmark)
+    const performanceLegendX = legendStartX + 15 + benchmarkWidth + 15;
     doc.setDrawColor(37, 99, 235);
     doc.setLineWidth(0.5);
     doc.line(performanceLegendX, legendY, performanceLegendX + 12, legendY);
     doc.setTextColor(37, 99, 235);
-    doc.text('Actual Performance', performanceLegendX + 15, legendY + 1);
+    doc.text(performanceText, performanceLegendX + 15, legendY + 1);
     
     doc.setTextColor(0, 0, 0);
-    yPosition += 10;
+    yPosition = legendY + 15;
 
     // Steps with behaviors - Professional formatting
     for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
