@@ -224,39 +224,63 @@ export class PDFGenerator {
       performancePoints.push([x, y]);
     }
     
-    // Fill the performance area with semi-transparent blue
+    // Fill the performance area with proper polygon fill
     if (performancePoints.length > 0) {
-      // Create semi-transparent fill effect using overlapping circles
-      doc.setFillColor(59, 130, 246);
+      // Create a proper filled polygon using triangulation from center
+      doc.setFillColor(59, 130, 246, 0.3); // Semi-transparent blue
       
-      // Fill polygon by drawing many small circles
+      // Fill each triangular section from center to adjacent vertices
       for (let i = 0; i < performancePoints.length; i++) {
         const nextIndex = (i + 1) % performancePoints.length;
         
-        // Draw triangular section from center to two adjacent vertices
-        const steps = 15;
-        for (let s = 0; s <= steps; s++) {
-          for (let t = 0; t <= steps - s; t++) {
-            const u = s / steps;
-            const v = t / steps;
-            const w = 1 - u - v;
+        // Draw filled triangle
+        const triangle = [
+          [centerX, centerY],
+          [performancePoints[i][0], performancePoints[i][1]], 
+          [performancePoints[nextIndex][0], performancePoints[nextIndex][1]]
+        ];
+        
+        // Simple triangle fill using lines
+        const minY = Math.min(triangle[0][1], triangle[1][1], triangle[2][1]);
+        const maxY = Math.max(triangle[0][1], triangle[1][1], triangle[2][1]);
+        
+        for (let y = minY; y <= maxY; y += 0.5) {
+          const intersections = [];
+          
+          // Find intersections with triangle edges
+          for (let e = 0; e < 3; e++) {
+            const p1 = triangle[e];
+            const p2 = triangle[(e + 1) % 3];
             
-            if (w >= 0) {
-              const x = centerX * w + performancePoints[i][0] * u + performancePoints[nextIndex][0] * v;
-              const y = centerY * w + performancePoints[i][1] * u + performancePoints[nextIndex][1] * v;
-              doc.setFillColor(59, 130, 246, 0.15);
-              doc.circle(x, y, 0.3, 'F');
+            if ((p1[1] <= y && p2[1] >= y) || (p1[1] >= y && p2[1] <= y)) {
+              if (p2[1] !== p1[1]) {
+                const x = p1[0] + (y - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]);
+                intersections.push(x);
+              }
             }
+          }
+          
+          if (intersections.length >= 2) {
+            intersections.sort((a, b) => a - b);
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(59, 130, 246, 0.3);
+            doc.line(intersections[0], y, intersections[intersections.length - 1], y);
           }
         }
       }
       
       // Draw performance polygon outline in dark blue
       doc.setDrawColor(37, 99, 235); // Dark blue
-      doc.setLineWidth(2.5);
+      doc.setLineWidth(2);
       for (let i = 0; i < performancePoints.length; i++) {
         const nextIndex = (i + 1) % performancePoints.length;
         doc.line(performancePoints[i][0], performancePoints[i][1], performancePoints[nextIndex][0], performancePoints[nextIndex][1]);
+      }
+      
+      // Add vertex dots
+      doc.setFillColor(37, 99, 235);
+      for (const point of performancePoints) {
+        doc.circle(point[0], point[1], 1.5, 'F');
       }
     }
     
@@ -460,12 +484,12 @@ export class PDFGenerator {
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0); // Black title
       doc.text(`${section.title}:`, 20, yPosition);
-      yPosition += 8; // Space between title and box
+      yPosition += 4; // Reduced space between title and box
 
-      // Recalculate content height without title space - increased by 25%
-      contentHeight = 25; // Minimum height for content only (increased from 20)
+      // Recalculate content height without title space - increased by 15% more
+      contentHeight = 28; // Minimum height for content only (increased by 15% more)
       if (lines.length > 0) {
-        contentHeight = (lines.length * 5 + 15) * 1.25; // Content + padding, increased by 25%
+        contentHeight = (lines.length * 5 + 15) * 1.4; // Content + padding, increased by 40% total
       }
 
       // Draw light colored background rectangle
@@ -485,7 +509,7 @@ export class PDFGenerator {
         doc.text(lines, 25, yPosition + 12);
       }
 
-      yPosition += contentHeight + 5; // Add small gap after box
+      yPosition += contentHeight + 2; // Very small gap between boxes
     });
 
     // Electronic Signatures section
@@ -496,7 +520,7 @@ export class PDFGenerator {
       yPosition = 20;
     }
 
-    yPosition += 10; // Minimal spacing
+    yPosition += 18; // Increased white space before electronic signatures (20% more)
 
     // Electronic Signatures section - condensed to 15% of page height max
     const maxSignatureHeight = pageHeight * 0.15; // 15% of page height
@@ -538,9 +562,13 @@ export class PDFGenerator {
     doc.setTextColor(128, 128, 128);
     doc.text('Electronic signatures accepted for digital approval.', 20, yPosition);
 
-    // Save PDF to file
+    // Save PDF to file with standard naming format
     const uploadsDir = this.ensureUploadsDirectory();
-    const filename = `coaching-report-${assessment.id}-${Date.now()}.pdf`;
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, ''); // HHMMSS
+    const coacheeName = assessment.assesseeName?.replace(/[^a-zA-Z0-9]/g, '_') || 'Unknown';
+    const filename = `SalesCoach_Report_${coacheeName}_${dateStr}_${timeStr}.pdf`;
     const filepath = path.join(uploadsDir, filename);
     
     // Write PDF to file
