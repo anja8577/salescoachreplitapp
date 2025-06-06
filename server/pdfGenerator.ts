@@ -131,10 +131,15 @@ export class PDFGenerator {
       doc.rect(leftColumnX, yPosition + 5, columnWidth, contextHeight);
     }
     
-    // Spider Graph - Use the exact same visualization as coaching session
-    // Create a clean, professional spider graph that matches the UI
-    const graphSize = Math.min(columnWidth * 0.4, contextHeight * 0.4);
-    const centerX = rightColumnX + columnWidth / 2;
+    // Performance Overview Table (right column)
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Performance Overview', rightColumnX, yPosition);
+    
+    // Create performance summary table
+    const tableStartY = yPosition + 10;
+    let tableY = tableStartY;
     const centerY = yPosition + 5 + contextHeight / 2;
     const maxRadius = graphSize / 2;
     

@@ -501,7 +501,7 @@ export default function Profile() {
                                 onClick={() => handleEditUser(user)}
                                 disabled={user.id === currentUser?.id}
                               >
-                                <Edit2 size={14} />
+                                <Edit size={14} />
                               </Button>
                               <Button
                                 variant="outline"
