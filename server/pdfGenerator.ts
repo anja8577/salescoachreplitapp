@@ -295,36 +295,55 @@ export class PDFGenerator {
     });
 
     // Electronic Signatures section
-    if (yPosition > pageHeight - 80) {
+    if (yPosition > pageHeight - 100) {
       doc.addPage();
       yPosition = 20;
     }
 
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Electronic Signatures', 20, yPosition);
     yPosition += 20;
 
+    // Electronic Signatures header with light grey background
+    doc.setFillColor(245, 245, 245); // Light grey background
+    doc.rect(20, yPosition - 5, pageWidth - 40, 20, 'F');
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Electronic Signatures', 20, yPosition + 8);
+    yPosition += 30;
+
+    // Coach signature line
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    
-    // Coach signature
     doc.text('Coach Signature:', 20, yPosition);
-    doc.text('Date:', pageWidth - 60, yPosition);
+    doc.text('Date:', pageWidth - 80, yPosition);
     yPosition += 15;
-    doc.text(coach.fullName, 60, yPosition);
-    yPosition += 25;
+    
+    // Signature line for coach
+    doc.line(20, yPosition, 120, yPosition);
+    doc.line(pageWidth - 80, yPosition, pageWidth - 20, yPosition);
+    
+    // Coach name below signature line
+    doc.text(coach.fullName, 50, yPosition + 10);
+    yPosition += 35;
 
-    // Coachee signature
+    // Coachee signature line
     doc.text('Coachee Signature:', 20, yPosition);
-    doc.text('Date:', pageWidth - 60, yPosition);
+    doc.text('Date:', pageWidth - 80, yPosition);
     yPosition += 15;
-    doc.text(assessment.assesseeName || '', 60, yPosition);
+    
+    // Signature line for coachee
+    doc.line(20, yPosition, 120, yPosition);
+    doc.line(pageWidth - 80, yPosition, pageWidth - 20, yPosition);
+    
+    // Coachee name below signature line
+    doc.text(assessment.assesseeName || '', 50, yPosition + 10);
     yPosition += 25;
 
-    // Note about electronic signatures
+    // Electronic signature note in medium grey and smaller font
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(128, 128, 128); // Medium grey
     doc.text('Note: This document supports electronic signatures for digital approval.', 20, yPosition);
 
     // Save PDF to file
