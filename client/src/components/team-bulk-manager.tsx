@@ -11,11 +11,20 @@ import { Loader2, Users, Plus, Edit, Trash2 } from "lucide-react";
 import type { User } from "@shared/schema";
 
 interface TeamBulkManagerProps {
-  onClose: () => void;
+  users: User[];
+  teams: string[];
+  onComplete: () => void;
+  onCancel: () => void;
   editingTeam?: string;
 }
 
-export default function TeamBulkManager({ onClose, editingTeam }: TeamBulkManagerProps) {
+export default function TeamBulkManager({ 
+  users, 
+  teams, 
+  onComplete, 
+  onCancel, 
+  editingTeam 
+}: TeamBulkManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [teamName, setTeamName] = useState(editingTeam || "");
