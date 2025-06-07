@@ -4,7 +4,7 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores, stepScores
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ne, isNotNull, sql } from "drizzle-orm";
+import { eq, desc, and, ne, isNotNull, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -1258,7 +1258,7 @@ export class DatabaseStorage implements IStorage {
             team: teamName,
             updatedAt: new Date()
           })
-          .where(sql`${users.id} = ANY(ARRAY[${userIds.join(',')}])`)
+          .where(inArray(users.id, userIds))
           .returning({ id: users.id });
           
         totalUpdated += result.length;
