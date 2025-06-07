@@ -13,6 +13,7 @@ import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
 import TeamInput from "@/components/team-input";
+import TeamBulkManager from "@/components/team-bulk-manager";
 
 export default function Profile() {
   const [, setLocation] = useLocation();

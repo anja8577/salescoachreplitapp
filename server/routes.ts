@@ -637,12 +637,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Team management endpoints
-  app.post("/api/teams", async (req, res) => {
+  // Bulk team management endpoint
+  app.post("/api/teams/bulk-update", async (req, res) => {
     try {
-      console.log("Team creation request received:", req.body);
+      console.log("=== BULK TEAM UPDATE REQUEST ===");
       const startTime = Date.now();
       
+      const { teamName, updates, isEdit, originalTeamName } = req.body;
+      
+      if (!teamName) {
+        return res.status(400).json({ message: "Team name is required" });
+      }
+      
+      if (!Array.isArray(updates)) {
+        return res.status(400).json({ message: "Updates array is required" });
+      }
+      
+      console.log(`${isEdit ? 'Editing' : 'Creating'} team "${teamName}" with ${updates.length} user updates`);
+      
+      // Filter updates to only include users whose team assignment actually changes
+      const filteredUpdates = updates.filter((update: any) => {
+        // Include update if user's current team differs from the new assignment
+        return update.team !== update.currentTeam;
+      });
+      
+      console.log(`Filtered to ${filteredUpdates.length} actual changes`);
+      
+      // Execute bulk update
+      const affectedUsers = await storage.bulkUpdateUserTeams(filteredUpdates);
+      
+      const totalTime = Date.now() - startTime;
+      console.log(`✅ Bulk team update completed: ${affectedUsers} users in ${totalTime}ms`);
+      console.log("=== END BULK TEAM UPDATE ===");
+      
+      res.json({ 
+        message: `Team ${isEdit ? 'updated' : 'created'} successfully`,
+        teamName,
+        affectedUsers,
+        duration: totalTime 
+      });
+    } catch (error: any) {
+      console.error("❌ Bulk team update failed:", error);
+      res.status(500).json({ message: "Failed to update team" });
+    }
+  });
+
+  // Legacy team creation endpoint (simplified)
+  app.post("/api/teams", async (req, res) => {
+    try {
       const { name } = req.body;
       if (!name) {
         return res.status(400).json({ message: "Team name is required" });
@@ -654,9 +696,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Team already exists" });
       }
       
-      // Just validate the team name - no placeholder users needed
-      // Teams are created implicitly when users are assigned to them
-      console.log(`Team "${name}" validated in ${Date.now() - startTime}ms`);
       res.json({ message: "Team created successfully", name });
     } catch (error) {
       console.error("Error creating team:", error);

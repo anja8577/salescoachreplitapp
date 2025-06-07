@@ -4,7 +4,7 @@ import {
   steps, substeps, behaviors, users, assessments, assessmentScores, stepScores
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ne, isNotNull } from "drizzle-orm";
+import { eq, desc, and, ne, isNotNull, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Steps
@@ -26,6 +26,7 @@ export interface IStorage {
   deleteUser(id: number): Promise<void>;
   getUniqueTeams(): Promise<string[]>;
   bulkUpdateUsersTeam(teamName: string, newTeamName: string | null): Promise<number>;
+  bulkUpdateUserTeams(updates: { userId: number; team: string | null }[]): Promise<number>;
 
   // Assessments
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
@@ -1225,6 +1226,48 @@ export class DatabaseStorage implements IStorage {
       
       console.log(`DatabaseStorage: Bulk updated ${affectedRows} users in ${duration}ms`);
       return affectedRows;
+    } catch (error) {
+      console.error(`❌ Bulk update error:`, error);
+      throw error;
+    }
+  }
+
+  async bulkUpdateUserTeams(updates: { userId: number; team: string | null }[]): Promise<number> {
+    console.log(`DatabaseStorage: Bulk updating ${updates.length} user team assignments`);
+    const startTime = Date.now();
+    
+    try {
+      let totalUpdated = 0;
+      
+      // Group updates by team assignment for efficiency
+      const groupedUpdates = new Map<string | null, number[]>();
+      for (const update of updates) {
+        const key = update.team;
+        if (!groupedUpdates.has(key)) {
+          groupedUpdates.set(key, []);
+        }
+        groupedUpdates.get(key)!.push(update.userId);
+      }
+      
+      // Execute bulk updates for each team
+      for (const [teamName, userIds] of groupedUpdates) {
+        if (userIds.length === 0) continue;
+        
+        const result = await db.update(users)
+          .set({ 
+            team: teamName,
+            updatedAt: new Date()
+          })
+          .where(sql`${users.id} = ANY(ARRAY[${userIds.join(',')}])`)
+          .returning({ id: users.id });
+          
+        totalUpdated += result.length;
+        console.log(`DatabaseStorage: Updated ${result.length} users to team "${teamName}"`);
+      }
+      
+      const duration = Date.now() - startTime;
+      console.log(`DatabaseStorage: Bulk updated ${totalUpdated} users in ${duration}ms`);
+      return totalUpdated;
     } catch (error) {
       console.error(`❌ Bulk update error:`, error);
       throw error;
