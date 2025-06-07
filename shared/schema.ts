@@ -37,7 +37,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   fullName: varchar("full_name").notNull(),
   email: varchar("email").notNull().unique(),
-  team: varchar("team"),
+  team: varchar("team"), // Keep for backward compatibility during migration
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   passwordHash: text("password_hash"),
@@ -47,6 +47,15 @@ export const users = pgTable("users", {
   resetToken: text("reset_token"),
   resetTokenExpiry: timestamp("reset_token_expiry"),
 });
+
+export const userTeams = pgTable("user_teams", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  uniqueUserTeam: unique().on(table.userId, table.teamId),
+}));
 
 export const assessments = pgTable("assessments", {
   id: serial("id").primaryKey(),
@@ -102,11 +111,23 @@ export const behaviorsRelations = relations(behaviors, ({ one, many }) => ({
 }));
 
 export const teamsRelations = relations(teams, ({ many }) => ({
-  users: many(users),
+  userTeams: many(userTeams),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
   assessments: many(assessments),
+  userTeams: many(userTeams),
+}));
+
+export const userTeamsRelations = relations(userTeams, ({ one }) => ({
+  user: one(users, {
+    fields: [userTeams.userId],
+    references: [users.id],
+  }),
+  team: one(teams, {
+    fields: [userTeams.teamId],
+    references: [teams.id],
+  }),
 }));
 
 export const assessmentsRelations = relations(assessments, ({ one, many }) => ({
@@ -176,6 +197,11 @@ export const insertStepScoreSchema = createInsertSchema(stepScores).omit({
   id: true,
 });
 
+export const insertUserTeamSchema = createInsertSchema(userTeams).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type Step = typeof steps.$inferSelect;
 export type Substep = typeof substeps.$inferSelect;
 export type Behavior = typeof behaviors.$inferSelect;
@@ -184,6 +210,7 @@ export type User = typeof users.$inferSelect;
 export type Assessment = typeof assessments.$inferSelect;
 export type AssessmentScore = typeof assessmentScores.$inferSelect;
 export type StepScore = typeof stepScores.$inferSelect;
+export type UserTeam = typeof userTeams.$inferSelect;
 
 export type InsertStep = z.infer<typeof insertStepSchema>;
 export type InsertSubstep = z.infer<typeof insertSubstepSchema>;
@@ -193,6 +220,7 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type InsertAssessmentScore = z.infer<typeof insertAssessmentScoreSchema>;
 export type InsertStepScore = z.infer<typeof insertStepScoreSchema>;
+export type InsertUserTeam = z.infer<typeof insertUserTeamSchema>;
 
 export interface UserRegistration {
   fullName: string;
