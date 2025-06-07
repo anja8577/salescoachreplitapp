@@ -37,6 +37,8 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
   provider: text("provider").$type<"email" | "google" | "apple">(),
   providerId: text("provider_id"),
+  resetToken: text("reset_token"),
+  resetTokenExpiry: timestamp("reset_token_expiry"),
 });
 
 export const assessments = pgTable("assessments", {

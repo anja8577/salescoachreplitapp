@@ -1,6 +1,7 @@
 
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 import { users, type User, type UserRegistration, type UserLogin } from '@shared/schema';
@@ -73,6 +74,67 @@ export class AuthService {
 
   static async getUserById(id: number): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    if (!user) return null;
+
+    const { passwordHash: _, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
+  }
+
+  static async generateResetToken(email: string): Promise<string | null> {
+    // Check if user exists
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (!user) {
+      return null;
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiryTime = new Date(Date.now() + 3600000); // 1 hour from now
+
+    // Save token to database
+    await db.update(users)
+      .set({ 
+        resetToken,
+        resetTokenExpiry: expiryTime
+      })
+      .where(eq(users.email, email));
+
+    return resetToken;
+  }
+
+  static async resetPassword(token: string, newPassword: string): Promise<boolean> {
+    // Find user with valid token
+    const [user] = await db.select()
+      .from(users)
+      .where(eq(users.resetToken, token))
+      .limit(1);
+
+    if (!user || !user.resetTokenExpiry) {
+      return false;
+    }
+
+    // Check if token has expired
+    if (new Date() > user.resetTokenExpiry) {
+      return false;
+    }
+
+    // Hash new password
+    const passwordHash = await this.hashPassword(newPassword);
+
+    // Update password and clear reset token
+    await db.update(users)
+      .set({
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiry: null
+      })
+      .where(eq(users.id, user.id));
+
+    return true;
+  }
+
+  static async getUserByEmail(email: string): Promise<User | null> {
+    const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (!user) return null;
 
     const { passwordHash: _, ...userWithoutPassword } = user;

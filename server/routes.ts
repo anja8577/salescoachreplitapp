@@ -553,6 +553,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      // Generate reset token
+      const resetToken = await AuthService.generateResetToken(email);
+      
+      if (!resetToken) {
+        // Don't reveal if email exists or not for security
+        return res.json({ message: "If an account with that email exists, we've sent a reset link." });
+      }
+
+      // Get user details for email
+      const user = await AuthService.getUserByEmail(email);
+      if (!user) {
+        return res.json({ message: "If an account with that email exists, we've sent a reset link." });
+      }
+
+      // Import and send email
+      const { EmailService } = await import('./emailService');
+      const emailSent = await EmailService.sendPasswordResetEmail(email, resetToken, user.fullName);
+
+      if (!emailSent) {
+        console.error("Failed to send password reset email to:", email);
+        return res.status(500).json({ error: "Failed to send reset email" });
+      }
+
+      res.json({ message: "If an account with that email exists, we've sent a reset link." });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      res.status(500).json({ error: "Failed to process password reset request" });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { token, password } = req.body;
+
+      if (!token || !password) {
+        return res.status(400).json({ error: "Token and password are required" });
+      }
+
+      if (password.length < 3) {
+        return res.status(400).json({ error: "Password must be at least 3 characters" });
+      }
+
+      const success = await AuthService.resetPassword(token, password);
+      
+      if (!success) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
+      }
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
+    }
+  });
+
   app.get("/api/auth/me", async (req, res) => {
     try {
       // For simplicity, return the first available user from database
