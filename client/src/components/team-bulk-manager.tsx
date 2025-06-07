@@ -100,12 +100,18 @@ export default function TeamBulkManager({
     setIsLoading(true);
 
     try {
-      // Create updates array for all users
-      const updates = users.map(user => ({
-        userId: user.id,
-        team: selectedUsers.has(user.id) ? teamName.trim() : null,
-        currentTeam: user.team,
-      }));
+      // Create updates array only for users whose team assignment is changing
+      const updates = users
+        .filter(user => {
+          const isSelected = selectedUsers.has(user.id);
+          const newTeam = isSelected ? teamName.trim() : user.team;
+          return newTeam !== user.team;
+        })
+        .map(user => ({
+          userId: user.id,
+          team: selectedUsers.has(user.id) ? teamName.trim() : user.team,
+          currentTeam: user.team,
+        }));
 
       await bulkUpdateMutation.mutateAsync({
         teamName: teamName.trim(),
