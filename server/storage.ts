@@ -1,7 +1,7 @@
 import { 
-  type Step, type Substep, type Behavior, type User, type Assessment, type AssessmentScore, type StepScore,
-  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertUser, type InsertAssessment, type InsertAssessmentScore, type InsertStepScore,
-  steps, substeps, behaviors, users, assessments, assessmentScores, stepScores
+  type Step, type Substep, type Behavior, type Team, type User, type Assessment, type AssessmentScore, type StepScore,
+  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertTeam, type InsertUser, type InsertAssessment, type InsertAssessmentScore, type InsertStepScore,
+  steps, substeps, behaviors, teams, users, assessments, assessmentScores, stepScores
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ne, isNotNull, sql, inArray } from "drizzle-orm";
@@ -17,6 +17,11 @@ export interface IStorage {
   // Behaviors
   createBehavior(behavior: InsertBehavior): Promise<Behavior>;
 
+  // Teams
+  getAllTeams(): Promise<Team[]>;
+  createTeam(team: InsertTeam): Promise<Team>;
+  getUniqueTeams(): Promise<string[]>;
+
   // Users
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
@@ -24,7 +29,6 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUser(id: number, user: Partial<User>): Promise<User>;
   deleteUser(id: number): Promise<void>;
-  getUniqueTeams(): Promise<string[]>;
   bulkUpdateUsersTeam(teamName: string, newTeamName: string | null): Promise<number>;
   bulkUpdateUserTeams(updates: { userId: number; team: string | null }[]): Promise<number>;
 

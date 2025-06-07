@@ -26,6 +26,13 @@ export const behaviors = pgTable("behaviors", {
   order: integer("order").notNull(),
 });
 
+export const teams = pgTable("teams", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull().unique(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   fullName: varchar("full_name").notNull(),
@@ -94,6 +101,10 @@ export const behaviorsRelations = relations(behaviors, ({ one, many }) => ({
   scores: many(assessmentScores),
 }));
 
+export const teamsRelations = relations(teams, ({ many }) => ({
+  users: many(users),
+}));
+
 export const usersRelations = relations(users, ({ many }) => ({
   assessments: many(assessments),
 }));
@@ -141,6 +152,12 @@ export const insertBehaviorSchema = createInsertSchema(behaviors).omit({
   id: true,
 });
 
+export const insertTeamSchema = createInsertSchema(teams).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -162,6 +179,7 @@ export const insertStepScoreSchema = createInsertSchema(stepScores).omit({
 export type Step = typeof steps.$inferSelect;
 export type Substep = typeof substeps.$inferSelect;
 export type Behavior = typeof behaviors.$inferSelect;
+export type Team = typeof teams.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Assessment = typeof assessments.$inferSelect;
 export type AssessmentScore = typeof assessmentScores.$inferSelect;
@@ -170,6 +188,7 @@ export type StepScore = typeof stepScores.$inferSelect;
 export type InsertStep = z.infer<typeof insertStepSchema>;
 export type InsertSubstep = z.infer<typeof insertSubstepSchema>;
 export type InsertBehavior = z.infer<typeof insertBehaviorSchema>;
+export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type InsertAssessmentScore = z.infer<typeof insertAssessmentScoreSchema>;
