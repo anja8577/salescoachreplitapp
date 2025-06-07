@@ -34,6 +34,8 @@ export default function Profile() {
   const [editTeamName, setEditTeamName] = useState("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editUserForm, setEditUserForm] = useState({ fullName: "", email: "", team: "" });
+  const [showBulkTeamManager, setShowBulkTeamManager] = useState(false);
+  const [bulkEditTeam, setBulkEditTeam] = useState<string | undefined>(undefined);
 
   // Fetch all users
   const { data: users = [] } = useQuery<User[]>({
