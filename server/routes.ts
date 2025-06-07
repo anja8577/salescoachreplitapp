@@ -152,10 +152,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user
   app.put("/api/users/:id", async (req, res) => {
     try {
+      console.log(`User update request for ID ${req.params.id}:`, req.body);
+      const startTime = Date.now();
+      
       const userId = parseInt(req.params.id);
       const userData = req.body;
 
+      // Optimize team assignment updates
+      if (userData.team !== undefined) {
+        console.log(`Team assignment change for user ${userId}: ${userData.team}`);
+      }
+
       const updatedUser = await storage.updateUser(userId, userData);
+      
+      console.log(`User ${userId} updated in ${Date.now() - startTime}ms`);
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating user:", error);

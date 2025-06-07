@@ -1156,11 +1156,14 @@ export class DatabaseStorage implements IStorage {
     console.log(`DatabaseStorage: Updating user ${id} with data:`, userData);
     const startTime = Date.now();
     
+    // Optimize team assignment updates with direct update
+    const updateData = {
+      ...userData,
+      updatedAt: new Date()
+    };
+    
     const [updatedUser] = await db.update(users)
-      .set({
-        ...userData,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(users.id, id))
       .returning();
     

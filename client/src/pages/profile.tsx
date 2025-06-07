@@ -205,19 +205,35 @@ export default function Profile() {
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, userData }: { userId: number; userData: any }) => {
+      console.log(`Frontend: Updating user ${userId} with:`, userData);
+      const startTime = Date.now();
+      
       const response = await apiRequest("PUT", `/api/users/${userId}`, userData);
       if (!response.ok) throw new Error("Failed to update user");
+      
+      console.log(`Frontend: User update completed in ${Date.now() - startTime}ms`);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast({
         title: "User updated",
         description: "User has been updated successfully.",
       });
       setEditingUser(null);
       setEditUserForm({ fullName: "", email: "", team: "" });
-      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      
+      // Optimistic update - update cache immediately without waiting for invalidation
+      queryClient.setQueryData(["/api/users"], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((user: any) => 
+          user.id === variables.userId ? { ...user, ...variables.userData } : user
+        );
+      });
+      
+      // Only invalidate teams if team changed
+      if (variables.userData.team !== undefined) {
+        queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      }
     },
     onError: (error: any) => {
       toast({
