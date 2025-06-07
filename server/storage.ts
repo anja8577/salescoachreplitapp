@@ -20,6 +20,7 @@ export interface IStorage {
   // Teams
   getAllTeams(): Promise<Team[]>;
   createTeam(team: InsertTeam): Promise<Team>;
+  deleteTeam(teamId: number): Promise<void>;
   getUniqueTeams(): Promise<string[]>;
 
   // Users
@@ -1298,6 +1299,14 @@ export class DatabaseStorage implements IStorage {
     console.log(`DatabaseStorage: Creating team "${team.name}"`);
     const result = await db.insert(teams).values(team).returning();
     return result[0];
+  }
+
+  async deleteTeam(teamId: number): Promise<void> {
+    console.log(`DatabaseStorage: Deleting team ${teamId}`);
+    // Delete all user-team relationships first (CASCADE should handle this but being explicit)
+    await db.delete(userTeams).where(eq(userTeams.teamId, teamId));
+    // Delete the team
+    await db.delete(teams).where(eq(teams.id, teamId));
   }
 
   async getUniqueTeams(): Promise<string[]> {

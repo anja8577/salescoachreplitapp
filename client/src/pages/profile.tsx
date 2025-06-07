@@ -327,6 +327,36 @@ export default function Profile() {
     setEditUserForm({ fullName: "", email: "", team: "" });
   };
 
+  const handleDeleteTeam = async (teamName: string) => {
+    if (!confirm(`Are you sure you want to delete team "${teamName}"? This will remove all users from this team.`)) {
+      return;
+    }
+
+    try {
+      // Get team ID by name
+      const response = await apiRequest("GET", "/api/teams/all");
+      const allTeams = await response.json();
+      const team = allTeams.find((t: any) => t.name === teamName);
+      
+      if (!team) {
+        toast({
+          title: "Error",
+          description: "Team not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      deleteTeamMutation.mutate(team.id);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete team",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Group users by team
   const usersByTeam = users.reduce((acc, user) => {
     const team = user.team || "No Team";
@@ -608,7 +638,9 @@ export default function Profile() {
                 {/* Teams List */}
                 <div className="space-y-4">
                   {teams.map((teamName) => {
-                    const teamUsers = users.filter(user => user.team === teamName);
+                    const teamUsers = users.filter((user: any) => 
+                      user.teams && user.teams.some((team: any) => team.name === teamName)
+                    );
                     return (
                       <Card key={teamName}>
                         <CardHeader>
@@ -625,6 +657,14 @@ export default function Profile() {
                               >
                                 <Edit2 size={14} className="mr-1" />
                                 Edit Team
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDeleteTeam(teamName)}
+                              >
+                                <Trash2 size={14} className="mr-1" />
+                                Delete
                               </Button>
                             </div>
                           </CardTitle>

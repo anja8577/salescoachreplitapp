@@ -35,8 +35,11 @@ export default function TeamBulkManager({
   useEffect(() => {
     if (editingTeam && users.length > 0) {
       const teamMembers = users
-        .filter((user: User) => user.team === editingTeam)
-        .map((user: User) => user.id);
+        .filter((user: any) => {
+          // Check if user is in the team being edited
+          return user.teams && user.teams.some((team: any) => team.name === editingTeam);
+        })
+        .map((user: any) => user.id);
       setSelectedUsers(new Set(teamMembers));
     }
   }, [editingTeam, users]);

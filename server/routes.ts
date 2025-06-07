@@ -721,6 +721,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete team endpoint
+  app.delete("/api/teams/:teamId", async (req, res) => {
+    try {
+      const teamId = parseInt(req.params.teamId);
+      if (isNaN(teamId)) {
+        return res.status(400).json({ message: "Invalid team ID" });
+      }
+      
+      await storage.deleteTeam(teamId);
+      res.json({ message: "Team deleted successfully" });
+    } catch (error: any) {
+      console.error("Team deletion failed:", error);
+      res.status(500).json({ message: "Failed to delete team" });
+    }
+  });
+
   // Legacy team creation endpoint (simplified)
   app.post("/api/teams", async (req, res) => {
     try {
