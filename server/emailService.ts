@@ -24,7 +24,8 @@ export class EmailService {
     userName: string
   ): Promise<boolean> {
     try {
-      const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
       
       const emailParams: EmailParams = {
         to: userEmail,
@@ -49,7 +50,13 @@ export class EmailService {
         `
       };
 
-      await mailService.send(emailParams);
+      await mailService.send({
+        to: emailParams.to,
+        from: emailParams.from,
+        subject: emailParams.subject,
+        text: emailParams.text,
+        html: emailParams.html,
+      });
       console.log(`Password reset email sent to ${userEmail}`);
       return true;
     } catch (error) {
@@ -64,8 +71,8 @@ export class EmailService {
         to: params.to,
         from: params.from || this.fromEmail,
         subject: params.subject,
-        text: params.text,
-        html: params.html,
+        text: params.text || '',
+        html: params.html || '',
       });
       return true;
     } catch (error) {

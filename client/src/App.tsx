@@ -9,6 +9,7 @@ import Landing from "@/pages/landing";
 import Assessment from "@/pages/assessment";
 import CoachingHistory from "@/pages/coaching-history";
 import Profile from "@/pages/profile";
+import ResetPassword from "@/pages/reset-password";
 
 function Router() {
   const [location, setLocation] = useLocation();
@@ -24,8 +25,8 @@ function Router() {
       setIsAuthenticated(true);
     } else {
       setIsAuthenticated(false);
-      // Redirect to login if not authenticated and not already there
-      if (location !== "/login") {
+      // Redirect to login if not authenticated and not already on public pages
+      if (location !== "/login" && location !== "/reset-password") {
         setLocation("/login");
       }
     }
@@ -41,9 +42,14 @@ function Router() {
     );
   }
 
-  // Show login screen if not authenticated
-  if (!isAuthenticated) {
+  // Show login screen if not authenticated (except for public pages)
+  if (!isAuthenticated && location !== "/reset-password") {
     return <Login />;
+  }
+
+  // Handle reset password page (public access)
+  if (location === "/reset-password") {
+    return <ResetPassword />;
   }
 
   // Show authenticated routes
