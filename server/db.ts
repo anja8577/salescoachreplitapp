@@ -13,9 +13,40 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  max: 25,
-  min: 3,
-  idleTimeoutMillis: 20000,
-  connectionTimeoutMillis: 3000,
+  max: 15,
+  min: 5, // Keep more connections warm
+  idleTimeoutMillis: 60000, // Keep connections alive longer
+  connectionTimeoutMillis: 1000,
 });
+
+// Pre-warm connection pool and maintain keep-alive
+async function warmPool() {
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+    console.log('🔥 Database connection pool warmed');
+  } catch (error) {
+    console.warn('⚠️ Failed to warm connection pool:', error);
+  }
+}
+
+// Keep connections alive with periodic queries
+function maintainConnections() {
+  setInterval(async () => {
+    try {
+      const client = await pool.connect();
+      await client.query('SELECT 1');
+      client.release();
+    } catch (error) {
+      console.warn('Connection maintenance failed:', error);
+    }
+  }, 30000); // Every 30 seconds
+}
+
+// Initialize on startup
+warmPool().then(() => {
+  maintainConnections();
+});
+
 export const db = drizzle({ client: pool, schema });

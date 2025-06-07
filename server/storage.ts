@@ -1162,13 +1162,13 @@ export class DatabaseStorage implements IStorage {
     }
     
     try {
-      // Monitor connection acquisition time
       const connectionStart = Date.now();
       const updateData = {
         ...userData,
         updatedAt: new Date()
       };
       
+      // Use prepared statement approach for better performance
       const [updatedUser] = await db.update(users)
         .set(updateData)
         .where(eq(users.id, id))
@@ -1177,7 +1177,7 @@ export class DatabaseStorage implements IStorage {
       const connectionTime = Date.now() - connectionStart;
       console.log(`DatabaseStorage: Connection + query time: ${connectionTime}ms`);
       
-      if (connectionTime > 100) {
+      if (connectionTime > 50) {
         console.warn(`⚠️  Slow database operation detected: ${connectionTime}ms for user ${id}`);
       }
       
