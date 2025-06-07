@@ -668,17 +668,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("=== BULK TEAM UPDATE REQUEST ===");
       const startTime = Date.now();
       
-      const { teamName, updates, isEdit, originalTeamName } = req.body;
+      const { teamName, selectedUserIds, isEdit, originalTeamName } = req.body;
       
       if (!teamName) {
         return res.status(400).json({ message: "Team name is required" });
       }
       
-      if (!Array.isArray(updates)) {
-        return res.status(400).json({ message: "Updates array is required" });
+      if (!Array.isArray(selectedUserIds)) {
+        return res.status(400).json({ message: "Selected user IDs array is required" });
       }
       
-      console.log(`${isEdit ? 'Editing' : 'Creating'} team "${teamName}" with ${updates.length} user updates`);
+      console.log(`${isEdit ? 'Editing' : 'Creating'} team "${teamName}" with ${selectedUserIds.length} selected users`);
       
       // Get or create the team
       let targetTeam;
@@ -705,11 +705,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!targetTeam) {
         return res.status(404).json({ message: "Team not found" });
       }
-      
-      // Extract user IDs that should be in this team (selected users)
-      const selectedUserIds = updates
-        .filter((update: any) => update.team === teamName)
-        .map((update: any) => update.userId);
       
       console.log(`Setting team "${teamName}" membership to ${selectedUserIds.length} users`);
       
