@@ -655,9 +655,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`${isEdit ? 'Editing' : 'Creating'} team "${teamName}" with ${updates.length} user updates`);
       
+      // For new teams, create the team first in the teams table
+      if (!isEdit) {
+        try {
+          await storage.createTeam({ name: teamName });
+          console.log(`Created team "${teamName}" in teams table`);
+        } catch (error: any) {
+          if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+            console.log(`Team "${teamName}" already exists in teams table`);
+          } else {
+            throw error;
+          }
+        }
+      }
+      
       // Filter updates to only include users whose team assignment actually changes
       const filteredUpdates = updates.filter((update: any) => {
-        // Include update if user's current team differs from the new assignment
         return update.team !== update.currentTeam;
       });
       

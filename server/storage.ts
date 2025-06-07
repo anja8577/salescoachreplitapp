@@ -1278,17 +1278,29 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getAllTeams(): Promise<Team[]> {
+    console.log("DatabaseStorage: Getting all teams - start");
+    const startTime = Date.now();
+    
+    const result = await db.select().from(teams);
+    console.log(`DatabaseStorage: Got ${result.length} teams in ${Date.now() - startTime}ms`);
+    return result;
+  }
+
+  async createTeam(team: InsertTeam): Promise<Team> {
+    console.log(`DatabaseStorage: Creating team "${team.name}"`);
+    const result = await db.insert(teams).values(team).returning();
+    return result[0];
+  }
+
   async getUniqueTeams(): Promise<string[]> {
     console.log("DatabaseStorage: Getting unique teams - start");
     const startTime = Date.now();
     
-    const result = await db.selectDistinct({ team: users.team })
-      .from(users)
-      .where(isNotNull(users.team));
-    
-    const teams = result.map(r => r.team).filter(Boolean) as string[];
-    console.log(`DatabaseStorage: Got ${teams.length} unique teams in ${Date.now() - startTime}ms`);
-    return teams;
+    const result = await db.select({ name: teams.name }).from(teams);
+    const teamNames = result.map(r => r.name);
+    console.log(`DatabaseStorage: Got ${teamNames.length} unique teams in ${Date.now() - startTime}ms`);
+    return teamNames;
   }
 
   async deleteUser(id: number): Promise<void> {
