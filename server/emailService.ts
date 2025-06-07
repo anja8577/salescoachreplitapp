@@ -54,8 +54,8 @@ export class EmailService {
         to: emailParams.to,
         from: emailParams.from,
         subject: emailParams.subject,
-        text: emailParams.text,
-        html: emailParams.html,
+        text: emailParams.text || '',
+        html: emailParams.html || '',
       });
       console.log(`Password reset email sent to ${userEmail}`);
       return true;
