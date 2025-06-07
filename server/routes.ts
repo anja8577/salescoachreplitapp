@@ -671,64 +671,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/teams/:name", async (req, res) => {
     try {
-      console.log("Team rename request received:", { oldName: req.params.name, newName: req.body.newName });
+      console.log("=== TEAM RENAME REQUEST ===");
       const startTime = Date.now();
       
       const oldName = req.params.name;
       const { newName } = req.body;
       
+      console.log(`Renaming team "${oldName}" to "${newName}"`);
+      
       if (!newName) {
         return res.status(400).json({ message: "New team name is required" });
       }
       
-      // Update all users with this team name
-      const users = await storage.getAllUsers();
-      const usersToUpdate = users.filter(user => user.team === oldName);
+      // Use bulk update for better performance
+      console.log(`🚀 Starting bulk team update...`);
+      const bulkStartTime = Date.now();
       
-      console.log(`Found ${usersToUpdate.length} users to update for team rename`);
+      const affectedUsers = await storage.bulkUpdateUsersTeam(oldName, newName);
       
-      // Use Promise.all for parallel updates instead of sequential
-      await Promise.all(usersToUpdate.map(user => 
-        storage.updateUser(user.id, { team: newName })
-      ));
+      const bulkTime = Date.now() - bulkStartTime;
+      const totalTime = Date.now() - startTime;
       
-      console.log(`Team renamed from "${oldName}" to "${newName}" in ${Date.now() - startTime}ms`);
-      res.json({ message: "Team renamed successfully", oldName, newName });
-    } catch (error) {
-      console.error("Error renaming team:", error);
+      console.log(`✅ Bulk update completed: ${affectedUsers} users in ${bulkTime}ms`);
+      console.log(`✅ Total team rename completed in ${totalTime}ms`);
+      console.log("=== END TEAM RENAME ===");
+      
+      res.json({ 
+        message: "Team renamed successfully", 
+        oldName, 
+        newName, 
+        affectedUsers,
+        duration: totalTime 
+      });
+    } catch (error: any) {
+      console.error("❌ Team rename failed:", error);
       res.status(500).json({ message: "Failed to rename team" });
     }
   });
 
   app.delete("/api/teams/:name", async (req, res) => {
     try {
+      console.log("=== TEAM DELETE REQUEST ===");
+      const startTime = Date.now();
       const teamName = req.params.name;
       
-      // Remove team assignment from all users
-      const users = await storage.getAllUsers();
-      const usersToUpdate = users.filter(user => user.team === teamName);
+      console.log(`Deleting team "${teamName}"`);
       
-      for (const user of usersToUpdate) {
-        await storage.updateUser(user.id, { team: null });
-      }
+      // Use bulk update for better performance
+      console.log(`🚀 Starting bulk team deletion...`);
+      const bulkStartTime = Date.now();
       
-      res.json({ message: "Team deleted successfully", teamName });
-    } catch (error) {
-      console.error("Error deleting team:", error);
+      const affectedUsers = await storage.bulkUpdateUsersTeam(teamName, null);
+      
+      const bulkTime = Date.now() - bulkStartTime;
+      const totalTime = Date.now() - startTime;
+      
+      console.log(`✅ Bulk deletion completed: ${affectedUsers} users in ${bulkTime}ms`);
+      console.log(`✅ Total team deletion completed in ${totalTime}ms`);
+      console.log("=== END TEAM DELETE ===");
+      
+      res.json({ 
+        message: "Team deleted successfully", 
+        teamName, 
+        affectedUsers,
+        duration: totalTime 
+      });
+    } catch (error: any) {
+      console.error("❌ Team deletion failed:", error);
       res.status(500).json({ message: "Failed to delete team" });
     }
   });
 
-  // Update user
+  // Update user with enhanced logging and performance tracking
   app.put("/api/users/:id", async (req, res) => {
+    const startTime = Date.now();
+    console.log("=== USER UPDATE REQUEST ===");
+    
     try {
       const userId = parseInt(req.params.id);
       const userData = req.body;
       
+      console.log(`User ID: ${userId}`);
+      console.log(`Request body:`, userData);
+      
+      // Track team assignment operations specifically
+      if (userData.team !== undefined) {
+        console.log(`🔄 TEAM ASSIGNMENT: User ${userId} -> Team "${userData.team}"`);
+      }
+      
+      console.log(`⏱️  Starting storage.updateUser call...`);
+      const storageStartTime = Date.now();
+      
       const updatedUser = await storage.updateUser(userId, userData);
+      
+      const storageTime = Date.now() - storageStartTime;
+      console.log(`⏱️  storage.updateUser completed in ${storageTime}ms`);
+      
+      const totalTime = Date.now() - startTime;
+      console.log(`✅ Total request completed in ${totalTime}ms`);
+      
+      if (totalTime > 100) {
+        console.warn(`🐌 SLOW REQUEST WARNING: User ${userId} update took ${totalTime}ms`);
+      }
+      
+      console.log("=== END USER UPDATE ===");
       res.json(updatedUser);
-    } catch (error) {
-      console.error("Error updating user:", error);
+    } catch (error: any) {
+      const totalTime = Date.now() - startTime;
+      console.error(`❌ USER UPDATE FAILED in ${totalTime}ms:`, error);
+      console.log("=== END USER UPDATE ===");
       res.status(500).json({ message: "Failed to update user" });
     }
   });

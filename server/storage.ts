@@ -25,6 +25,7 @@ export interface IStorage {
   updateUser(id: number, user: Partial<User>): Promise<User>;
   deleteUser(id: number): Promise<void>;
   getUniqueTeams(): Promise<string[]>;
+  bulkUpdateUsersTeam(teamName: string, newTeamName: string | null): Promise<number>;
 
   // Assessments
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
@@ -140,6 +141,21 @@ export class MemStorage implements IStorage {
       }
     }
     return Array.from(teams);
+  }
+
+  async bulkUpdateUsersTeam(teamName: string, newTeamName: string | null): Promise<number> {
+    console.log(`MemStorage: Bulk updating users from team "${teamName}" to "${newTeamName}"`);
+    let count = 0;
+    
+    for (const user of this.users.values()) {
+      if (user.team === teamName) {
+        user.team = newTeamName;
+        count++;
+      }
+    }
+    
+    console.log(`MemStorage: Bulk updated ${count} users`);
+    return count;
   }
 
   async createAssessment(assessment: InsertAssessment): Promise<Assessment> {
@@ -1185,6 +1201,30 @@ export class DatabaseStorage implements IStorage {
       return updatedUser;
     } catch (error) {
       console.error(`❌ Database error for user ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async bulkUpdateUsersTeam(teamName: string, newTeamName: string | null): Promise<number> {
+    console.log(`DatabaseStorage: Bulk updating users from team "${teamName}" to "${newTeamName}"`);
+    const startTime = Date.now();
+    
+    try {
+      const result = await db.update(users)
+        .set({ 
+          team: newTeamName,
+          updatedAt: new Date()
+        })
+        .where(eq(users.team, teamName))
+        .returning({ id: users.id });
+      
+      const affectedRows = result.length;
+      const duration = Date.now() - startTime;
+      
+      console.log(`DatabaseStorage: Bulk updated ${affectedRows} users in ${duration}ms`);
+      return affectedRows;
+    } catch (error) {
+      console.error(`❌ Bulk update error:`, error);
       throw error;
     }
   }
