@@ -1373,12 +1373,34 @@ export class DatabaseStorage implements IStorage {
   async bulkUpdateTeamMembership(teamId: number, userIds: number[]): Promise<void> {
     console.log(`DatabaseStorage: Bulk updating team ${teamId} membership with ${userIds.length} users`);
     
-    // Remove all current members from the team
-    await db.delete(userTeams).where(eq(userTeams.teamId, teamId));
+    // Get current team members
+    const currentMembers = await db.select({ userId: userTeams.userId })
+      .from(userTeams)
+      .where(eq(userTeams.teamId, teamId));
     
-    // Add new members to the team
-    if (userIds.length > 0) {
-      const insertValues = userIds.map(userId => ({
+    const currentUserIds = new Set(currentMembers.map(m => m.userId));
+    const newUserIds = new Set(userIds);
+    
+    // Find users to add (in new list but not in current)
+    const usersToAdd = userIds.filter(userId => !currentUserIds.has(userId));
+    
+    // Find users to remove (in current but not in new list)
+    const usersToRemove = Array.from(currentUserIds).filter(userId => !newUserIds.has(userId));
+    
+    console.log(`Adding ${usersToAdd.length} users, removing ${usersToRemove.length} users`);
+    
+    // Remove users who should no longer be in this team
+    if (usersToRemove.length > 0) {
+      await db.delete(userTeams)
+        .where(and(
+          eq(userTeams.teamId, teamId),
+          inArray(userTeams.userId, usersToRemove)
+        ));
+    }
+    
+    // Add new users to the team
+    if (usersToAdd.length > 0) {
+      const insertValues = usersToAdd.map(userId => ({
         userId,
         teamId
       }));
