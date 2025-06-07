@@ -205,14 +205,25 @@ export default function Profile() {
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, userData }: { userId: number; userData: any }) => {
-      console.log(`Frontend: Updating user ${userId} with:`, userData);
-      const startTime = Date.now();
+      console.log(`\n🚀 FRONTEND: Starting user update for ${userId}`);
+      console.log(`📝 Data to update:`, userData);
+      const totalStartTime = Date.now();
       
+      // Track network request timing
+      console.log(`🌐 Making API request...`);
+      const networkStartTime = Date.now();
       const response = await apiRequest("PUT", `/api/users/${userId}`, userData);
+      console.log(`🌐 Network request completed in ${Date.now() - networkStartTime}ms`);
+      
       if (!response.ok) throw new Error("Failed to update user");
       
-      console.log(`Frontend: User update completed in ${Date.now() - startTime}ms`);
-      return response.json();
+      console.log(`📊 Parsing response...`);
+      const parseStartTime = Date.now();
+      const result = await response.json();
+      console.log(`📊 Response parsed in ${Date.now() - parseStartTime}ms`);
+      
+      console.log(`✅ Total frontend operation: ${Date.now() - totalStartTime}ms\n`);
+      return result;
     },
     onSuccess: (data, variables) => {
       toast({

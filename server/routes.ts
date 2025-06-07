@@ -152,23 +152,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update user
   app.put("/api/users/:id", async (req, res) => {
     try {
-      console.log(`User update request for ID ${req.params.id}:`, req.body);
+      console.log(`\n=== USER UPDATE REQUEST ===`);
+      console.log(`User ID: ${req.params.id}`);
+      console.log(`Request body:`, req.body);
+      console.log(`Request headers:`, Object.keys(req.headers));
       const startTime = Date.now();
       
       const userId = parseInt(req.params.id);
       const userData = req.body;
 
-      // Optimize team assignment updates
+      // Track team assignment operations specifically
       if (userData.team !== undefined) {
-        console.log(`Team assignment change for user ${userId}: ${userData.team}`);
+        console.log(`🔄 TEAM ASSIGNMENT: User ${userId} -> Team "${userData.team}"`);
       }
 
+      console.log(`⏱️  Starting storage.updateUser call...`);
+      const storageStartTime = Date.now();
       const updatedUser = await storage.updateUser(userId, userData);
+      console.log(`⏱️  storage.updateUser completed in ${Date.now() - storageStartTime}ms`);
       
-      console.log(`User ${userId} updated in ${Date.now() - startTime}ms`);
+      console.log(`✅ Total request completed in ${Date.now() - startTime}ms`);
+      console.log(`=== END USER UPDATE ===\n`);
       res.json(updatedUser);
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error("❌ Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
     }
   });

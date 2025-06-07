@@ -1156,7 +1156,12 @@ export class DatabaseStorage implements IStorage {
     console.log(`DatabaseStorage: Updating user ${id} with data:`, userData);
     const startTime = Date.now();
     
-    // Optimize team assignment updates with direct update
+    // Track team assignment operations
+    if (userData.team !== undefined) {
+      console.log(`DatabaseStorage: Team assignment - user ${id} moving to team "${userData.team}"`);
+    }
+    
+    // Direct update without fetching current user first - this eliminates the extra query
     const updateData = {
       ...userData,
       updatedAt: new Date()
@@ -1167,7 +1172,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     
-    console.log(`DatabaseStorage: User ${id} updated in ${Date.now() - startTime}ms`);
+    console.log(`DatabaseStorage: User ${id} update completed in ${Date.now() - startTime}ms`);
     return updatedUser;
   }
 
