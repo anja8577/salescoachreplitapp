@@ -1161,19 +1161,32 @@ export class DatabaseStorage implements IStorage {
       console.log(`DatabaseStorage: Team assignment - user ${id} moving to team "${userData.team}"`);
     }
     
-    // Direct update without fetching current user first - this eliminates the extra query
-    const updateData = {
-      ...userData,
-      updatedAt: new Date()
-    };
-    
-    const [updatedUser] = await db.update(users)
-      .set(updateData)
-      .where(eq(users.id, id))
-      .returning();
-    
-    console.log(`DatabaseStorage: User ${id} update completed in ${Date.now() - startTime}ms`);
-    return updatedUser;
+    try {
+      // Monitor connection acquisition time
+      const connectionStart = Date.now();
+      const updateData = {
+        ...userData,
+        updatedAt: new Date()
+      };
+      
+      const [updatedUser] = await db.update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+      
+      const connectionTime = Date.now() - connectionStart;
+      console.log(`DatabaseStorage: Connection + query time: ${connectionTime}ms`);
+      
+      if (connectionTime > 100) {
+        console.warn(`⚠️  Slow database operation detected: ${connectionTime}ms for user ${id}`);
+      }
+      
+      console.log(`DatabaseStorage: User ${id} update completed in ${Date.now() - startTime}ms`);
+      return updatedUser;
+    } catch (error) {
+      console.error(`❌ Database error for user ${id}:`, error);
+      throw error;
+    }
   }
 
   async getUniqueTeams(): Promise<string[]> {

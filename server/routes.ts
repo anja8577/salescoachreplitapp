@@ -149,33 +149,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Request queue for user updates to prevent connection pool exhaustion
+  const userUpdateQueue = new Map<number, Promise<any>>();
+
   // Update user
   app.put("/api/users/:id", async (req, res) => {
+    const userId = parseInt(req.params.id);
+    const userData = req.body;
+    
     try {
       console.log(`\n=== USER UPDATE REQUEST ===`);
-      console.log(`User ID: ${req.params.id}`);
-      console.log(`Request body:`, req.body);
-      console.log(`Request headers:`, Object.keys(req.headers));
+      console.log(`User ID: ${userId}`);
+      console.log(`Request body:`, userData);
       const startTime = Date.now();
       
-      const userId = parseInt(req.params.id);
-      const userData = req.body;
+      // Check if there's already an update in progress for this user
+      if (userUpdateQueue.has(userId)) {
+        console.log(`⏳ Waiting for existing update to complete for user ${userId}`);
+        await userUpdateQueue.get(userId);
+      }
 
       // Track team assignment operations specifically
       if (userData.team !== undefined) {
         console.log(`🔄 TEAM ASSIGNMENT: User ${userId} -> Team "${userData.team}"`);
       }
 
+      // Create and queue the update operation
+      const updatePromise = storage.updateUser(userId, userData);
+      userUpdateQueue.set(userId, updatePromise);
+
       console.log(`⏱️  Starting storage.updateUser call...`);
       const storageStartTime = Date.now();
-      const updatedUser = await storage.updateUser(userId, userData);
+      const updatedUser = await updatePromise;
       console.log(`⏱️  storage.updateUser completed in ${Date.now() - storageStartTime}ms`);
+      
+      // Remove from queue when complete
+      userUpdateQueue.delete(userId);
       
       console.log(`✅ Total request completed in ${Date.now() - startTime}ms`);
       console.log(`=== END USER UPDATE ===\n`);
       res.json(updatedUser);
     } catch (error) {
       console.error("❌ Error updating user:", error);
+      userUpdateQueue.delete(userId);
       res.status(500).json({ message: "Failed to update user" });
     }
   });
