@@ -1,7 +1,7 @@
 import { 
-  type Step, type Substep, type Behavior, type Team, type User, type Assessment, type AssessmentScore, type StepScore,
-  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertTeam, type InsertUser, type InsertAssessment, type InsertAssessmentScore, type InsertStepScore,
-  steps, substeps, behaviors, teams, users, assessments, assessmentScores, stepScores
+  type Step, type Substep, type Behavior, type Team, type User, type Assessment, type AssessmentScore, type StepScore, type UserTeam,
+  type InsertStep, type InsertSubstep, type InsertBehavior, type InsertTeam, type InsertUser, type InsertAssessment, type InsertAssessmentScore, type InsertStepScore, type InsertUserTeam,
+  steps, substeps, behaviors, teams, users, assessments, assessmentScores, stepScores, userTeams
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ne, isNotNull, sql, inArray } from "drizzle-orm";
@@ -31,6 +31,13 @@ export interface IStorage {
   deleteUser(id: number): Promise<void>;
   bulkUpdateUsersTeam(teamName: string, newTeamName: string | null): Promise<number>;
   bulkUpdateUserTeams(updates: { userId: number; team: string | null }[]): Promise<number>;
+
+  // User-Team Relationships
+  getUserTeams(userId: number): Promise<Team[]>;
+  getTeamUsers(teamId: number): Promise<User[]>;
+  addUserToTeam(userId: number, teamId: number): Promise<UserTeam>;
+  removeUserFromTeam(userId: number, teamId: number): Promise<void>;
+  bulkUpdateTeamMembership(teamId: number, userIds: number[]): Promise<void>;
 
   // Assessments
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
@@ -1305,6 +1312,78 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<void> {
     await db.delete(users).where(eq(users.id, id));
+  }
+
+  // User-Team Relationships
+  async getUserTeams(userId: number): Promise<Team[]> {
+    console.log(`DatabaseStorage: Getting teams for user ${userId}`);
+    const result = await db
+      .select({
+        id: teams.id,
+        name: teams.name,
+        createdAt: teams.createdAt,
+        updatedAt: teams.updatedAt,
+      })
+      .from(userTeams)
+      .innerJoin(teams, eq(userTeams.teamId, teams.id))
+      .where(eq(userTeams.userId, userId));
+    
+    return result;
+  }
+
+  async getTeamUsers(teamId: number): Promise<User[]> {
+    console.log(`DatabaseStorage: Getting users for team ${teamId}`);
+    const result = await db
+      .select({
+        id: users.id,
+        fullName: users.fullName,
+        email: users.email,
+        team: users.team,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        passwordHash: users.passwordHash,
+        emailVerified: users.emailVerified,
+        provider: users.provider,
+        providerId: users.providerId,
+        resetToken: users.resetToken,
+        resetTokenExpiry: users.resetTokenExpiry,
+      })
+      .from(userTeams)
+      .innerJoin(users, eq(userTeams.userId, users.id))
+      .where(eq(userTeams.teamId, teamId));
+    
+    return result;
+  }
+
+  async addUserToTeam(userId: number, teamId: number): Promise<UserTeam> {
+    console.log(`DatabaseStorage: Adding user ${userId} to team ${teamId}`);
+    const result = await db.insert(userTeams).values({
+      userId,
+      teamId
+    }).returning();
+    return result[0];
+  }
+
+  async removeUserFromTeam(userId: number, teamId: number): Promise<void> {
+    console.log(`DatabaseStorage: Removing user ${userId} from team ${teamId}`);
+    await db.delete(userTeams)
+      .where(and(eq(userTeams.userId, userId), eq(userTeams.teamId, teamId)));
+  }
+
+  async bulkUpdateTeamMembership(teamId: number, userIds: number[]): Promise<void> {
+    console.log(`DatabaseStorage: Bulk updating team ${teamId} membership with ${userIds.length} users`);
+    
+    // Remove all current members from the team
+    await db.delete(userTeams).where(eq(userTeams.teamId, teamId));
+    
+    // Add new members to the team
+    if (userIds.length > 0) {
+      const insertValues = userIds.map(userId => ({
+        userId,
+        teamId
+      }));
+      await db.insert(userTeams).values(insertValues);
+    }
   }
 
   async createAssessment(assessment: InsertAssessment): Promise<Assessment> {

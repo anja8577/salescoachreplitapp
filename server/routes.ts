@@ -67,7 +67,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", async (req, res) => {
     try {
       const users = await storage.getAllUsers();
-      res.json(users);
+      
+      // Get team memberships for each user
+      const usersWithTeams = await Promise.all(
+        users.map(async (user) => {
+          const userTeams = await storage.getUserTeams(user.id);
+          return {
+            ...user,
+            teams: userTeams,
+            // Keep backward compatibility with single team field
+            team: userTeams.length > 0 ? userTeams[0].name : user.team
+          };
+        })
+      );
+      
+      res.json(usersWithTeams);
     } catch (error) {
       console.error("Failed to fetch users:", error);
       res.status(500).json({ message: "Failed to fetch users", error: error.message });
@@ -655,38 +669,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log(`${isEdit ? 'Editing' : 'Creating'} team "${teamName}" with ${updates.length} user updates`);
       
-      // For new teams, create the team first in the teams table
+      // Get or create the team
+      let targetTeam;
       if (!isEdit) {
         try {
-          await storage.createTeam({ name: teamName });
+          targetTeam = await storage.createTeam({ name: teamName });
           console.log(`Created team "${teamName}" in teams table`);
         } catch (error: any) {
           if (error.message?.includes('duplicate key') || error.message?.includes('unique constraint')) {
+            // Team already exists, get it
+            const allTeams = await storage.getAllTeams();
+            targetTeam = allTeams.find(t => t.name === teamName);
             console.log(`Team "${teamName}" already exists in teams table`);
           } else {
             throw error;
           }
         }
+      } else {
+        // Get existing team
+        const allTeams = await storage.getAllTeams();
+        targetTeam = allTeams.find(t => t.name === teamName);
       }
       
-      // Filter updates to only include users whose team assignment actually changes
-      const filteredUpdates = updates.filter((update: any) => {
-        return update.team !== update.currentTeam;
-      });
+      if (!targetTeam) {
+        return res.status(404).json({ message: "Team not found" });
+      }
       
-      console.log(`Filtered to ${filteredUpdates.length} actual changes`);
+      // Extract user IDs that should be in this team (selected users)
+      const selectedUserIds = updates
+        .filter((update: any) => update.team === teamName)
+        .map((update: any) => update.userId);
       
-      // Execute bulk update
-      const affectedUsers = await storage.bulkUpdateUserTeams(filteredUpdates);
+      console.log(`Setting team "${teamName}" membership to ${selectedUserIds.length} users`);
+      
+      // Use bulk update to set team membership
+      await storage.bulkUpdateTeamMembership(targetTeam.id, selectedUserIds);
       
       const totalTime = Date.now() - startTime;
-      console.log(`✅ Bulk team update completed: ${affectedUsers} users in ${totalTime}ms`);
+      console.log(`✅ Bulk team update completed: ${selectedUserIds.length} users in ${totalTime}ms`);
       console.log("=== END BULK TEAM UPDATE ===");
       
       res.json({ 
         message: `Team ${isEdit ? 'updated' : 'created'} successfully`,
         teamName,
-        affectedUsers,
+        affectedUsers: selectedUserIds.length,
         duration: totalTime 
       });
     } catch (error: any) {
