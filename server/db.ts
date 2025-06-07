@@ -13,10 +13,10 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  max: 15,
-  min: 5, // Keep more connections warm
-  idleTimeoutMillis: 60000, // Keep connections alive longer
-  connectionTimeoutMillis: 1000,
+  max: 20,
+  min: 8, // Increase minimum connections
+  idleTimeoutMillis: 120000, // 2 minutes keep-alive
+  connectionTimeoutMillis: 2000, // Increase timeout
 });
 
 // Pre-warm connection pool and maintain keep-alive

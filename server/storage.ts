@@ -1184,16 +1184,18 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       };
       
-      // Use prepared statement approach for better performance
-      const [updatedUser] = await db.update(users)
-        .set(updateData)
-        .where(eq(users.id, id))
-        .returning();
+      // Use transaction for consistency and better performance
+      const [updatedUser] = await db.transaction(async (tx) => {
+        return await tx.update(users)
+          .set(updateData)
+          .where(eq(users.id, id))
+          .returning();
+      });
       
       const connectionTime = Date.now() - connectionStart;
       console.log(`DatabaseStorage: Connection + query time: ${connectionTime}ms`);
       
-      if (connectionTime > 50) {
+      if (connectionTime > 30) {
         console.warn(`⚠️  Slow database operation detected: ${connectionTime}ms for user ${id}`);
       }
       

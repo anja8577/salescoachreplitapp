@@ -654,14 +654,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Team already exists" });
       }
       
-      // Create a placeholder user to establish the team (will be removed when first real user joins)
-      const placeholderUser = await storage.createUser({
-        fullName: `${name} Team Placeholder`,
-        email: `placeholder-${name.toLowerCase().replace(/\s+/g, '-')}@temp.com`,
-        team: name
-      });
-      
-      console.log(`Team "${name}" created in ${Date.now() - startTime}ms with placeholder user ${placeholderUser.id}`);
+      // Just validate the team name - no placeholder users needed
+      // Teams are created implicitly when users are assigned to them
+      console.log(`Team "${name}" validated in ${Date.now() - startTime}ms`);
       res.json({ message: "Team created successfully", name });
     } catch (error) {
       console.error("Error creating team:", error);
