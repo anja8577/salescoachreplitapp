@@ -122,7 +122,14 @@ export default function CoachingHistory() {
   });
 
   const handleViewAssessment = (assessmentId: number) => {
-    setLocation(`/assessment?id=${assessmentId}`);
+    const assessment = assessments.find(a => a.id === assessmentId);
+    if (assessment && assessment.status === 'submitted') {
+      // For submitted assessments, open in view-only mode
+      setLocation(`/assessment?id=${assessmentId}&readonly=true`);
+    } else {
+      // For draft or saved assessments, open in edit mode
+      setLocation(`/assessment?id=${assessmentId}`);
+    }
   };
 
 

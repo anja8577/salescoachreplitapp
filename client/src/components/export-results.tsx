@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Share2, Download, Home, User as UserIcon } from "lucide-react";
+import { Share2, Download, Save, CheckCircle, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -341,89 +341,6 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
 
       {/* Action Buttons - Centered */}
       <div className="flex gap-3 pt-4 border-t border-gray-200 justify-center">
-        <Button
-          onClick={handleSaveAndContinue}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
-          disabled={!assessor}
-        >
-          <Home className="mr-2 h-4 w-4" />
-          Save Coaching Session
-        </Button>
-
-        <Button
-          onClick={async () => {
-            if (!assessmentId) return;
-            
-            // Check if session has been saved
-            if (!keyObservations && !whatWorkedWell && !whatCanBeImproved && !nextSteps) {
-              toast({
-                title: "Session Not Saved",
-                description: "Please save the coaching session first before downloading the PDF report.",
-                variant: "destructive",
-              });
-              return;
-            }
-            
-            try {
-              // Include coach information in the request
-              const authToken = localStorage.getItem('auth_token');
-              const headers: HeadersInit = {};
-              if (authToken) {
-                headers['Authorization'] = `Bearer ${authToken}`;
-              }
-              
-              const response = await fetch(`/api/assessments/${assessmentId}/pdf`, {
-                headers
-              });
-              if (response.ok) {
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                // Use the same filename format as the server
-                const now = new Date();
-                const dateStr = now.toISOString().split('T')[0];
-                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
-                const coacheeName = user.fullName.replace(/[^a-zA-Z0-9]/g, '_');
-                a.download = `SalesCoach_Report_${coacheeName}_${dateStr}_${timeStr}.pdf`;
-                a.click();
-                URL.revokeObjectURL(url);
-                
-                toast({
-                  title: "PDF Downloaded",
-                  description: "Your assessment report has been downloaded successfully.",
-                });
-              } else {
-                const errorData = await response.json();
-                if (errorData.requiresSave) {
-                  toast({
-                    title: "Session Not Saved",
-                    description: "Please save the coaching session first before downloading the PDF report.",
-                    variant: "destructive",
-                  });
-                } else {
-                  toast({
-                    title: "PDF Generation Failed",
-                    description: "Failed to generate PDF report. Please try again.",
-                    variant: "destructive",
-                  });
-                }
-              }
-            } catch (error) {
-              console.error('PDF download error:', error);
-              toast({
-                title: "PDF Download Failed",
-                description: "There was an error downloading the PDF. Please try again.",
-                variant: "destructive",
-              });
-            }
-          }}
-          variant="outline"
-          className="px-6 py-2"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Download PDF Report
-        </Button>
         
         {/* Save Session Button */}
         {assessor && assessmentStatus !== 'submitted' && (
@@ -492,9 +409,9 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
               }
             }}
             disabled={isSaving || !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim()}
-            variant="outline"
-            className="px-6 py-2 border-blue-300 text-blue-700 hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+            className="w-48 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-200"
           >
+            <Save className="mr-2 h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save Session'}
           </Button>
         )}
@@ -568,11 +485,87 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
               }
             }}
             disabled={isSubmitting || !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim()}
-            className="px-6 py-2 bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-200"
+            className="w-48 px-6 py-2 bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-200"
           >
+            <CheckCircle className="mr-2 h-4 w-4" />
             {isSubmitting ? 'Submitting...' : 'Save & Submit'}
           </Button>
         )}
+
+        {/* Download PDF Report Button */}
+        <Button
+          onClick={async () => {
+            if (!assessmentId) return;
+            
+            // Check if session has been saved
+            if (!keyObservations && !whatWorkedWell && !whatCanBeImproved && !nextSteps) {
+              toast({
+                title: "Session Not Saved",
+                description: "Please save the coaching session first before downloading the PDF report.",
+                variant: "destructive",
+              });
+              return;
+            }
+            
+            try {
+              // Include coach information in the request
+              const authToken = localStorage.getItem('auth_token');
+              const headers: HeadersInit = {};
+              if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+              }
+              
+              const response = await fetch(`/api/assessments/${assessmentId}/pdf`, {
+                headers
+              });
+              if (response.ok) {
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Use the same filename format as the server
+                const now = new Date();
+                const dateStr = now.toISOString().split('T')[0];
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+                const coacheeName = user.fullName.replace(/[^a-zA-Z0-9]/g, '_');
+                a.download = `SalesCoach_Report_${coacheeName}_${dateStr}_${timeStr}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                toast({
+                  title: "PDF Downloaded",
+                  description: "Your assessment report has been downloaded successfully.",
+                });
+              } else {
+                const errorData = await response.json();
+                if (errorData.requiresSave) {
+                  toast({
+                    title: "Session Not Saved",
+                    description: "Please save the coaching session first before downloading the PDF report.",
+                    variant: "destructive",
+                  });
+                } else {
+                  toast({
+                    title: "PDF Generation Failed",
+                    description: "Failed to generate PDF report. Please try again.",
+                    variant: "destructive",
+                  });
+                }
+              }
+            } catch (error) {
+              console.error('PDF download error:', error);
+              toast({
+                title: "PDF Download Failed",
+                description: "There was an error downloading the PDF. Please try again.",
+                variant: "destructive",
+              });
+            }
+          }}
+          className="w-48 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 focus:ring-2 focus:ring-purple-200"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Download PDF Report
+        </Button>
       </div>
 
       {/* Status indicator */}

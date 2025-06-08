@@ -29,6 +29,11 @@ export default function Assessment() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [assesseeName, setAssesseeName] = useState<string>('');
   const [context, setContext] = useState<string>('');
+  
+  // Check if we're in readonly mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const isReadonly = urlParams.get('readonly') === 'true';
+  const isLocked = currentAssessment?.status === 'submitted';
 
   // Always call hooks in same order
   const { data: steps = [], isLoading: stepsLoading } = useQuery<StepWithSubsteps[]>({
