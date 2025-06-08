@@ -1,11 +1,10 @@
-import { MailService } from '@sendgrid/mail';
+import sgMail from '@sendgrid/mail';
 
 if (!process.env.SENDGRID_API_KEY) {
   throw new Error("SENDGRID_API_KEY environment variable must be set");
 }
 
-const mailService = new MailService();
-mailService.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 interface EmailParams {
   to: string;
@@ -50,7 +49,7 @@ export class EmailService {
         `
       };
 
-      await mailService.send({
+      await sgMail.send({
         to: emailParams.to,
         from: emailParams.from,
         subject: emailParams.subject,
@@ -70,7 +69,7 @@ export class EmailService {
 
   static async sendEmail(params: EmailParams): Promise<boolean> {
     try {
-      await mailService.send({
+      await sgMail.send({
         to: params.to,
         from: params.from || this.fromEmail,
         subject: params.subject,
