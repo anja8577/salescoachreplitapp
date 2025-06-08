@@ -545,6 +545,10 @@ export default function Assessment() {
               }
             }}
             assessmentId={currentAssessment.id}
+            assessmentStatus={currentAssessment.status}
+            onStatusChange={(newStatus) => {
+              setCurrentAssessment(prev => prev ? { ...prev, status: newStatus } : null);
+            }}
           />
         )}
       </div>

@@ -183,6 +183,7 @@ export class MemStorage implements IStorage {
       whatCanBeImproved: assessment.whatCanBeImproved ?? null,
       nextSteps: assessment.nextSteps ?? null,
       pdfFilePath: null,
+      status: assessment.status ?? 'draft',
       createdAt: new Date() 
     };
     this.assessments.set(newAssessment.id, newAssessment);

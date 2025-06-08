@@ -271,8 +271,13 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             value={keyObservations}
             onChange={(e) => setKeyObservations(e.target.value)}
             placeholder="What did you observe during this engagement?"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            className={`w-full p-3 border rounded-lg resize-none ${
+              assessmentStatus === 'submitted' 
+                ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
             rows={3}
+            disabled={assessmentStatus === 'submitted'}
           />
         </div>
 
@@ -285,8 +290,13 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             value={whatWorkedWell}
             onChange={(e) => setWhatWorkedWell(e.target.value)}
             placeholder="Which strengths and positive behaviors were demonstrated?"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            className={`w-full p-3 border rounded-lg resize-none ${
+              assessmentStatus === 'submitted' 
+                ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
             rows={3}
+            disabled={assessmentStatus === 'submitted'}
           />
         </div>
 
@@ -299,8 +309,13 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             value={whatCanBeImproved}
             onChange={(e) => setWhatCanBeImproved(e.target.value)}
             placeholder="Which 1-2 behaviors could be improved and how?"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            className={`w-full p-3 border rounded-lg resize-none ${
+              assessmentStatus === 'submitted' 
+                ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
             rows={3}
+            disabled={assessmentStatus === 'submitted'}
           />
         </div>
 
@@ -313,8 +328,13 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
             value={nextSteps}
             onChange={(e) => setNextSteps(e.target.value)}
             placeholder="Action items and follow-up plans..."
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            className={`w-full p-3 border rounded-lg resize-none ${
+              assessmentStatus === 'submitted' 
+                ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
             rows={3}
+            disabled={assessmentStatus === 'submitted'}
           />
         </div>
       </div>
