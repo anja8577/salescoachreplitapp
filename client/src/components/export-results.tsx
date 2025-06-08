@@ -24,6 +24,8 @@ interface ExportResultsProps {
   assessor?: User; // The coach conducting the assessment
   context?: string; // Assessment context
   assessmentId?: number; // Current assessment ID
+  assessmentStatus?: string; // "draft", "saved", "submitted"
+  onStatusChange?: (newStatus: string) => void;
 }
 
 export default function ExportResults({ 
@@ -36,7 +38,9 @@ export default function ExportResults({
   onSaveAssessment,
   assessor,
   context = '',
-  assessmentId
+  assessmentId,
+  assessmentStatus = 'draft',
+  onStatusChange
 }: ExportResultsProps) {
   const { toast } = useToast();
   const [isSharing, setIsSharing] = useState(false);
@@ -45,6 +49,8 @@ export default function ExportResults({
   const [whatWorkedWell, setWhatWorkedWell] = useState('');
   const [whatCanBeImproved, setWhatCanBeImproved] = useState('');
   const [nextSteps, setNextSteps] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load current assessment data and prepopulate from previous session if available
   useEffect(() => {
@@ -398,7 +404,173 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
           <Download className="mr-2 h-4 w-4" />
           Download PDF Report
         </Button>
+        
+        {/* Save Session Button */}
+        {assessor && assessmentStatus !== 'submitted' && (
+          <Button
+            onClick={async () => {
+              setIsSaving(true);
+              try {
+                const coachingData = { keyObservations, whatWorkedWell, whatCanBeImproved, nextSteps };
+                
+                if (assessmentId && onSaveAssessment) {
+                  // Update existing assessment
+                  const response = await fetch(`/api/assessments/${assessmentId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      ...coachingData,
+                      status: 'saved'
+                    })
+                  });
+
+                  if (response.ok) {
+                    onSaveAssessment(coachingData);
+                    onStatusChange?.('saved');
+                    toast({
+                      title: "Session Saved",
+                      description: "Coaching session saved successfully. You can continue editing.",
+                    });
+                  } else {
+                    throw new Error('Failed to save assessment');
+                  }
+                } else {
+                  // Save new assessment
+                  const response = await fetch('/api/assessments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: assessmentTitle,
+                      assesseeName: user.fullName,
+                      context,
+                      status: 'saved',
+                      ...coachingData
+                    })
+                  });
+
+                  if (response.ok) {
+                    const newAssessment = await response.json();
+                    onSaveAssessment?.(coachingData);
+                    onStatusChange?.('saved');
+                    toast({
+                      title: "Session Saved",
+                      description: "Coaching session saved successfully. You can continue editing.",
+                    });
+                  } else {
+                    throw new Error('Failed to save assessment');
+                  }
+                }
+              } catch (error) {
+                console.error('Save error:', error);
+                toast({
+                  title: "Save Failed",
+                  description: "Failed to save coaching session. Please try again.",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            disabled={isSaving || !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim()}
+            variant="outline"
+            className="px-6 py-2 border-blue-300 text-blue-700 hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+          >
+            {isSaving ? 'Saving...' : 'Save Session'}
+          </Button>
+        )}
+
+        {/* Save and Submit Button */}
+        {assessor && assessmentStatus !== 'submitted' && (
+          <Button
+            onClick={async () => {
+              setIsSubmitting(true);
+              try {
+                const coachingData = { keyObservations, whatWorkedWell, whatCanBeImproved, nextSteps };
+                
+                if (assessmentId && onSaveAssessment) {
+                  // Update existing assessment and submit
+                  const response = await fetch(`/api/assessments/${assessmentId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      ...coachingData,
+                      status: 'submitted'
+                    })
+                  });
+
+                  if (response.ok) {
+                    onSaveAssessment(coachingData);
+                    onStatusChange?.('submitted');
+                    toast({
+                      title: "Session Submitted",
+                      description: "Coaching session has been submitted and locked. No further changes can be made.",
+                      className: "border-green-200 bg-green-50 text-green-800",
+                    });
+                  } else {
+                    throw new Error('Failed to submit assessment');
+                  }
+                } else {
+                  // Save new assessment and submit
+                  const response = await fetch('/api/assessments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: assessmentTitle,
+                      assesseeName: user.fullName,
+                      context,
+                      status: 'submitted',
+                      ...coachingData
+                    })
+                  });
+
+                  if (response.ok) {
+                    const newAssessment = await response.json();
+                    onSaveAssessment?.(coachingData);
+                    onStatusChange?.('submitted');
+                    toast({
+                      title: "Session Submitted",
+                      description: "Coaching session has been submitted and locked. No further changes can be made.",
+                      className: "border-green-200 bg-green-50 text-green-800",
+                    });
+                  } else {
+                    throw new Error('Failed to submit assessment');
+                  }
+                }
+              } catch (error) {
+                console.error('Submit error:', error);
+                toast({
+                  title: "Submit Failed",
+                  description: "Failed to submit coaching session. Please try again.",
+                  variant: "destructive",
+                });
+              } finally {
+                setIsSubmitting(false);
+              }
+            }}
+            disabled={isSubmitting || !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim()}
+            className="px-6 py-2 bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-200"
+          >
+            {isSubmitting ? 'Submitting...' : 'Save & Submit'}
+          </Button>
+        )}
       </div>
+
+      {/* Status indicator */}
+      {assessor && (
+        <div className={`text-sm p-3 rounded-lg ${
+          assessmentStatus === 'submitted' 
+            ? 'text-green-700 bg-green-50 border border-green-200' 
+            : assessmentStatus === 'saved'
+            ? 'text-blue-700 bg-blue-50 border border-blue-200'
+            : 'text-amber-600 bg-amber-50 border border-amber-200'
+        }`}>
+          {assessmentStatus === 'submitted' 
+            ? '✓ This session has been submitted and is locked from further editing.'
+            : assessmentStatus === 'saved'
+            ? '○ This session is saved as a draft and can still be edited.'
+            : '○ This session is a draft. Save or submit to preserve your work.'}
+        </div>
+      )}
 
       {/* Assessment note */}
       {!assessor && (

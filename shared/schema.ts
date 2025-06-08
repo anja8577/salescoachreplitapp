@@ -68,6 +68,7 @@ export const assessments = pgTable("assessments", {
   whatCanBeImproved: text("what_can_be_improved"),
   nextSteps: text("next_steps"),
   pdfFilePath: text("pdf_file_path"), // Path to generated PDF report
+  status: text("status").default("draft").notNull(), // "draft", "saved", "submitted"
   createdAt: timestamp("created_at").defaultNow(),
 });
 

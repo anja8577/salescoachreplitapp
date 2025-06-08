@@ -46,7 +46,7 @@ export default function Landing() {
           <Button
             onClick={() => setLocation("/coaching-history")}
             variant="outline"
-            className="h-24 flex flex-col items-center justify-center space-y-2 border-blue-600 emotion-trust hover:bg-blue-600 hover:text-white"
+            className="h-24 flex flex-col items-center justify-center space-y-2 border-[#11339b] text-[#11339b] hover:bg-[#11339b] hover:text-white"
             size="lg"
           >
             <History size={24} />
