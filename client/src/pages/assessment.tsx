@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
 import AssessmentStep from "@/components/assessment-step";
 import SpiderGraph from "@/components/spider-graph";
 import ExportResults from "@/components/export-results";
@@ -30,8 +31,9 @@ export default function Assessment() {
   const [assesseeName, setAssesseeName] = useState<string>('');
   const [context, setContext] = useState<string>('');
   
-  // Check if we're in readonly mode
-  const urlParams = new URLSearchParams(window.location.search);
+  // Use wouter hooks for URL parameter monitoring
+  const searchString = useSearch();
+  const urlParams = new URLSearchParams(searchString);
   const isReadonly = urlParams.get('readonly') === 'true';
   const isLocked = currentAssessment?.status === 'submitted';
 
@@ -220,21 +222,33 @@ export default function Assessment() {
     checkAuth();
   }, []);
 
-  // Handle URL parameters
+  // Handle URL parameters - watch for changes
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
     const assessmentId = urlParams.get('id');
     
     if (assessmentId) {
       // Load existing assessment by ID
       loadExistingAssessment(parseInt(assessmentId));
-    } else if (userId && !currentUser && !currentAssessment) {
-      handleUserSelected(parseInt(userId));
+    } else if (userId) {
+      // Always handle userId parameter, even if we have a current assessment
+      // This ensures new sessions work from the footer button
+      const newUserId = parseInt(userId);
+      if (!currentUser || currentUser.id !== newUserId) {
+        // Reset state for new user
+        setCurrentAssessment(null);
+        setCurrentUser(null);
+        setCheckedBehaviors(new Set());
+        setStepScores({});
+        setAssesseeName('');
+        setContext('');
+        
+        handleUserSelected(newUserId);
+      }
     } else if (!userId && !currentUser && !showUserModal) {
       setShowUserModal(true);
     }
-  }, []);
+  }, [searchString, currentUser]); // Watch for search string changes
 
   const loadExistingAssessment = async (assessmentId: number) => {
     try {
