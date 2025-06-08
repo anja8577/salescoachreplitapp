@@ -399,8 +399,18 @@ export default function Profile() {
                     <Input value={currentUser.email || ""} disabled />
                   </div>
                   <div>
-                    <Label>Team</Label>
-                    <Input value={currentUser.team || "No Team"} disabled />
+                    <Label>Teams</Label>
+                    {currentUser.teams && currentUser.teams.length > 0 ? (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {currentUser.teams.map((team) => (
+                          <span key={team.id} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {team.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <Input value="No Teams" disabled />
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -564,8 +574,16 @@ export default function Profile() {
                             <div>
                               <div className="font-medium">{user.fullName}</div>
                               <div className="text-sm text-gray-600">{user.email}</div>
-                              {user.team && (
-                                <div className="text-xs text-blue-600">{user.team}</div>
+                              {user.teams && user.teams.length > 0 ? (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {user.teams.map((team) => (
+                                    <span key={team.id} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      {team.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-gray-400">No teams</div>
                               )}
                             </div>
                             <div className="flex gap-2">

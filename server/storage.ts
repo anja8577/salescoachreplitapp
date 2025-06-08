@@ -1156,8 +1156,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    const allUsers = await db.select().from(users).orderBy(users.fullName);
-    return allUsers;
+    const allUsers = await db.query.users.findMany({
+      with: {
+        userTeams: {
+          with: {
+            team: true
+          }
+        }
+      },
+      orderBy: (users, { asc }) => [asc(users.fullName)]
+    });
+    
+    // Transform the data to include teams array
+    return allUsers.map(user => ({
+      ...user,
+      teams: user.userTeams.map(ut => ut.team)
+    }));
   }
 
   async createUser(user: InsertUser): Promise<User> {

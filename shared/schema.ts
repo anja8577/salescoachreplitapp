@@ -212,6 +212,9 @@ export type AssessmentScore = typeof assessmentScores.$inferSelect;
 export type StepScore = typeof stepScores.$inferSelect;
 export type UserTeam = typeof userTeams.$inferSelect;
 
+// Extended user type with teams
+export type UserWithTeams = User & { teams: Team[] };
+
 export type InsertStep = z.infer<typeof insertStepSchema>;
 export type InsertSubstep = z.infer<typeof insertSubstepSchema>;
 export type InsertBehavior = z.infer<typeof insertBehaviorSchema>;
