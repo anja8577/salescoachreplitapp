@@ -51,6 +51,7 @@ export default function ExportResults({
   const [nextSteps, setNextSteps] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [saveTimeoutId, setSaveTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   // Load current assessment data and prepopulate from previous session if available
   useEffect(() => {
@@ -408,7 +409,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
                 setIsSaving(false);
               }
             }}
-            disabled={isSaving || !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim()}
+            disabled={isSaving}
             className="w-48 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-200"
           >
             <Save className="mr-2 h-4 w-4" />
@@ -420,6 +421,17 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
         {assessor && assessmentStatus !== 'submitted' && (
           <Button
             onClick={async () => {
+              const isIncomplete = !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim();
+              
+              if (isIncomplete) {
+                const confirmSubmit = window.confirm(
+                  "The coaching session is incomplete. Some fields are empty. Do you really want to submit this incomplete form? Once submitted, it cannot be edited."
+                );
+                if (!confirmSubmit) {
+                  return;
+                }
+              }
+              
               setIsSubmitting(true);
               try {
                 const coachingData = { keyObservations, whatWorkedWell, whatCanBeImproved, nextSteps };
@@ -484,7 +496,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
                 setIsSubmitting(false);
               }
             }}
-            disabled={isSubmitting || !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim()}
+            disabled={isSubmitting}
             className="w-48 px-6 py-2 bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-200"
           >
             <CheckCircle className="mr-2 h-4 w-4" />

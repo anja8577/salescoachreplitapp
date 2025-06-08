@@ -294,6 +294,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // PATCH endpoint for assessment updates (including status changes)
+  app.patch("/api/assessments/:id", async (req, res) => {
+    try {
+      const assessmentId = parseInt(req.params.id);
+      const updateData = req.body;
+      
+      console.log("PATCH - Updating assessment", assessmentId, "with data:", updateData);
+
+      const updatedAssessment = await storage.updateAssessment(assessmentId, updateData);
+      res.json(updatedAssessment);
+    } catch (error) {
+      console.error("Error updating assessment via PATCH:", error);
+      res.status(500).json({ message: "Failed to update assessment" });
+    }
+  });
+
   // Generate and serve PDF on demand
   app.get("/api/assessments/:id/pdf", async (req, res) => {
     try {
