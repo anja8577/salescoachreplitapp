@@ -15,6 +15,7 @@ interface AssessmentStepProps {
   onBehaviorCheck: (behaviorId: number, checked: boolean) => void;
   stepScores?: { [stepId: number]: number };
   onStepScoreChange?: (stepId: number, level: number) => void;
+  disabled?: boolean;
 }
 
 export default function AssessmentStep({ 
@@ -22,7 +23,8 @@ export default function AssessmentStep({
   checkedBehaviors, 
   onBehaviorCheck, 
   stepScores = {}, 
-  onStepScoreChange 
+  onStepScoreChange,
+  disabled = false
 }: AssessmentStepProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -160,8 +162,13 @@ export default function AssessmentStep({
                 <select
                   value={currentStepScore}
                   onChange={(e) => handleStepLevelChange(parseInt(e.target.value), parseInt(e.target.value) > 0)}
-                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                  className={`px-2 py-1 border rounded text-xs ${
+                    disabled 
+                      ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' 
+                      : 'border-gray-300'
+                  }`}
                   onClick={(e) => e.stopPropagation()}
+                  disabled={disabled}
                 >
                   <option value={0}>Auto</option>
                   <option value={1}>1 - Learner</option>
@@ -201,14 +208,15 @@ export default function AssessmentStep({
                     </div>
                     <div className="space-y-2 ml-4">
                       {levelBehaviors.map((behavior) => (
-                        <label key={behavior.id} className="flex items-start space-x-3 cursor-pointer">
+                        <label key={behavior.id} className={`flex items-start space-x-3 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
                           <input
                             type="checkbox"
-                            className="mt-1"
+                            className={`mt-1 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
                             checked={checkedBehaviors.has(behavior.id)}
                             onChange={(e) => onBehaviorCheck(behavior.id, e.target.checked)}
+                            disabled={disabled}
                           />
-                          <span className="text-sm text-gray-700">{behavior.description}</span>
+                          <span className={`text-sm ${disabled ? 'text-gray-400' : 'text-gray-700'}`}>{behavior.description}</span>
                         </label>
                       ))}
                     </div>

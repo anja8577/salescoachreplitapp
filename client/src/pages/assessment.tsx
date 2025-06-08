@@ -489,8 +489,13 @@ export default function Assessment() {
             value={context}
             onChange={(e) => setContext(e.target.value)}
             placeholder="Enter assessment context, background information, or specific focus areas..."
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            className={`w-full p-3 border rounded-md resize-none ${
+              isReadonly || isLocked 
+                ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
             rows={3}
+            disabled={isReadonly || isLocked}
           />
         </div>
 
@@ -501,9 +506,10 @@ export default function Assessment() {
               key={step.id}
               step={step}
               checkedBehaviors={checkedBehaviors}
-              onBehaviorCheck={handleBehaviorCheck}
+              onBehaviorCheck={isReadonly || isLocked ? () => {} : handleBehaviorCheck}
               stepScores={stepScores}
-              onStepScoreChange={handleStepScoreChange}
+              onStepScoreChange={isReadonly || isLocked ? () => {} : handleStepScoreChange}
+              disabled={isReadonly || isLocked}
             />
           ))}
         </div>
