@@ -528,32 +528,9 @@ export default function Assessment() {
             stepScores={stepScores}
             assessor={assessor}
             context={context}
-            onSaveAssessment={async (coachingData) => {
-              if (!currentAssessment) return;
-              
-              try {
-                const saveData = {
-                  ...coachingData,
-                  context: context // Include the context field
-                };
-                
-                const response = await fetch(`/api/assessments/${currentAssessment.id}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(saveData),
-                });
-                
-                if (response.ok) {
-                  alert('Coaching session saved successfully!');
-                } else {
-                  alert('Failed to save coaching session. Please try again.');
-                }
-              } catch (error) {
-                console.error('Error saving coaching session:', error);
-                alert('Failed to save coaching session. Please try again.');
-              }
+            onSaveAssessment={(coachingData) => {
+              // No duplicate API call needed - ExportResults handles the save
+              console.log('Save completed:', coachingData);
             }}
             assessmentId={currentAssessment.id}
             assessmentStatus={currentAssessment.status}
