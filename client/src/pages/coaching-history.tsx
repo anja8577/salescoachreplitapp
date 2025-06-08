@@ -135,6 +135,18 @@ export default function CoachingHistory() {
 
 
   const handleDownloadPDF = async (assessment: Assessment) => {
+    // Check if assessment is submitted before allowing PDF download
+    if (assessment.status !== 'submitted') {
+      const confirmed = window.confirm(
+        'This coaching session is not yet submitted and locked. To download the PDF report, you need to go back to the session, submit it first, and then download the report. Would you like to go back to the session now?'
+      );
+      
+      if (confirmed) {
+        setLocation(`/assessment?id=${assessment.id}`);
+      }
+      return;
+    }
+
     try {
       const response = await fetch(`/api/assessments/${assessment.id}/pdf`);
       if (response.ok) {

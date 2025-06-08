@@ -68,25 +68,39 @@ export default function Assessment() {
       
       console.log("Found previous assessment:", previousAssessment.id);
       
-      // Get scores from previous assessment
-      const scoresResponse = await fetch(`/api/assessments/${previousAssessment.id}/scores`);
+      // Get scores and step scores in parallel for better performance
+      const [scoresResponse, stepScoresResponse] = await Promise.all([
+        fetch(`/api/assessments/${previousAssessment.id}/scores`),
+        fetch(`/api/assessments/${previousAssessment.id}/step-scores`)
+      ]);
+
+      // Process behavior scores
       if (scoresResponse.ok) {
         const previousScores = await scoresResponse.json();
         console.log("Found", previousScores.length, "previous behavior scores to duplicate");
         
-        // Duplicate each score to the new assessment
+        // Batch all score updates into parallel requests
         const newCheckedBehaviors = new Set<number>();
+        const scoreUpdatePromises = [];
+        
         for (const score of previousScores) {
           if (score.checked) {
             newCheckedBehaviors.add(score.behaviorId);
             
-            // Save score to new assessment
-            await fetch(`/api/assessments/${newAssessmentId}/scores/${score.behaviorId}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ checked: true }),
-            });
+            // Queue the update request
+            scoreUpdatePromises.push(
+              fetch(`/api/assessments/${newAssessmentId}/scores/${score.behaviorId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ checked: true }),
+              })
+            );
           }
+        }
+        
+        // Execute all score updates in parallel
+        if (scoreUpdatePromises.length > 0) {
+          await Promise.all(scoreUpdatePromises);
         }
         
         // Update UI with duplicated scores
@@ -97,23 +111,31 @@ export default function Assessment() {
         queryClient.invalidateQueries({ queryKey: ["/api/assessments", newAssessmentId, "scores"] });
       }
       
-      // Duplicate step scores from previous assessment
-      const stepScoresResponse = await fetch(`/api/assessments/${previousAssessment.id}/step-scores`);
+      // Process step scores
       if (stepScoresResponse.ok) {
         const previousStepScores = await stepScoresResponse.json();
         console.log("Found", previousStepScores.length, "previous step scores to duplicate");
         
-        // Duplicate each step score to the new assessment
+        // Batch all step score updates into parallel requests
         const newStepScores: { [stepId: number]: number } = {};
+        const stepScoreUpdatePromises = [];
+        
         for (const stepScore of previousStepScores) {
           newStepScores[stepScore.stepId] = stepScore.level;
           
-          // Save step score to new assessment
-          await fetch(`/api/assessments/${newAssessmentId}/step-scores/${stepScore.stepId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ level: stepScore.level }),
-          });
+          // Queue the update request
+          stepScoreUpdatePromises.push(
+            fetch(`/api/assessments/${newAssessmentId}/step-scores/${stepScore.stepId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ level: stepScore.level }),
+            })
+          );
+        }
+        
+        // Execute all step score updates in parallel
+        if (stepScoreUpdatePromises.length > 0) {
+          await Promise.all(stepScoreUpdatePromises);
         }
         
         // Update UI with duplicated step scores
@@ -254,6 +276,7 @@ export default function Assessment() {
   useEffect(() => {
     const userId = urlParams.get('userId');
     const assessmentId = urlParams.get('id');
+    const timestamp = urlParams.get('t'); // Timestamp to force fresh navigation
     
     if (assessmentId) {
       // Load existing assessment by ID
@@ -262,8 +285,13 @@ export default function Assessment() {
       // Always handle userId parameter, even if we have a current assessment
       // This ensures new sessions work from the footer button
       const newUserId = parseInt(userId);
-      if (!currentUser || currentUser.id !== newUserId) {
-        // Reset state for new user
+      
+      // Check if this is a forced new session (has timestamp) or different user
+      const isForcedNewSession = timestamp && Date.now() - parseInt(timestamp) < 5000; // Within 5 seconds
+      const isDifferentUser = !currentUser || currentUser.id !== newUserId;
+      
+      if (isForcedNewSession || isDifferentUser) {
+        // Reset state for new user/session
         setCurrentAssessment(null);
         setCurrentUser(null);
         setCheckedBehaviors(new Set());
@@ -276,7 +304,7 @@ export default function Assessment() {
     } else if (!userId && !currentUser && !showUserModal) {
       setShowUserModal(true);
     }
-  }, [searchString, currentUser]); // Watch for search string changes
+  }, [searchString]); // Remove currentUser from deps to prevent loops
 
   const loadExistingAssessment = async (assessmentId: number) => {
     try {

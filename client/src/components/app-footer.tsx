@@ -15,7 +15,8 @@ export default function AppFooter() {
 
   const handleUserSelected = (userId: number) => {
     setShowUserModal(false);
-    setLocation(`/assessment?userId=${userId}`);
+    // Add timestamp to force a fresh navigation and prevent caching issues
+    setLocation(`/assessment?userId=${userId}&t=${Date.now()}`);
   };
 
   const isActive = (path: string) => location === path;
