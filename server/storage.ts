@@ -1,5 +1,5 @@
 import { 
-  type Step, type Substep, type Behavior, type Team, type User, type Assessment, type AssessmentScore, type StepScore, type UserTeam,
+  type Step, type Substep, type Behavior, type Team, type User, type Assessment, type AssessmentScore, type StepScore, type UserTeam, type UserWithTeams,
   type InsertStep, type InsertSubstep, type InsertBehavior, type InsertTeam, type InsertUser, type InsertAssessment, type InsertAssessmentScore, type InsertStepScore, type InsertUserTeam,
   steps, substeps, behaviors, teams, users, assessments, assessmentScores, stepScores, userTeams
 } from "@shared/schema";
@@ -24,7 +24,7 @@ export interface IStorage {
   getUniqueTeams(): Promise<string[]>;
 
   // Users
-  getAllUsers(): Promise<User[]>;
+  getAllUsers(): Promise<UserWithTeams[]>;
   createUser(user: InsertUser): Promise<User>;
   getUserById(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -1155,7 +1155,7 @@ export class DatabaseStorage implements IStorage {
     return newBehavior;
   }
 
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers(): Promise<UserWithTeams[]> {
     const allUsers = await db.query.users.findMany({
       with: {
         userTeams: {
@@ -1171,7 +1171,7 @@ export class DatabaseStorage implements IStorage {
     return allUsers.map(user => ({
       ...user,
       teams: user.userTeams.map(ut => ut.team)
-    }));
+    })) as UserWithTeams[];
   }
 
   async createUser(user: InsertUser): Promise<User> {

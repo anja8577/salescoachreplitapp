@@ -11,7 +11,7 @@ import AppFooter from "@/components/app-footer";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
-import type { User } from "@shared/schema";
+import type { User, UserWithTeams } from "@shared/schema";
 import TeamInput from "@/components/team-input";
 import TeamBulkManager from "@/components/team-bulk-manager";
 
@@ -38,7 +38,7 @@ export default function Profile() {
   const [bulkEditTeam, setBulkEditTeam] = useState<string | undefined>(undefined);
 
   // Fetch all users
-  const { data: users = [] } = useQuery<User[]>({
+  const { data: users = [] } = useQuery<UserWithTeams[]>({
     queryKey: ["/api/users"],
   });
 
@@ -400,9 +400,9 @@ export default function Profile() {
                   </div>
                   <div>
                     <Label>Teams</Label>
-                    {currentUser.teams && currentUser.teams.length > 0 ? (
+                    {(currentUser as any)?.teams && (currentUser as any).teams.length > 0 ? (
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {currentUser.teams.map((team) => (
+                        {(currentUser as any).teams.map((team: any) => (
                           <span key={team.id} className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
                             {team.name}
                           </span>
