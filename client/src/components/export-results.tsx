@@ -176,8 +176,9 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
 
       if (response.ok) {
         toast({
-          title: "Assessment Shared",
+          title: "✓ Assessment Shared Successfully",
           description: "Your assessment has been successfully shared.",
+          className: "emotion-success-light-bg border-green-200",
         });
       } else {
         const errorData = await response.text();

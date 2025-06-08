@@ -1,0 +1,84 @@
+/* EMOTION RESPONSIVE COLOR PALETTE */
+/* Easy rollback: Delete this file and remove import from index.css */
+
+:root {
+  /* Original colors preserved for rollback */
+  --original-primary: #11339b;
+  --original-gray-50: #f9fafb;
+  --original-gray-500: #6b7280;
+  
+  /* Emotion Responsive Palette */
+  
+  /* TRUST & PROFESSIONALISM (Primary Blue Family) */
+  --trust-primary: #11339b;
+  --trust-light: #3b82f6;
+  --trust-lighter: #dbeafe;
+  --trust-dark: #1e3a8a;
+  
+  /* SUCCESS & ACHIEVEMENT (Positive Green Family) */
+  --success-primary: #10b981;
+  --success-light: #34d399;
+  --success-lighter: #d1fae5;
+  --success-dark: #047857;
+  
+  /* ENERGY & ACTION (Motivational Orange Family) */
+  --energy-primary: #f59e0b;
+  --energy-light: #fbbf24;
+  --energy-lighter: #fef3c7;
+  --energy-dark: #d97706;
+  
+  /* FOCUS & ATTENTION (Focused Purple Family) */
+  --focus-primary: #8b5cf6;
+  --focus-light: #a78bfa;
+  --focus-lighter: #ede9fe;
+  --focus-dark: #7c3aed;
+  
+  /* WARNING & CAUTION (Alert Amber Family) */
+  --warning-primary: #f59e0b;
+  --warning-light: #fcd34d;
+  --warning-lighter: #fef3c7;
+  --warning-dark: #d97706;
+  
+  /* ERROR & URGENT (Critical Red Family) */
+  --error-primary: #ef4444;
+  --error-light: #f87171;
+  --error-lighter: #fee2e2;
+  --error-dark: #dc2626;
+  
+  /* NEUTRAL & CALM (Supporting Grays) */
+  --neutral-50: #f9fafb;
+  --neutral-100: #f3f4f6;
+  --neutral-200: #e5e7eb;
+  --neutral-300: #d1d5db;
+  --neutral-400: #9ca3af;
+  --neutral-500: #6b7280;
+  --neutral-600: #4b5563;
+  --neutral-700: #374151;
+  --neutral-800: #1f2937;
+  --neutral-900: #111827;
+}
+
+/* Emotion-based utility classes */
+.emotion-trust { color: var(--trust-primary); }
+.emotion-trust-bg { background-color: var(--trust-primary); }
+.emotion-trust-light-bg { background-color: var(--trust-lighter); }
+
+.emotion-success { color: var(--success-primary); }
+.emotion-success-bg { background-color: var(--success-primary); }
+.emotion-success-light-bg { background-color: var(--success-lighter); }
+
+.emotion-energy { color: var(--energy-primary); }
+.emotion-energy-bg { background-color: var(--energy-primary); }
+.emotion-energy-light-bg { background-color: var(--energy-lighter); }
+
+.emotion-focus { color: var(--focus-primary); }
+.emotion-focus-bg { background-color: var(--focus-primary); }
+.emotion-focus-light-bg { background-color: var(--focus-lighter); }
+
+.emotion-warning { color: var(--warning-primary); }
+.emotion-warning-bg { background-color: var(--warning-primary); }
+.emotion-warning-light-bg { background-color: var(--warning-lighter); }
+
+.emotion-error { color: var(--error-primary); }
+.emotion-error-bg { background-color: var(--error-primary); }
+.emotion-error-light-bg { background-color: var(--error-lighter); }
