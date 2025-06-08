@@ -574,9 +574,9 @@ export default function Profile() {
                             <div>
                               <div className="font-medium">{user.fullName}</div>
                               <div className="text-sm text-gray-600">{user.email}</div>
-                              {user.teams && user.teams.length > 0 ? (
+                              {(user as any).teams && (user as any).teams.length > 0 ? (
                                 <div className="flex flex-wrap gap-1 mt-1">
-                                  {user.teams.map((team) => (
+                                  {(user as any).teams.map((team: any) => (
                                     <span key={team.id} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                                       {team.name}
                                     </span>

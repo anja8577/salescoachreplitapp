@@ -11,7 +11,7 @@ import AppFooter from "@/components/app-footer";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { StepLevelCalculator } from "@shared/stepLevelCalculator";
-import type { Assessment, User as UserType, AssessmentScore, StepScore, Step, Substep, Behavior } from "@shared/schema";
+import type { Assessment, User as UserType, UserWithTeams, AssessmentScore, StepScore, Step, Substep, Behavior } from "@shared/schema";
 
 export default function CoachingHistory() {
   const [, setLocation] = useLocation();
@@ -28,7 +28,7 @@ export default function CoachingHistory() {
   });
 
   // Fetch all users for filtering
-  const { data: users = [] } = useQuery<UserType[]>({
+  const { data: users = [] } = useQuery<UserWithTeams[]>({
     queryKey: ["/api/users"],
   });
 
@@ -93,7 +93,9 @@ export default function CoachingHistory() {
   };
 
   // Get unique teams for filtering
-  const teams = Array.from(new Set(users.map(user => user.team).filter(Boolean)));
+  const teams = Array.from(new Set(
+    users.flatMap(user => (user as any).teams?.map((team: any) => team.name) || [])
+  ));
   
   // Get unique coachees for filtering
   const coachees = Array.from(new Set(assessments.map(assessment => assessment.assesseeName)));
@@ -104,7 +106,8 @@ export default function CoachingHistory() {
                          assessment.title?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesTeam = filterTeam === "all" || 
-                       users.find(user => user.fullName === assessment.assesseeName)?.team === filterTeam;
+                       users.find(user => user.fullName === assessment.assesseeName && 
+                         (user as any).teams?.some((team: any) => team.name === filterTeam));
     
     const matchesCoachee = filterCoachee === "all" || assessment.assesseeName === filterCoachee;
 
