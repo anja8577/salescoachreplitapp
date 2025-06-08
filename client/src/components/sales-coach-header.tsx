@@ -18,7 +18,7 @@ export default function SalesCoachHeader({
   };
 
   const logoSizes = {
-    sm: "h-9 w-9",
+    sm: "h-14 w-14",
     md: "h-12 w-12", 
     lg: "h-16 w-16"
   };
