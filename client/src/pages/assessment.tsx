@@ -124,6 +124,34 @@ export default function Assessment() {
         queryClient.invalidateQueries({ queryKey: ["/api/assessments", newAssessmentId, "step-scores"] });
       }
       
+      // Load and apply text prepopulation from previous assessment
+      if (previousAssessment.keyObservations || previousAssessment.whatWorkedWell || 
+          previousAssessment.whatCanBeImproved || previousAssessment.nextSteps) {
+        console.log("Loading previous assessment text for prepopulation:", previousAssessment);
+        
+        // Update the new assessment with previous text content
+        const updateResponse = await fetch(`/api/assessments/${newAssessmentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: previousAssessment.context || '',
+            keyObservations: previousAssessment.keyObservations || '',
+            whatWorkedWell: previousAssessment.whatWorkedWell || '',
+            whatCanBeImproved: previousAssessment.whatCanBeImproved || '',
+            nextSteps: previousAssessment.nextSteps || ''
+          })
+        });
+        
+        if (updateResponse.ok) {
+          // Update local context state for immediate UI reflection
+          setContext(previousAssessment.context || '');
+          
+          // Refresh the current assessment data
+          const refreshedAssessment = await updateResponse.json();
+          setCurrentAssessment(refreshedAssessment);
+        }
+      }
+      
     } catch (error) {
       console.log("Could not duplicate previous session as baseline:", error);
     }
