@@ -21,6 +21,7 @@ type StepWithSubsteps = Step & {
 };
 
 export default function Assessment() {
+  const { toast } = useToast();
   const [currentAssessment, setCurrentAssessment] = useState<AssessmentType | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [assessor, setAssessor] = useState<User | null>(null);
@@ -200,7 +201,11 @@ export default function Assessment() {
     },
     onError: (error: Error) => {
       console.error("Error creating assessment:", error);
-      alert("Failed to create assessment. Please try again.");
+      toast({
+        title: "Assessment Creation Failed",
+        description: "Failed to create assessment. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -422,7 +427,11 @@ export default function Assessment() {
       createAssessmentMutation.mutate({ title, userId, assesseeName });
     } catch (error) {
       console.error("Error in handleUserSelected:", error);
-      alert("Failed to create assessment. Please try again.");
+      toast({
+        title: "Assessment Creation Failed",
+        description: "Failed to create assessment. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

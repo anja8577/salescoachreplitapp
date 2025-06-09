@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/app-header";
 import AppFooter from "@/components/app-footer";
 import { useLocation } from "wouter";
@@ -14,6 +15,7 @@ import { StepLevelCalculator } from "@shared/stepLevelCalculator";
 import type { Assessment, User as UserType, UserWithTeams, AssessmentScore, StepScore, Step, Substep, Behavior } from "@shared/schema";
 
 export default function CoachingHistory() {
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTeam, setFilterTeam] = useState<string>("all");
@@ -137,13 +139,20 @@ export default function CoachingHistory() {
   const handleDownloadPDF = async (assessment: Assessment) => {
     // Check if assessment is submitted before allowing PDF download
     if (assessment.status !== 'submitted') {
-      const confirmed = window.confirm(
-        'This coaching session is not yet submitted and locked. To download the PDF report, you need to go back to the session, submit it first, and then download the report. Would you like to go back to the session now?'
-      );
-      
-      if (confirmed) {
-        setLocation(`/assessment?id=${assessment.id}`);
-      }
+      toast({
+        title: "Session Not Submitted",
+        description: "This coaching session must be submitted before downloading the PDF report. Would you like to go back to the session to submit it?",
+        variant: "destructive",
+        action: (
+          <Button
+            onClick={() => setLocation(`/assessment?id=${assessment.id}`)}
+            className="ml-2"
+            size="sm"
+          >
+            Go to Session
+          </Button>
+        ),
+      });
       return;
     }
 
@@ -172,12 +181,25 @@ export default function CoachingHistory() {
         a.download = `SalesCoach_Report_${coacheeName}_${dateStr}_${timeStr}.pdf`;
         a.click();
         URL.revokeObjectURL(url);
+        
+        toast({
+          title: "PDF Downloaded",
+          description: "Your assessment report has been downloaded successfully.",
+        });
       } else {
-        alert('Failed to generate PDF report. Please try again.');
+        toast({
+          title: "PDF Generation Failed",
+          description: "Failed to generate PDF report. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      alert('Failed to download PDF report.');
+      toast({
+        title: "PDF Download Failed",
+        description: "There was an error downloading the PDF. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

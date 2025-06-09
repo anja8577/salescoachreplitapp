@@ -52,6 +52,7 @@ export default function ExportResults({
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveTimeoutId, setSaveTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [showIncompleteWarning, setShowIncompleteWarning] = useState(false);
 
   // Load current assessment data and prepopulate from previous session if available
   useEffect(() => {
@@ -509,11 +510,11 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
           onClick={async () => {
             if (!assessmentId) return;
             
-            // Check if session has been saved
-            if (!keyObservations && !whatWorkedWell && !whatCanBeImproved && !nextSteps) {
+            // Check if assessment is submitted before allowing PDF download
+            if (assessmentStatus !== 'submitted') {
               toast({
-                title: "Session Not Saved",
-                description: "Please save the coaching session first before downloading the PDF report.",
+                title: "Session Not Submitted",
+                description: "PDF reports can only be downloaded after the coaching session has been submitted. Please submit the session first.",
                 variant: "destructive",
               });
               return;
@@ -549,20 +550,11 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
                   description: "Your assessment report has been downloaded successfully.",
                 });
               } else {
-                const errorData = await response.json();
-                if (errorData.requiresSave) {
-                  toast({
-                    title: "Session Not Saved",
-                    description: "Please save the coaching session first before downloading the PDF report.",
-                    variant: "destructive",
-                  });
-                } else {
-                  toast({
-                    title: "PDF Generation Failed",
-                    description: "Failed to generate PDF report. Please try again.",
-                    variant: "destructive",
-                  });
-                }
+                toast({
+                  title: "PDF Generation Failed",
+                  description: "Failed to generate PDF report. Please try again.",
+                  variant: "destructive",
+                });
               }
             } catch (error) {
               console.error('PDF download error:', error);
