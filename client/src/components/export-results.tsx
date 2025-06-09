@@ -457,7 +457,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
               }
             }}
             disabled={isSaving}
-            className="w-48 px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-200"
+            className="w-full sm:w-48 px-4 sm:px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-200"
           >
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? 'Saving...' : 'Save Session'}
@@ -544,7 +544,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
               }
             }}
             disabled={isSubmitting}
-            className="w-48 px-6 py-2 bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-200"
+            className="w-full sm:w-48 px-4 sm:px-6 py-2 bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-200"
           >
             <CheckCircle className="mr-2 h-4 w-4" />
             {isSubmitting ? 'Submitting...' : 'Save & Submit'}
@@ -611,7 +611,7 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
               });
             }
           }}
-          className="w-48 px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 focus:ring-2 focus:ring-purple-200"
+          className="w-full sm:w-48 px-4 sm:px-6 py-2 bg-purple-600 text-white hover:bg-purple-700 focus:ring-2 focus:ring-purple-200"
         >
           <Download className="mr-2 h-4 w-4" />
           Download PDF Report

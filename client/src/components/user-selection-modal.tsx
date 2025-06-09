@@ -95,13 +95,13 @@ export default function UserSelectionModal({ open, onClose, onUserSelected }: Us
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle>Select Coachee</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
             <Button
               variant={mode === "select" ? "default" : "outline"}
               onClick={() => setMode("select")}
