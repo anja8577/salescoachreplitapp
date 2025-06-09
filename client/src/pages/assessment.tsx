@@ -10,6 +10,7 @@ import AuthModal from "@/components/auth-modal";
 import SalesCoachHeader from "@/components/sales-coach-header";
 import AppFooter from "@/components/app-footer";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import type { Step, Substep, Behavior, User, Assessment as AssessmentType, AssessmentScore, StepScore } from "@shared/schema";
 
