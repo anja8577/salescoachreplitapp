@@ -1,0 +1,138 @@
+Received: from BE1P281MB1700.DEUP281.PROD.OUTLOOK.COM (::1) by
+ BEUP281MB3500.DEUP281.PROD.OUTLOOK.COM with HTTPS; Sun, 8 Jun 2025 08:21:43
+ +0000
+Received: from BE1P281CA0151.DEUP281.PROD.OUTLOOK.COM (2603:10a6:b10:67::6) by
+ BE1P281MB1700.DEUP281.PROD.OUTLOOK.COM (2603:10a6:b10:19::8) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.20.8813.27; Sun, 8 Jun 2025 08:21:42 +0000
+Received: from BE1PEPF0000056C.DEUP281.PROD.OUTLOOK.COM
+ (2603:10a6:b10:67:cafe::48) by BE1P281CA0151.outlook.office365.com
+ (2603:10a6:b10:67::6) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.20.8835.9 via Frontend Transport; Sun, 8
+ Jun 2025 08:21:42 +0000
+Authentication-Results: spf=pass (sender IP is 159.183.224.105)
+ smtp.mailfrom=sendgrid.net; dkim=pass (signature was verified)
+ header.d=sendgrid.net;dmarc=fail action=none
+ header.from=akticon.net;compauth=fail reason=601
+Received-SPF: Pass (protection.outlook.com: domain of sendgrid.net designates
+ 159.183.224.105 as permitted sender) receiver=protection.outlook.com;
+ client-ip=159.183.224.105; helo=s.wfbtzhsw.outbound-mail.sendgrid.net; pr=C
+Received: from s.wfbtzhsw.outbound-mail.sendgrid.net (159.183.224.105) by
+ BE1PEPF0000056C.mail.protection.outlook.com (10.167.241.5) with Microsoft
+ SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.20.8835.15
+ via Frontend Transport; Sun, 8 Jun 2025 08:21:41 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sendgrid.net;
+	h=content-transfer-encoding:content-type:from:mime-version:subject:to:
+	cc:content-type:from:subject:to;
+	s=smtpapi; bh=s58Jv480l0xDqnT9bwsifz7aER7zqt+CYRkd59v00o0=;
+	b=qzlo/t+2CR0M/d2Yl0Mik1kFciODcc34u43mgIqGxoidFMq79Ra7eUJhw66r0WledN59
+	nE2x/B5gM0RP8r3L0SAYubix/QpGycbO8Stt9iumuoYZgdSRpqG84vqwm8v7cbju1CpL0C
+	cPjAAhLupjOthxTR3/8/8J/ldFoD+BJRM=
+Received: by recvd-canary-56574d8977-8rxfg with SMTP id recvd-canary-56574d8977-8rxfg-1-68454814-10
+	2025-06-08 08:21:40.504392751 +0000 UTC m=+378801.721966738
+Received: from NTMzOTg3OTE (unknown)
+	by geopod-ismtpd-11 (SG) with HTTP
+	id rGjA5chmSjyzXiBEmub1Pg
+	Sun, 08 Jun 2025 08:21:40.468 +0000 (UTC)
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Date: Sun, 08 Jun 2025 08:21:40 +0000 (UTC)
+From: salescoach@akticon.net
+Mime-Version: 1.0
+Message-ID: <rGjA5chmSjyzXiBEmub1Pg@geopod-ismtpd-11>
+Subject: SendGrid Test
+X-SG-EID:
+ =?us-ascii?Q?u001=2EzftVtLxuhpOxz=2FYc+M31nkZ41YHYcw3A6YgnGQcmal7jDxUmuTEmMAV3P?=
+ =?us-ascii?Q?4jEl2umCI3iwsd5c7VgK7NwOrNOypRTjI0zKlYL?=
+ =?us-ascii?Q?6OIJpWa2dfMITWcHpLdO=2F1=2F0MA+LsYYLTrWMMBk?=
+ =?us-ascii?Q?taAcMem9VWDX4hdAPVgAMkwq2SV2DSlzYxNhN2p?=
+ =?us-ascii?Q?UoVtOt9xV67pY2=2FBh9+i8CXdVJxUltSyrfKXIK1?=
+ =?us-ascii?Q?g=3D=3D?=
+To: info@akticon.net
+X-Entity-ID: u001.HQ/XYm3IFpYPJ025tQslQw==
+Return-Path: bounces+53398791-b084-info=akticon.net@sendgrid.net
+X-MS-Exchange-Organization-ExpirationStartTime: 08 Jun 2025 08:21:41.9650
+ (UTC)
+X-MS-Exchange-Organization-ExpirationStartTimeReason: OriginalSubmit
+X-MS-Exchange-Organization-ExpirationInterval: 1:00:00:00.0000000
+X-MS-Exchange-Organization-ExpirationIntervalReason: OriginalSubmit
+X-MS-Exchange-Organization-Network-Message-Id:
+ 2fa537d9-b103-4999-1b07-08dda6657fa1
+X-EOPAttributedMessage: 0
+X-EOPTenantAttributedMessage: a4e0496c-cc5f-45aa-952d-453cf3f1f9b5:0
+X-MS-Exchange-Organization-MessageDirectionality: Incoming
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic:
+ BE1PEPF0000056C:EE_|BE1P281MB1700:EE_|BEUP281MB3500:EE_
+X-MS-Exchange-Organization-AuthSource:
+ BE1PEPF0000056C.DEUP281.PROD.OUTLOOK.COM
+X-MS-Exchange-Organization-AuthAs: Anonymous
+X-MS-Office365-Filtering-Correlation-Id: 2fa537d9-b103-4999-1b07-08dda6657fa1
+X-MS-Exchange-Organization-SCL: 5
+X-Forefront-Antispam-Report:
+ CIP:159.183.224.105;CTRY:US;LANG:en;SCL:5;SRV:;IPV:NLI;SFV:SPM;H:s.wfbtzhsw.outbound-mail.sendgrid.net;PTR:s.wfbtzhsw.outbound-mail.sendgrid.net;CAT:SPOOF;SFS:(13230040)(29132699027);DIR:INB;
+X-Microsoft-Antispam: BCL:0;ARA:13230040|29132699027;
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 08 Jun 2025 08:21:41.4862
+ (UTC)
+X-MS-Exchange-CrossTenant-Network-Message-Id: 2fa537d9-b103-4999-1b07-08dda6657fa1
+X-MS-Exchange-CrossTenant-Id: a4e0496c-cc5f-45aa-952d-453cf3f1f9b5
+X-MS-Exchange-CrossTenant-AuthSource: BE1PEPF0000056C.DEUP281.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-AuthAs: Anonymous
+X-MS-Exchange-CrossTenant-FromEntityHeader: Internet
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BE1P281MB1700
+X-MS-Exchange-Transport-EndToEndLatency: 00:00:02.0502336
+X-MS-Exchange-Processed-By-BccFoldering: 15.20.8813.020
+X-Microsoft-Antispam-Mailbox-Delivery:
+	ucf:0;jmr:0;auth:0;dest:J;OFR:SpamFilterAuthJ;ENG:(910005)(944506478)(944626604)(4710137)(4999163)(920097)(930097)(3100021)(140003);RF:JunkEmail;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?1YDMIKqgnfG5FjdnBKIq5J2giG8e0wrEd7DE4baLXcAjQviK+x6RCPVU02tD?=
+ =?us-ascii?Q?n7x44qUG/h2A1f/wQnw4RB9D6w0GRXqqQpFhoDjlxt7J/1X9KQMXlw7IF5kt?=
+ =?us-ascii?Q?mrEDtyi4aqk6oi6ycUp/LPnjpCDy1ofsk0d7v1ZEMIUjrhJCE97zc81O/AqW?=
+ =?us-ascii?Q?ZboA/8wTm+GoJrNN3hZFEFSRSC9fikV00dhYiZJGEKQ8LO711yF2N92MmiFw?=
+ =?us-ascii?Q?0T4NuGtDylFis/1mQvJXLuADmY7cIq6u3YZ7rvqAkhvRR7YwURhbBE5SDrUc?=
+ =?us-ascii?Q?jkyxD08pb7YwVlx0oUq1E8X/ca3AMrr1sbb059IhBRwy01OuMF0Jxc+k2uqq?=
+ =?us-ascii?Q?SpvQcjOhgsgMsR5xbZwooN8lcn3jMTSaQzDsPvi8LddkEgfe+4mAnAn9lnG3?=
+ =?us-ascii?Q?mUYC/92vpx7kkAfv1or0fx7ksgjTExnR7dmyEIzX9ECmUoSERrjBOs9l6B7o?=
+ =?us-ascii?Q?3ezdNpwpKyqSgxWBq0opzrXBtCDEUhXWngmO3jqT9pH3cebex/lvtcM/P4kH?=
+ =?us-ascii?Q?blIlpmLG8UOo7Z55h8B+wO4gHzZFTnZYcHffRJlV545RPtZwB2KqVY40SQXp?=
+ =?us-ascii?Q?/+Lh2Rx4qEvpGz5Glggs3iUyhwia6E+j1FANTFpNVkppVTuJg7lgsJRSCchj?=
+ =?us-ascii?Q?tFLWPItqqyeEkuGysfXU0gHcoJ9QJ9Pd+CKtkMApNJ5NRvsjJrdRL54UgBxZ?=
+ =?us-ascii?Q?JDjSPf+hXU9xCBrBWO/b5G5/Xh3MpbKo1USavqJbf8ofWj6QG/rMYJAxDEe0?=
+ =?us-ascii?Q?Ie+bkbeClHHK3CHOl3KGjNUzzAKVC9fs5w/zRakooCXJLGqxfcuvc2M9A9Wm?=
+ =?us-ascii?Q?avicy6565TgBy5dSfCxJtuhUoGDwKOSgacuiDXQt9w0ZUvfFQ22wEdxmbKLq?=
+ =?us-ascii?Q?SinB7DreAgPRV+/Z7cnWdJctBgAajhCpY0H/C4uYkIekw06cYMUjrlA1k9GA?=
+ =?us-ascii?Q?VGiXAwQWc9DtJEQs7j3ry0UiAM9q40B2M79kHyYEtSMYNPOO5IzsnSqCDdHE?=
+ =?us-ascii?Q?K4CxcAfZHKA1kc4Pf5JOOvALwDvRoexek0yxOcBhoXPHtwACFPiAWNQ1MLZZ?=
+ =?us-ascii?Q?srXZRevXrD0CZJdZ5kvyk+32e08GzeQZznyVh2Ap5TgvoP4wwU/x+SC6XuCb?=
+ =?us-ascii?Q?1SMG8/gSqQT2zIrQVseaFV07ISUa31TKy1P30jQLoIl+ActlqjhYdKXL4dmW?=
+ =?us-ascii?Q?Fl5ciJEugcB0SEklCwt9VvpQUZoSPj0u+rkIcIPP+TFkk/JLcmvBafFvE6Ws?=
+ =?us-ascii?Q?2Qy2dvh6wF0p11zbm9VYpj63X1uKzrSga1BKH35wGecQS6BQPv0xpNQVZIzC?=
+ =?us-ascii?Q?d6DrcP86myN6kuqZ1nVUJvtdT/hkfTdXQWhuDXSW8wuMaBEb5z1gffZ4Lgnf?=
+ =?us-ascii?Q?yBpOpabSjjqGj52saYPO+p5AQCcr4qP/FQhyO72J4uCDb2kwAlJFnpPqic+e?=
+ =?us-ascii?Q?s2QEohYAJuaWyXnegfzwk9bxiNakbKKevujsnw4L/JYlhZjUQh/RporeeLnM?=
+ =?us-ascii?Q?R8nr/C9QcMIYG2+u+MH3O58P7lJW5Ey5eXT4uLJ4BZwy5jt69icF2BBAjQcW?=
+ =?us-ascii?Q?sKbwUme2ppnxw9Wf+bNxfqGdJiCvMiT71QSinRdHXoZrLOc9i61t58AffDvV?=
+ =?us-ascii?Q?RkZIylqCvBAGMxzVRCRKsdvcWyDLZrc+BLRgwO0rIsNRcnIQ6Qbwy6r0PXsA?=
+ =?us-ascii?Q?Fqx+EI8M5MR08fzR8YqQHCabQJVG9hn2+bfxUjZLEj3nSXYG4WgpSz3Scntu?=
+ =?us-ascii?Q?nlh0IE05Bdea/8UV6sdnOx/jR2xqGUGl/TVpaw+hs555jvsNIt713lfmrD6w?=
+ =?us-ascii?Q?ryNjsK3Q5XTyF/KzbrocO4nIK8vMBD+NvJoA4DCwM7JSDpwMmJa+Fq5tkroT?=
+ =?us-ascii?Q?2lL+zEBR8XQvu1aZA4eBJpJ32p5qlEYUWVYI7kX1Ltf6NSz32s+C8Bx5YbJU?=
+ =?us-ascii?Q?9NQaNSj7dcPloZCbWky0O+4K5yjAt46djvO1VGsh38AE3RD8/bZW4S98qwTJ?=
+ =?us-ascii?Q?2BZ0vjudJnrU5VLklxFN0J/MbfSzcc/At4dwIKuw//u3gozYRGdnmDZB9Mrt?=
+ =?us-ascii?Q?iqip9ns7Z/iUCO78ljYZhPUvmInTfRuKqq4L1QNy/HxTF/DS4wgW8tTPIKsE?=
+ =?us-ascii?Q?CbGDXPNVZlDyufLQtQ1OO5280dBrdRzzKRwafMGxvYx5PM4HAgPa0+Ht3Qv4?=
+ =?us-ascii?Q?3bTpubnDInF0E5z5rKcq3qu6mIW81k0RHYIuXuT/VBKvUh0/dbCWjArJldF8?=
+ =?us-ascii?Q?oYgwrJtnLZSNe8G9KfQ+WpyOEAbsaoNegOlgtM05Cs2Sclark+ZodqpfWoGS?=
+ =?us-ascii?Q?//9qYoGtnWQvt/zjEYXQo7pfO7bpMQKbwd+xGCOQ9oBFCrfn2vUguN0L1L0h?=
+ =?us-ascii?Q?EyntOVG8qfsRduL4cRbpIEV58vQjx3O3e+vzNtiR3kHTy+RFZf3QxNPxOXSR?=
+ =?us-ascii?Q?kCkrbAUf9gxkkwNcRS1d5dUHTGgugHbidPHw5zz/iC6T4w4XB9HNuS2OJP7k?=
+ =?us-ascii?Q?UggcEEK2JJ1MPW1UCYFAZlJkHM5temL+Aea+V04gGaHB/mNIF8cBzD8euz2A?=
+ =?us-ascii?Q?zNBkXwzHMpQR0F/n7zNMo80ttycVY8yAM/WuEjNxWqOKLTquETHFIZgx9Ssx?=
+ =?us-ascii?Q?fmOzS2ZzS4hg9Z7I3wPAIb0ZX2Fz3krqNDDrLP2ujdXUGTqzvwqDYcl6p6sA?=
+ =?us-ascii?Q?/ID8KWSCpQR2xGO2wcFywYjEsrtYj0OZRLHXoxwjrGDEVqSor8HIm4ca9OAc?=
+ =?us-ascii?Q?jUU6AMuuYjsQblB57E1Lx+JnrqwfByVA73Kj4LumJ5ePFGEEs++K8gWF4Ql/?=
+ =?us-ascii?Q?DVjr11zJ6WzwccPL68uU75HbgLpjmFw08zhNIjuQ9flx44pxAMelTB+PuYSd?=
+ =?us-ascii?Q?E0pJ/THT4YIXI6ILYw2H5xkceUY8dig8RDAeuSeDWNuof7tX0uF1VfzfoL7W?=
+ =?us-ascii?Q?fHJ3w0oh3Sl3i+pHPp5/cqyd4hVLxW9QIN3X7G3V6ioDK0Jix2dHde7hqgsP?=
+ =?us-ascii?Q?wGxvCg9AkmQDyeO6pMXtoB0GcZnie+Rcyichgq+NSzIq1aCU624ipmRU82Rx?=
+ =?us-ascii?Q?Z5jJtDg7?=

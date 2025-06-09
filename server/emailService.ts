@@ -9,6 +9,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 interface EmailParams {
   to: string;
   from: string | { email: string; name: string };
+  replyTo?: string;
   subject: string;
   text?: string;
   html?: string;
@@ -28,11 +29,8 @@ export class EmailService {
       
       const emailParams: EmailParams = {
         to: userEmail,
-        from: {
-          email: this.fromEmail,
-          name: 'SalesCoach Support'
-        } as any,
-        subject: 'Reset Your SalesCoach Password',
+        from: this.fromEmail,
+        subject: 'Password Reset - SalesCoach',
         text: `Hello ${userName},\n\nYou requested to reset your password for SalesCoach.\n\nClick the link below to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nThe SalesCoach Team`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -59,12 +57,18 @@ export class EmailService {
         text: emailParams.text || '',
         html: emailParams.html || '',
         trackingSettings: {
-          clickTracking: { enable: true },
-          openTracking: { enable: true },
+          clickTracking: { enable: false },
+          openTracking: { enable: false },
           subscriptionTracking: { enable: false }
         },
         mailSettings: {
-          sandboxMode: { enable: false }
+          sandboxMode: { enable: false },
+          spamCheck: { enable: false }
+        },
+        headers: {
+          'X-Priority': '1',
+          'X-MSMail-Priority': 'High',
+          'Importance': 'high'
         }
       });
       
