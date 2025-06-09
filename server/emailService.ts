@@ -17,6 +17,37 @@ interface EmailParams {
 
 export class EmailService {
   private static fromEmail = process.env.SENDGRID_FROM_EMAIL || 'salescoach@akticon.net';
+  
+  // Enhanced email delivery with better authentication
+  private static getOptimalSenderConfig(recipientEmail: string) {
+    const domain = recipientEmail.split('@')[1]?.toLowerCase();
+    
+    // Special handling for problematic domains
+    if (domain === 'outlook.com' || domain === 'hotmail.com' || domain?.includes('outlook')) {
+      return {
+        from: {
+          email: this.fromEmail,
+          name: 'SalesCoach Password Reset'
+        },
+        headers: {
+          'X-Priority': 'Normal',
+          'X-MSMail-Priority': 'Normal',
+          'List-Unsubscribe': `<mailto:${this.fromEmail}?subject=unsubscribe>`,
+          'X-Entity-ID': `password-reset-${Date.now()}`,
+        }
+      };
+    }
+    
+    // Default configuration for other providers
+    return {
+      from: this.fromEmail,
+      headers: {
+        'X-Priority': '1',
+        'X-MSMail-Priority': 'High',
+        'Importance': 'high'
+      }
+    };
+  }
 
   static async sendPasswordResetEmail(
     userEmail: string,
@@ -27,48 +58,46 @@ export class EmailService {
       const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
       const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
       
-      const emailParams: EmailParams = {
-        to: userEmail,
-        from: this.fromEmail,
-        subject: 'Password Reset - SalesCoach',
+      // Get optimized sender configuration based on recipient domain
+      const senderConfig = this.getOptimalSenderConfig(userEmail);
+      
+      const emailBody = {
         text: `Hello ${userName},\n\nYou requested to reset your password for SalesCoach.\n\nClick the link below to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nThe SalesCoach Team`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Reset Your SalesCoach Password</h2>
-            <p>Hello ${userName},</p>
-            <p>You requested to reset your password for SalesCoach.</p>
-            <p>Click the button below to reset your password:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #2563eb; margin: 0;">SalesCoach</h1>
             </div>
-            <p>Or copy and paste this link into your browser:</p>
-            <p style="word-break: break-all; color: #666;">${resetUrl}</p>
-            <p><strong>This link will expire in 1 hour.</strong></p>
-            <p>If you didn't request this password reset, please ignore this email.</p>
-            <p>Best regards,<br>The SalesCoach Team</p>
+            <h2 style="color: #333; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">Password Reset Request</h2>
+            <p style="font-size: 16px; line-height: 1.5;">Hello ${userName},</p>
+            <p style="font-size: 16px; line-height: 1.5;">We received a request to reset your password for your SalesCoach account.</p>
+            <div style="text-align: center; margin: 40px 0;">
+              <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">Reset Your Password</a>
+            </div>
+            <p style="font-size: 14px; color: #666; border: 1px solid #e5e7eb; padding: 15px; border-radius: 6px; background-color: #f9fafb;">
+              <strong>Security Note:</strong> This link will expire in 1 hour for your security. If you didn't request this reset, you can safely ignore this email.
+            </p>
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 14px; color: #6b7280;">
+              <p>Best regards,<br>The SalesCoach Team</p>
+            </div>
           </div>
         `
       };
 
       const result = await sgMail.send({
-        to: emailParams.to,
-        from: emailParams.from,
-        subject: emailParams.subject,
-        text: emailParams.text || '',
-        html: emailParams.html || '',
+        to: userEmail,
+        from: senderConfig.from,
+        subject: 'SalesCoach - Password Reset Request',
+        text: emailBody.text,
+        html: emailBody.html,
+        headers: senderConfig.headers,
         trackingSettings: {
           clickTracking: { enable: false },
           openTracking: { enable: false },
           subscriptionTracking: { enable: false }
         },
         mailSettings: {
-          sandboxMode: { enable: false },
-          spamCheck: { enable: false }
-        },
-        headers: {
-          'X-Priority': '1',
-          'X-MSMail-Priority': 'High',
-          'Importance': 'high'
+          sandboxMode: { enable: false }
         }
       });
       
