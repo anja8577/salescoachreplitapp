@@ -32,6 +32,7 @@ export default function Assessment() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [assesseeName, setAssesseeName] = useState<string>('');
   const [context, setContext] = useState<string>('');
+  const [autoSaveRef, setAutoSaveRef] = useState<{ performAutoSave: () => Promise<boolean> } | null>(null);
   
   // Use wouter hooks for URL parameter monitoring
   const searchString = useSearch();

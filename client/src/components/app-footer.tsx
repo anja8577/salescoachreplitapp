@@ -1,15 +1,36 @@
 import { Home, Plus, History, User } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import UserSelectionModal from "./user-selection-modal";
 
 export default function AppFooter() {
   const [location, setLocation] = useLocation();
   const [showUserModal, setShowUserModal] = useState(false);
+  const { toast } = useToast();
 
-  const handleNewSession = (e: React.MouseEvent) => {
+  // Auto-save before navigation
+  const performAutoSaveBeforeNavigation = async () => {
+    // Check if we're currently in a coaching session
+    if (location.includes('/assessment') && (window as any).currentAssessmentAutoSave) {
+      try {
+        const autoSaveSuccess = await (window as any).currentAssessmentAutoSave();
+        if (autoSaveSuccess) {
+          toast({
+            title: "Session Auto-Saved",
+            description: "Your coaching session has been saved automatically.",
+          });
+        }
+      } catch (error) {
+        console.error('Auto-save failed during navigation:', error);
+      }
+    }
+  };
+
+  const handleNewSession = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    await performAutoSaveBeforeNavigation();
     setShowUserModal(true);
   };
 
@@ -17,6 +38,11 @@ export default function AppFooter() {
     setShowUserModal(false);
     // Add timestamp to force a fresh navigation and prevent caching issues
     setLocation(`/assessment?userId=${userId}&t=${Date.now()}`);
+  };
+
+  const handleNavigation = async (path: string) => {
+    await performAutoSaveBeforeNavigation();
+    setLocation(path);
   };
 
   const isActive = (path: string) => location === path;

@@ -237,6 +237,51 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
     }
   };
 
+  // Auto-save function for navigation away scenarios
+  const performAutoSave = async () => {
+    if (!assessmentId || assessmentStatus === 'submitted') return;
+    
+    // Only auto-save if there's actual content to save
+    const hasContent = keyObservations.trim() || whatWorkedWell.trim() || whatCanBeImproved.trim() || nextSteps.trim();
+    if (!hasContent) return;
+
+    try {
+      const response = await fetch(`/api/assessments/${assessmentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keyObservations,
+          whatWorkedWell,
+          whatCanBeImproved,
+          nextSteps,
+          status: 'saved'
+        })
+      });
+
+      if (response.ok) {
+        console.log('Auto-save completed successfully');
+        if (onStatusChange) {
+          onStatusChange('saved');
+        }
+        return true;
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    }
+    return false;
+  };
+
+  // Expose auto-save function to parent component via callback
+  useEffect(() => {
+    if (onSaveAssessment) {
+      // Expose the auto-save function to parent
+      (window as any).currentAssessmentAutoSave = performAutoSave;
+    }
+    return () => {
+      delete (window as any).currentAssessmentAutoSave;
+    };
+  }, [performAutoSave, onSaveAssessment]);
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
       <div className="flex items-center justify-between">
