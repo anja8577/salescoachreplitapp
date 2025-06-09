@@ -606,7 +606,7 @@ export default function Assessment() {
             user={currentUser}
             assessmentTitle={currentAssessment.title}
             stepScores={stepScores}
-            assessor={assessor || undefined}
+            {...(assessor && { assessor })}
             context={context}
             onSaveAssessment={(coachingData) => {
               // No duplicate API call needed - ExportResults handles the save
