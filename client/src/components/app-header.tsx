@@ -1,5 +1,6 @@
 import { ArrowLeft, Home } from "lucide-react";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import SalesCoachHeader from "./sales-coach-header";
 
 interface AppHeaderProps {
@@ -9,9 +10,28 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ showBack = false, onBack, title }: AppHeaderProps) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
 
-  const handleHomeClick = () => {
+  // Auto-save before navigation
+  const performAutoSaveBeforeNavigation = async () => {
+    if (location.includes('/assessment') && (window as any).currentAssessmentAutoSave) {
+      try {
+        const autoSaveSuccess = await (window as any).currentAssessmentAutoSave();
+        if (autoSaveSuccess) {
+          toast({
+            title: "Session Auto-Saved",
+            description: "Your coaching session has been saved automatically.",
+          });
+        }
+      } catch (error) {
+        console.error('Auto-save failed during navigation:', error);
+      }
+    }
+  };
+
+  const handleHomeClick = async () => {
+    await performAutoSaveBeforeNavigation();
     setLocation("/");
   };
 

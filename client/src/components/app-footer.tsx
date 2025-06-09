@@ -52,7 +52,7 @@ export default function AppFooter() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50">
         <div className="flex justify-around items-center max-w-md mx-auto">
           <button
-            onClick={() => setLocation("/")}
+            onClick={() => handleNavigation("/")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
               isActive("/") ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:text-gray-700"
             }`}
@@ -70,7 +70,7 @@ export default function AppFooter() {
           </button>
 
           <button
-            onClick={() => setLocation("/coaching-history")}
+            onClick={() => handleNavigation("/coaching-history")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
               isActive("/coaching-history") ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:text-gray-700"
             }`}
@@ -80,7 +80,7 @@ export default function AppFooter() {
           </button>
 
           <button
-            onClick={() => setLocation("/profile")}
+            onClick={() => handleNavigation("/profile")}
             className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
               isActive("/profile") ? "text-blue-600 bg-blue-50" : "text-gray-500 hover:text-gray-700"
             }`}

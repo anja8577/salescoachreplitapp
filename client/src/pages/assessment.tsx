@@ -40,6 +40,20 @@ export default function Assessment() {
   const isReadonly = urlParams.get('readonly') === 'true';
   const isLocked = currentAssessment?.status === 'submitted';
 
+  // Browser beforeunload protection for unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (currentAssessment && currentAssessment.status !== 'submitted') {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes in your coaching session. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentAssessment]);
+
   // Always call hooks in same order
   const { data: steps = [], isLoading: stepsLoading } = useQuery<StepWithSubsteps[]>({
     queryKey: ["/api/steps"],
