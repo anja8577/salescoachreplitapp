@@ -203,7 +203,7 @@ export default function CoachingHistory() {
     }
   };
 
-  const formatDateTime = (dateString: string | null) => {
+  const formatDateTime = (dateString: string | Date | null) => {
     if (!dateString) return { date: 'N/A', time: 'N/A' };
     const date = new Date(dateString);
     return {

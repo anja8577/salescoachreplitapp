@@ -294,9 +294,20 @@ export default function Profile() {
   };
 
   const handleDeleteUser = (userId: number) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      deleteUserMutation.mutate(userId);
-    }
+    toast({
+      title: "Delete User",
+      description: "Are you sure you want to delete this user? This action cannot be undone.",
+      variant: "destructive",
+      action: (
+        <Button
+          onClick={() => deleteUserMutation.mutate(userId)}
+          variant="destructive"
+          size="sm"
+        >
+          Delete
+        </Button>
+      ),
+    });
   };
 
   const handleEditUser = (user: User) => {
@@ -328,9 +339,25 @@ export default function Profile() {
   };
 
   const handleDeleteTeam = async (teamName: string) => {
-    if (!confirm(`Are you sure you want to delete team "${teamName}"? This will remove all users from this team.`)) {
-      return;
-    }
+    toast({
+      title: "Delete Team",
+      description: `Are you sure you want to delete team "${teamName}"? This will remove all users from this team.`,
+      variant: "destructive",
+      action: (
+        <Button
+          onClick={async () => {
+            await executeTeamDeletion(teamName);
+          }}
+          variant="destructive"
+          size="sm"
+        >
+          Delete Team
+        </Button>
+      ),
+    });
+  };
+
+  const executeTeamDeletion = async (teamName: string) => {
 
     try {
       // Get team ID by name

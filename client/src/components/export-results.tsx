@@ -144,7 +144,8 @@ ${steps.map(step => {
   const percentage = totalCount > 0 ? Math.round((checkedCount / totalCount) * 100) : 0;
   
   // Calculate unified level: manual > calculated
-  const overallLevel = stepScores.reduce((sum, level) => sum + level, 0) / steps.length;
+  const stepScoreValues = Object.values(stepScores);
+  const overallLevel = stepScoreValues.length > 0 ? stepScoreValues.reduce((sum: number, level: number) => sum + level, 0) / stepScoreValues.length : 0;
   
   return `${step.title}: ${percentage}% complete${manualLevel ? `, Manual Score: ${manualLevel}` : ''}`;
 }).join('\n')}
@@ -425,12 +426,12 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
               const isIncomplete = !keyObservations.trim() || !whatWorkedWell.trim() || !whatCanBeImproved.trim() || !nextSteps.trim();
               
               if (isIncomplete) {
-                const confirmSubmit = window.confirm(
-                  "The coaching session is incomplete. Some fields are empty. Do you really want to submit this incomplete form? Once submitted, it cannot be edited."
-                );
-                if (!confirmSubmit) {
-                  return;
-                }
+                toast({
+                  title: "Incomplete Session",
+                  description: "Some fields are empty. Please complete all sections before submitting, or use 'Save Draft' to save your progress.",
+                  variant: "destructive",
+                });
+                return;
               }
               
               setIsSubmitting(true);
