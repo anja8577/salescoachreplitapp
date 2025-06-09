@@ -387,8 +387,8 @@ Overall Performance Level: ${stepScores && Object.keys(stepScores).length > 0 ?
         </div>
       </div>
 
-      {/* Action Buttons - Centered */}
-      <div className="flex gap-3 pt-4 border-t border-gray-200 justify-center">
+      {/* Action Buttons - Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-4 border-t border-gray-200 justify-center">
         
         {/* Save Session Button */}
         {assessor && assessmentStatus !== 'submitted' && (

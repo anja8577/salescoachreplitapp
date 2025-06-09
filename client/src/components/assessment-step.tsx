@@ -127,42 +127,46 @@ export default function AssessmentStep({
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-3 sm:p-6 border-b border-gray-200">
         <div 
-          className="flex items-center justify-between cursor-pointer" 
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between cursor-pointer space-y-3 lg:space-y-0" 
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-semibold text-blue-600">{step.order}</span>
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-xs sm:text-sm font-semibold text-blue-600">{step.order}</span>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
-              <p className="text-sm text-gray-600">{step.description}</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">{step.title}</h3>
+              <p className="text-xs sm:text-sm text-gray-600 break-words">{step.description}</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <div className="text-sm text-gray-500">
+          
+          {/* Mobile-optimized stats layout */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 lg:flex-nowrap">
+            <div className="text-center min-w-0">
+              <div className="text-xs text-gray-500">
                 Score {currentStepScore > 0 && <span className="text-xs">(Auto)</span>}
               </div>
-              <div className={`text-lg font-semibold ${currentStepScore > 0 ? 'text-gray-400' : 'text-blue-600'}`}>
+              <div className={`text-sm sm:text-lg font-semibold ${currentStepScore > 0 ? 'text-gray-400' : 'text-blue-600'}`}>
                 {stepScore}
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Level</div>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${stepLevelClass}`}>
+            
+            <div className="text-center min-w-0">
+              <div className="text-xs text-gray-500">Level</div>
+              <span className={`px-1 sm:px-2 py-1 rounded text-xs font-medium ${stepLevelClass} break-all`}>
                 {stepLevel}
               </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <div>
-                <div className="text-sm text-gray-500">Scored Level</div>
+            
+            <div className="flex items-center space-x-1 sm:space-x-2 min-w-0">
+              <div className="min-w-0">
+                <div className="text-xs text-gray-500 text-center">Scored Level</div>
                 <select
                   value={currentStepScore}
                   onChange={(e) => handleStepLevelChange(parseInt(e.target.value), parseInt(e.target.value) > 0)}
-                  className={`px-2 py-1 border rounded text-xs ${
+                  className={`w-full px-1 sm:px-2 py-1 border rounded text-xs ${
                     disabled 
                       ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' 
                       : 'border-gray-300'
@@ -178,8 +182,8 @@ export default function AssessmentStep({
                 </select>
               </div>
               <ChevronDown 
-                className={`text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                size={20}
+                className={`text-gray-400 transform transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+                size={16}
               />
             </div>
           </div>

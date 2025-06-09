@@ -537,31 +537,31 @@ export default function Assessment() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header with Logo, SalesCoach left, Coaching Session title right */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Left side - Logo and SalesCoach */}
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0">
               <SalesCoachHeader showLogo={true} size="sm" />
             </div>
 
             {/* Right side - Title */}
-            <div className="flex items-center">
-              <h1 className="text-lg font-semibold text-gray-900">Coaching Session</h1>
+            <div className="flex items-center min-w-0">
+              <h1 className="text-sm sm:text-lg font-semibold text-gray-900 truncate">Coaching Session</h1>
             </div>
           </div>
         </div>
       </header>
 
       {/* Sub-header with Coachee name left, Date/Time right */}
-      <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
-        <div className="max-w-4xl mx-auto flex justify-between items-center">
-          <div className="text-sm font-medium text-gray-700">
+      <div className="bg-gray-50 border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-3">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-1 sm:space-y-0">
+          <div className="text-xs sm:text-sm font-medium text-gray-700 truncate">
             Coachee: {currentUser?.fullName}
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs sm:text-sm text-gray-500">
             {new Date().toLocaleDateString()} {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
@@ -573,7 +573,7 @@ export default function Assessment() {
         onUserSelected={handleUserSelected}
       />
       
-      <div className="max-w-4xl mx-auto px-4 py-4 pb-20 space-y-4">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 pb-24 space-y-4">
         {/* Context Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <label htmlFor="context" className="block text-sm font-medium text-gray-700 mb-2">

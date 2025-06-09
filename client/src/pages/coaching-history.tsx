@@ -139,13 +139,16 @@ export default function CoachingHistory() {
   const handleDownloadPDF = async (assessment: Assessment) => {
     // Check if assessment is submitted before allowing PDF download
     if (assessment.status !== 'submitted') {
-      toast({
+      const { dismiss } = toast({
         title: "Session Not Submitted",
         description: "This coaching session must be submitted before downloading the PDF report. Would you like to go back to the session to submit it?",
         variant: "destructive",
         action: (
           <Button
-            onClick={() => setLocation(`/assessment?id=${assessment.id}`)}
+            onClick={() => {
+              dismiss();
+              setLocation(`/assessment?id=${assessment.id}`);
+            }}
             className="ml-2"
             size="sm"
           >
