@@ -8,14 +8,14 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 interface EmailParams {
   to: string;
-  from: string;
+  from: string | { email: string; name: string };
   subject: string;
   text?: string;
   html?: string;
 }
 
 export class EmailService {
-  private static fromEmail = 'salescoach@akticon.net';
+  private static fromEmail = process.env.SENDGRID_FROM_EMAIL || 'salescoach@akticon.net';
 
   static async sendPasswordResetEmail(
     userEmail: string,
@@ -28,7 +28,10 @@ export class EmailService {
       
       const emailParams: EmailParams = {
         to: userEmail,
-        from: this.fromEmail,
+        from: {
+          email: this.fromEmail,
+          name: 'SalesCoach Support'
+        } as any,
         subject: 'Reset Your SalesCoach Password',
         text: `Hello ${userName},\n\nYou requested to reset your password for SalesCoach.\n\nClick the link below to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nThe SalesCoach Team`,
         html: `
@@ -49,19 +52,34 @@ export class EmailService {
         `
       };
 
-      await sgMail.send({
+      const result = await sgMail.send({
         to: emailParams.to,
         from: emailParams.from,
         subject: emailParams.subject,
         text: emailParams.text || '',
         html: emailParams.html || '',
+        trackingSettings: {
+          clickTracking: { enable: true },
+          openTracking: { enable: true },
+          subscriptionTracking: { enable: false }
+        },
+        mailSettings: {
+          sandboxMode: { enable: false }
+        }
       });
-      console.log(`Password reset email sent to ${userEmail}`);
+      
+      const messageId = result[0]?.headers?.['x-message-id'] || 'unknown';
+      console.log(`Password reset email sent to ${userEmail} - Message ID: ${messageId}`);
+      console.log('SendGrid status code:', result[0]?.statusCode);
+      
       return true;
     } catch (error: any) {
       console.error('SendGrid email error:', error);
       if (error.response && error.response.body && error.response.body.errors) {
         console.error('SendGrid error details:', JSON.stringify(error.response.body.errors, null, 2));
+      }
+      if (error.code) {
+        console.error('SendGrid error code:', error.code);
       }
       return false;
     }
