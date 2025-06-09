@@ -233,10 +233,10 @@ export default function CoachingHistory() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <AppHeader title="Coaching History" />
       
-      <div className="max-w-4xl mx-auto px-4 pt-20">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-20">
         {/* Search */}
         <div className="mb-6">
           <Input
@@ -314,33 +314,33 @@ export default function CoachingHistory() {
               
               return (
                 <Card key={assessment.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-5">
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <CardContent className="p-4 sm:p-5">
+                    <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 break-words">
                           {assessment.title?.replace('Assessment for', 'Coaching session for') || 'Coaching Session'}
                         </h3>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-sm text-gray-600 mb-3">
                           <div className="flex items-center space-x-1">
-                            <User size={16} />
-                            <span>{assessment.assesseeName || 'Unknown'}</span>
+                            <User size={14} />
+                            <span className="truncate">{assessment.assesseeName || 'Unknown'}</span>
                           </div>
                           {user?.team && (
                             <div className="flex items-center space-x-1">
-                              <Users size={16} />
-                              <span>{user.team}</span>
+                              <Users size={14} />
+                              <span className="truncate">{user.team}</span>
                             </div>
                           )}
                           <div className="flex items-center space-x-1">
-                            <Calendar size={16} />
-                            <span>{dateTime.date} at {dateTime.time}</span>
+                            <Calendar size={14} />
+                            <span className="text-xs sm:text-sm">{dateTime.date} at {dateTime.time}</span>
                           </div>
                         </div>
                         
-                        {/* Proficiency and Step Levels in single row */}
-                        <div className="flex items-center space-x-4 text-sm">
+                        {/* Proficiency Level */}
+                        <div className="flex flex-col space-y-2 text-sm">
                           <div className="flex items-center space-x-2">
-                            <span className="text-gray-600">Proficiency:</span>
+                            <span className="text-gray-600 text-xs sm:text-sm">Proficiency:</span>
                             {(() => {
                               const proficiencyLevel = calculateProficiencyLevel(assessment.id);
                               const unifiedLevels = getUnifiedStepLevels(assessment.id);
@@ -348,15 +348,17 @@ export default function CoachingHistory() {
                               const badgeClass = StepLevelCalculator.getLevelBadgeClass(proficiency.level);
                               
                               return (
-                                <Badge variant="outline" className={badgeClass}>
+                                <Badge variant="outline" className={`${badgeClass} text-xs`}>
                                   {proficiencyLevel}
                                 </Badge>
                               );
                             })()}
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-gray-600">Steps:</span>
-                            <div className="flex space-x-1">
+                          
+                          {/* Step Levels - Responsive wrap */}
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                            <span className="text-gray-600 text-xs sm:text-sm">Steps:</span>
+                            <div className="flex flex-wrap gap-1">
                               {getStepBadges(assessment.id).map((badge, index) => (
                                 <Badge key={index} variant="outline" className={`text-xs ${badge.colorClass}`}>
                                   {badge.stepNumber}: {badge.levelText}
@@ -367,13 +369,13 @@ export default function CoachingHistory() {
                         </div>
                       </div>
                       
-                      {/* Action buttons - vertically centered */}
-                      <div className="flex flex-col space-y-2 ml-4 justify-center">
+                      {/* Action buttons - responsive layout */}
+                      <div className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2 lg:ml-4 lg:justify-center">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewAssessment(assessment.id)}
-                          className="min-w-[100px]"
+                          className="flex-1 lg:min-w-[100px] text-xs sm:text-sm"
                         >
                           <Eye className="mr-1" size={14} />
                           View
@@ -382,7 +384,7 @@ export default function CoachingHistory() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDownloadPDF(assessment)}
-                          className="min-w-[100px]"
+                          className="flex-1 lg:min-w-[100px] text-xs sm:text-sm"
                         >
                           <FileText className="mr-1" size={14} />
                           PDF Report

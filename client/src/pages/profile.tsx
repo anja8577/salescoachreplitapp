@@ -393,19 +393,19 @@ export default function Profile() {
   }, {} as Record<string, User[]>);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <AppHeader 
         title="Profile Management" 
         showBack={true} 
         onBack={handleBack}
       />
       
-      <div className="max-w-4xl mx-auto px-4 pt-20">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-20">
         <Tabs defaultValue="account" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="account">My Account</TabsTrigger>
-            <TabsTrigger value="users">Manage my Coachees</TabsTrigger>
-            <TabsTrigger value="teams">Manage Teams</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-10">
+            <TabsTrigger value="account" className="text-sm py-2 sm:py-1">My Account</TabsTrigger>
+            <TabsTrigger value="users" className="text-sm py-2 sm:py-1">Manage Coachees</TabsTrigger>
+            <TabsTrigger value="teams" className="text-sm py-2 sm:py-1">Manage Teams</TabsTrigger>
           </TabsList>
 
           {/* My Account Tab */}
@@ -689,12 +689,13 @@ export default function Profile() {
                     return (
                       <Card key={teamName}>
                         <CardHeader>
-                          <CardTitle className="flex items-center justify-between">
-                            <span>{teamName} ({teamUsers.length} members)</span>
-                            <div className="flex space-x-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                            <CardTitle className="text-lg">{teamName} ({teamUsers.length} members)</CardTitle>
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="w-full sm:w-auto"
                                 onClick={() => {
                                   setShowBulkTeamManager(true);
                                   setBulkEditTeam(teamName);
@@ -706,13 +707,14 @@ export default function Profile() {
                               <Button
                                 variant="destructive"
                                 size="sm"
+                                className="w-full sm:w-auto"
                                 onClick={() => handleDeleteTeam(teamName)}
                               >
                                 <Trash2 size={14} className="mr-1" />
                                 Delete
                               </Button>
                             </div>
-                          </CardTitle>
+                          </div>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
