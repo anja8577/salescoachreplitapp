@@ -19,8 +19,16 @@ export class EmailService {
   private static fromEmail = process.env.SENDGRID_FROM_EMAIL || 'salescoach@akticon.net';
   
   // Enhanced email delivery with better authentication
-  private static getOptimalSenderConfig(recipientEmail: string) {
+  private static getOptimalSenderConfig(recipientEmail: string): {
+    from: string | { email: string; name: string };
+    headers: { [key: string]: string };
+  } {
     const domain = recipientEmail.split('@')[1]?.toLowerCase();
+    
+    const baseHeaders: { [key: string]: string } = {
+      'X-Priority': 'Normal',
+      'X-MSMail-Priority': 'Normal'
+    };
     
     // Special handling for problematic domains
     if (domain === 'outlook.com' || domain === 'hotmail.com' || domain?.includes('outlook')) {
@@ -30,10 +38,9 @@ export class EmailService {
           name: 'SalesCoach Password Reset'
         },
         headers: {
-          'X-Priority': 'Normal',
-          'X-MSMail-Priority': 'Normal',
+          ...baseHeaders,
           'List-Unsubscribe': `<mailto:${this.fromEmail}?subject=unsubscribe>`,
-          'X-Entity-ID': `password-reset-${Date.now()}`,
+          'X-Entity-ID': `password-reset-${Date.now()}`
         }
       };
     }
