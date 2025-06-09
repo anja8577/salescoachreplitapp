@@ -71,6 +71,13 @@ export class EmailService {
       const messageId = result[0]?.headers?.['x-message-id'] || 'unknown';
       console.log(`Password reset email sent to ${userEmail} - Message ID: ${messageId}`);
       console.log('SendGrid status code:', result[0]?.statusCode);
+      console.log('Email details:', {
+        to: userEmail,
+        from: this.fromEmail,
+        subject: 'Reset Your SalesCoach Password',
+        messageId: messageId,
+        timestamp: new Date().toISOString()
+      });
       
       return true;
     } catch (error: any) {
